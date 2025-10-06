@@ -56,7 +56,7 @@ class ImportManager:
                 row[1].value,
                 row[2].value,
                 row[3].value,
-                row[4].value
+                row[4].value if row[4].value else ""
             ]
         
             yield data

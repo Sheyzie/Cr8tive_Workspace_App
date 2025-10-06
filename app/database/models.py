@@ -1,9 +1,12 @@
 import uuid
+from pathlib import Path
 
 from .db import InitDB
-from app.exceptions.exception import ValidationError
+from exceptions.exception import ValidationError
 from logs.utils import log_error_to_file, log_to_file
 from utils.import_file import ImportManager
+from utils.export_file import ExportManager
+from model_helpers import export_helper
 
 
 class Client(InitDB):
@@ -174,7 +177,7 @@ class Client(InitDB):
                 log_to_file('Client', 'Error', f'Error getting client')
 
     @classmethod
-    def fetch_all(cls):
+    def fetch_all(cls, col_names=False):
         conn = cls._connect_to_db()
         if conn:
             cursor = conn.cursor(dictionary=True)
@@ -187,7 +190,11 @@ class Client(InitDB):
 
                 clients = cursor.fetchall()
 
-                return clients
+                if col_names:
+                    # Get column names
+                    column_names = [description[0] for description in cursor.description]
+                    clients = (clients, column_names)
+                return clients if clients else []
             except Exception as err:
                 log_error_to_file('Client', 'Error', f'Error getting client')
                 log_error_to_file('Client', 'Error', f'{err}')
@@ -282,13 +289,9 @@ class Client(InitDB):
                     failed.append((client_data, {'Reason': err}))
 
     @classmethod
-    def export_clients(cls, file_type):
-        ACCEPTED_TYPES = {'.csv', '.pdf', '.xls', '.xlsx'}
-
-        if file_type not in ACCEPTED_TYPES:
-            raise ValidationError(f'File type: {file_type} not valid. Valid types include {', '.join(ACCEPTED_TYPES)}')
-        file_name = 'clients_export' + file_type
-        pass
+    def export_clients(cls, file_type, path):
+        export_helper(cls, file_type, path, 'clients_export')
+        print('Export complete')
         
 
 class Plan(InitDB):
@@ -478,14 +481,68 @@ class Plan(InitDB):
 
         
     @classmethod
-    def import_plans(cls, filepath, type):
-        pass
+    def import_plans(ccls, filepath, file_type, has_header):
+        manager = ImportManager(file_path=filepath, file_type=file_type, has_header=has_header)
+        plans = []
+        failed = []
+
+        if not has_header and file_type.lower() == '.cvs':
+            for plan_data in manager.import_from_csv():
+                data = {
+                    'plan_name': plan_data[0],
+                    'duration': plan_data[1],
+                    'plan_type': plan_data[2],
+                    'price': plan_data[3],
+                }
+
+                try:
+                    plan = Plan(data)
+                    plan.register()
+                    plan.save_to_db()
+                    plans.append(plan)
+                except Exception as err:
+                    failed.append((data, {'Reason': err}))
+
+        elif has_header and file_type.lower() == '.csv':
+            for plan_data in manager.import_from_csv():
+                
+                try:
+                    plan = Plan(data)
+                    plan.register()
+                    plan.save_to_db()
+                    plans.append(plan)
+                except Exception as err:
+                    failed.append((plan_data, {'Reason': err}))
+
+        elif file_type.lower() in {'.xls', '.xlsx'}:
+            for plan_data in manager.import_from_excel():
+                data = {
+                    'plan_name': plan_data[0],
+                    'duration': plan_data[1],
+                    'plan_type': plan_data[2],
+                    'price': plan_data[3],
+                }
+                try:
+                    plan = Plan(data)
+                    plan.register()
+                    plan.save_to_db()
+                    plans.append(plan)
+                except Exception as err:
+                    failed.append((plan_data, {'Reason': err}))
+
+        else:
+            for plan_data in manager.import_from_pdf():
+                try:
+                    plan = Plan(plan_data)
+                    plan.register()
+                    plan.save_to_db()
+                    plans.append(plan)
+                except Exception as err:
+                    failed.append((plan_data, {'Reason': err}))
+
 
     @classmethod
-    def export_plans(cls, file_type):
-        ACCEPTED_TYPES = {'.csv', '.pdf', '.xls'}
-
-        if file_type not in ACCEPTED_TYPES:
-            raise ValidationError(f'File type: {file_type} not valid. Valid types include {', '.join(ACCEPTED_TYPES)}')
-        file_name = 'plans_export' + file_type
-        pass
+    def export_clients(cls, file_type, path):
+        export_helper(cls, file_type, path, 'plans_export')
+        print('Export complete')
+        

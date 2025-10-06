@@ -1,12 +1,16 @@
 import sqlite3
 from logs.utils import log_to_file, log_error_to_file
+from configs import db_config
+
 
 class InitDB:
-    _db: str = 'cr8tive_db.db'
+    _db: str = db_config.DB_NAME if db_config.DB_NAME else 'cr8tive_db.db'
 
-    def __init__(self):
+    def __init__(self, using=None):
         log_to_file('Database','Init', 'Initializing connection')
         conn = None
+        if using:
+            self._db = using
         try:
             conn = sqlite3.connect(self._db)
             conn.execute("PRAGMA foreign_keys = ON")
@@ -150,3 +154,14 @@ class InitDB:
 
     def save_to_db(self):
         pass
+
+    def drop_db(self):
+        from pathlib import Path
+        print(f'Dropping database {self._db}...')
+        db_file = Path(self._db)
+        
+        if db_file.exists():
+            db_file.unlink()
+            print("Database dropped.")
+        else:
+            print("Database not found.")
