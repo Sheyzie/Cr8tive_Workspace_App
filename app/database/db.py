@@ -1,5 +1,6 @@
 import sqlite3
 from logs.utils import log_to_file, log_error_to_file
+from notification.notification import Notification
 from configs import db_config
 
 
@@ -21,6 +22,7 @@ class InitDB:
             log_to_file('Database', 'Error', f'Error connecting to {self._db}')
             if conn:
                 conn.close()
+            Notification.send_notification(err)
             return
                 
     def _connect_to_db(self):
@@ -32,6 +34,7 @@ class InitDB:
         except Exception as err:
             log_error_to_file('Database', 'Error', f'Error connecting to {self._db}: {err}')
             log_to_file('Database', 'Error', f'Error connecting to {self._db}')
+            Notification.send_notification(err)
             self.conn = None
             return None
             
@@ -66,6 +69,7 @@ class InitDB:
             log_error_to_file('Database', 'Error', f'Error creating client table')
             log_error_to_file('Database', 'Error', f'{err}')
             log_to_file('Database', 'Error', f'Error creating client table')
+            Notification.send_notification(err)
 
     def _create_plan_table(self):
         log_to_file('Database', 'Init', 'Initializing plan table')
@@ -76,7 +80,7 @@ class InitDB:
                         plan_id TEXT PRIMARY KEY,
                         plan_name TEXT NOT NULL,
                         duration INTEGER NOT NULL,
-                        type TEXT NOT NULL,
+                        plan_type TEXT NOT NULL,
                         price INTEGER NOT NULL,
                         created_at TEXT NOT NULL
                     );
@@ -86,6 +90,7 @@ class InitDB:
             log_error_to_file('Database', 'Error', f'Error creating plan table')
             log_error_to_file('Database', 'Error', f'{err}')
             log_to_file('Database', 'Error', f'Error creating plan table')
+            Notification.send_notification(err)
 
 
     def _create_payment_table(self):
@@ -107,6 +112,7 @@ class InitDB:
             log_error_to_file('Database', 'Error', f'Error creating payment table')
             log_error_to_file('Database', 'Error', f'{err}')
             log_to_file('Database', 'Error', f'Error creating payment table')
+            Notification.send_notification(err)
 
     def _create_subscription_table(self):
         log_to_file('Database', 'Init', 'Initializing subscription table')
@@ -134,6 +140,7 @@ class InitDB:
             log_error_to_file('Database', 'Error', f'Error creating subscription table')
             log_error_to_file('Database', 'Error', f'{err}')
             log_to_file('Database', 'Error', f'Error creating subscription table')
+            Notification.send_notification(err)
 
     def _create_visit_table(self):
         log_to_file('Database', 'Init', 'Initializing visit table')
@@ -151,9 +158,10 @@ class InitDB:
             log_error_to_file('Database', 'Error', f'Error creating visit table')
             log_error_to_file('Database', 'Error', f'{err}')
             log_to_file('Database', 'Error', f'Error creating visit table')
+            Notification.send_notification(err)
 
     def save_to_db(self):
-        pass
+        self.conn.commit()
 
     def drop_db(self):
         from pathlib import Path
