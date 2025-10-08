@@ -2,13 +2,14 @@ import uuid
 from pathlib import Path
 
 from database.db import InitDB
-from exceptions.exception import ValidationError
+from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
 from utils.import_file import ImportManager
 from utils.export_file import ExportManager
 from helpers.export_helper import export_helper
+from helpers.db_helpers import insert_to_db, update_in_db
+from helpers.db_helpers import generate_id
 from notification.notification import Notification
-
 
 
 class Payment(InitDB):
@@ -53,8 +54,9 @@ class Payment(InitDB):
             self.created_at = created_at
 
     def _validate(self, check_id=False):
-        VALID_PLAN_TYPES = {'hourly', 'daily', 'weekly', 'monthly', 'yearly'}
-
+        if check_id:
+            if not self.payment_id:
+                raise ValidationError('Payment ID is required')
         if not self.discount:
             raise ValidationError('Payment discount is required')
         if self.discount < 0:
@@ -80,31 +82,19 @@ class Payment(InitDB):
         if not isinstance(self.amount_paid, (int, float)):
             raise ValidationError('Payment amount_paid cannot be letters')
     
-    # TODO: setup payment    
-    def add_payment(self):
+    def get_id(self):
         self._connect_to_db()
         if self.conn:
             cursor = self.conn.cursor(dictionary=True)
-            plan_found = True
-
-            while plan_found:
-                try:
-                    id_string = str(uuid.uuid4())
-                    self.query = '''
-                        SELECT * FROM plan WHERE plan_id = %s
-                    '''
-                    cursor.execute(self.query, (id_string,))
-                    client = cursor.fetchone()
-                    
-                    if not client:
-                        plan_found = False
-                        self.plan_id = id_string
-                except Exception as err:
-                    log_error_to_file('Plan', 'Error', f'Error getting plan')
-                    log_error_to_file('Plan', 'Error', f'{err}')
-                    log_to_file('Plan', 'Error', f'Error getting plan')
-
-            self.query = ""
+            id_string = generate_id('payment', cursor)
+            
+            if not id_string:
+                raise GenerationError('Error generating Payment ID')
+            
+            self.payment_id = id_string
+            
+            log_to_file('Plan', 'Success', f'Payment ID generated')
+            
             cursor.close()
             self.conn.close()
 
@@ -113,27 +103,21 @@ class Payment(InitDB):
         self._connect_to_db()
         if self.conn:
             cursor = self.conn.cursor(dictionary=True)
-
-            self.query = '''
-                INSERT INTO plan VALUES (%s, %s, %s, %s, %s);
-            '''
-
-            value = (self.plan_id, self.plan_name, self.duration, self.type, self.price)
-
-            if update:
-                self.query = '''
-                    UPDATE plan SET plan_name = %s, duration = %s, type = %s, price = %s WHERE plan_id = %s;
-                '''
-                value = (self.plan_name, self.duration, self.type, self.price, self.plan_id)
-
             try:
-                cursor.execute(self.query, value)
-                self.query = ""
-            except Exception as err:
-                    log_to_file('Plan', 'Error', f'Error saving plan to db')
-                    log_error_to_file('Plan', 'Error', f'Error saving plan to db')
-                    log_error_to_file('Plan', 'Error', f'{err}')
-                    Notification.send_notification(err)
+                if update:
+                    values = (self.plan_name, self.duration, self.type, self.price, self.plan_id)
+                    update_in_db('plan', cursor, values)
+                    return
+
+                values = (self.plan_id, self.plan_name, self.duration, self.type, self.price)
+                insert_to_db('plan', cursor, values)
+            except ValueError as err:
+                log_error_to_file('Plan', 'Error', f'Error saving plan')
+                log_error_to_file('Plan', 'Error', f'{err}')
+                log_to_file('Plan', 'Error', f'Error saving plan')
+                Notification.send_notification(err)
+                
+    # TODO: setup payment    
     @classmethod
     def fetch_one(cls, value, by_name=False):
         conn = cls._connect_to_db()

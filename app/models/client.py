@@ -2,11 +2,12 @@ import uuid
 from pathlib import Path
 
 from database.db import InitDB
-from exceptions.exception import ValidationError
+from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
 from utils.import_file import ImportManager
 from utils.export_file import ExportManager
 from helpers.export_helper import export_helper
+from helpers.db_helpers import generate_id, insert_to_db, update_in_db
 from notification.notification import Notification
 
 
@@ -75,30 +76,19 @@ class Client(InitDB):
             if not self.client_id:
                 raise ValidationError('Phone cannot be empty')
             
-    def register(self):
+    def get_id(self):
         self._connect_to_db()
         if self.conn:
             cursor = self.conn.cursor(dictionary=True)
-            user_found = True
-
-            while user_found:
-                try:
-                    id_string = str(uuid.uuid4())
-                    self.query = '''
-                        SELECT * FROM client WHERE client_id = %s
-                    '''
-                    cursor.execute(self.query, (id_string,))
-                    client = cursor.fetchone()
-                    
-                    if not client:
-                        user_found = False
-                        self.client_id = id_string
-                except Exception as err:
-                    log_error_to_file('Client', 'Error', f'Error getting user')
-                    log_error_to_file('Client', 'Error', f'{err}')
-                    log_to_file('Client', 'Error', f'Error getting user')
-
-            self.query = ""
+            id_string = generate_id('payment', cursor)
+            
+            if not id_string:
+                raise GenerationError('Error generating Payment ID')
+            
+            self.payment_id = id_string
+            
+            log_to_file('Client', 'Success', f'Payment ID generated')
+            
             cursor.close()
             self.conn.close()
 
@@ -106,28 +96,20 @@ class Client(InitDB):
         self._connect_to_db()
         if self.conn:
             cursor = self.conn.cursor(dictionary=True)
-
-            self.query = '''
-                INSERT INTO client VALUES (%s, %s, %s, %s, %s, %s);
-            '''
-
-            value = (self.client_id, self.first_name, self.last_name, self.company_name, self.email, self.phone)
-
-            if update:
-                self.query = '''
-                    UPDATE client SET first_name = %s, last_name = %s, company_name = %s, email = %s, phone = %s WHERE client_id = %s;
-                '''
-                value = (self.first_name, self.last_name, self.company_name, self.email, self.phone, self.client_id)
-
             try:
-                cursor.execute(self.query, value)
-                self.query = ""
-            except Exception as err:
-                    log_error_to_file('Client', 'Error', f'Error inserting client')
-                    log_error_to_file('Client', 'Error', f'{err}')
-                    log_to_file('Client', 'Error', f'Error inserting client')
-                    Notification.send_notification(err)
+                if update:
+                    values = (self.first_name, self.last_name, self.company_name, self.email, self.phone, self.client_id)
+                    update_in_db('client', cursor, values)
+                    return
 
+                values = (self.client_id, self.first_name, self.last_name, self.company_name, self.email, self.phone)
+                insert_to_db('client', cursor, values)
+            except ValueError as err:
+                log_error_to_file('Client', 'Error', f'Error saving client')
+                log_error_to_file('Client', 'Error', f'{err}')
+                log_to_file('Client', 'Error', f'Error saving client')
+                Notification.send_notification(err)
+            
     def update(self, **kwargs):
         if kwargs:
             self._get_from_kwargs(kwargs)

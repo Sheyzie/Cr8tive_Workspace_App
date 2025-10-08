@@ -5,9 +5,9 @@ from exceptions.exception import ValidationError
 from configs import db_config
 
 
-class InitDB:
+class DB:
 
-    def __init__(self, using=db_config.DB_NAME):
+    def __init__(self, using=None):
         log_to_file('Database','Init', 'Initializing connection')
         conn = None
         if not using:
@@ -175,3 +175,8 @@ class InitDB:
             print("Database dropped.")
         else:
             print("Database not found.")
+
+
+class InitDB(DB):
+    def __init__(self, using=db_config.DB_NAME):
+        super().__init__(using)
