@@ -1,17 +1,19 @@
 import sqlite3
 from logs.utils import log_to_file, log_error_to_file
 from notification.notification import Notification
+from exceptions.exception import ValidationError
 from configs import db_config
 
 
 class InitDB:
-    _db: str = db_config.DB_NAME if db_config.DB_NAME else 'cr8tive_db.db'
 
-    def __init__(self, using=None):
+    def __init__(self, using=db_config.DB_NAME):
         log_to_file('Database','Init', 'Initializing connection')
         conn = None
-        if using:
-            self._db = using
+        if not using:
+            log_error_to_file('Database', 'Error', 'No Database provided. Ensure DB config is set')
+            log_to_file('Database', 'Error', 'No Database provided. Ensure DB config is set')
+            raise ValidationError('No Database provided. Ensure DB config is set')
         try:
             conn = sqlite3.connect(self._db)
             conn.execute("PRAGMA foreign_keys = ON")
