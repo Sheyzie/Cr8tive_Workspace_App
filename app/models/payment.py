@@ -159,96 +159,24 @@ class Payment(InitDB):
             return None
 
     @classmethod  
-    def filter_plan(cls, value, plan_type=False, created_at=False):
+    def filter_by_date(cls, value):
         conn = cls._connect_to_db()
         try:
             if conn:
                 cursor = conn.cursor(dictionary=True)
-                if plan_type:
-                    query = '''
-                        SELECT * FROM plan WHERE type = %s;
-                    '''
-                    cursor.execute(query, (value,))
-
-                if created_at:
-                    query = '''
-                        SELECT * FROM plan WHERE created_at LIKE %s;
-                    '''
-                    cursor.execute(query, ('%' + value + '%',))
+               
+                query = '''
+                    SELECT * FROM payment WHERE created_at LIKE %s;
+                '''
+                cursor.execute(query, ('%' + value + '%',))
 
                 clients = cursor.fetchall()
 
                 return clients
         except Exception as err:
-            log_to_file('Plan', 'Error', f'Error getting plan from db')
-            log_error_to_file('Plan', 'Error', f'Error getting plan from db')
-            log_error_to_file('Plan', 'Error', f'{err}')
+            log_to_file('Payment', 'Error', f'Error getting payments from db')
+            log_error_to_file('Payments', 'Error', f'Error getting payments from db')
+            log_error_to_file('Payments', 'Error', f'{err}')
             return None
 
-        
-    @classmethod
-    def import_plans(ccls, filepath, file_type, has_header):
-        manager = ImportManager(file_path=filepath, file_type=file_type, has_header=has_header)
-        plans = []
-        failed = []
-
-        if not has_header and file_type.lower() == '.cvs':
-            for plan_data in manager.import_from_csv():
-                data = {
-                    'plan_name': plan_data[0],
-                    'duration': plan_data[1],
-                    'plan_type': plan_data[2],
-                    'price': plan_data[3],
-                }
-
-                try:
-                    plan = Plan(data)
-                    plan.register()
-                    plan.save_to_db()
-                    plans.append(plan)
-                except Exception as err:
-                    failed.append((data, {'Reason': err}))
-
-        elif has_header and file_type.lower() == '.csv':
-            for plan_data in manager.import_from_csv():
-                
-                try:
-                    plan = Plan(data)
-                    plan.register()
-                    plan.save_to_db()
-                    plans.append(plan)
-                except Exception as err:
-                    failed.append((plan_data, {'Reason': err}))
-
-        elif file_type.lower() in {'.xls', '.xlsx'}:
-            for plan_data in manager.import_from_excel():
-                data = {
-                    'plan_name': plan_data[0],
-                    'duration': plan_data[1],
-                    'plan_type': plan_data[2],
-                    'price': plan_data[3],
-                }
-                try:
-                    plan = Plan(data)
-                    plan.register()
-                    plan.save_to_db()
-                    plans.append(plan)
-                except Exception as err:
-                    failed.append((plan_data, {'Reason': err}))
-
-        else:
-            for plan_data in manager.import_from_pdf():
-                try:
-                    plan = Plan(plan_data)
-                    plan.register()
-                    plan.save_to_db()
-                    plans.append(plan)
-                except Exception as err:
-                    failed.append((plan_data, {'Reason': err}))
-
-
-    @classmethod
-    def export_clients(cls, file_type, path):
-        export_helper(cls, file_type, path, 'clients_export')
-        print('Export complete')
-
+    
