@@ -97,3 +97,70 @@ def update_in_db(model: str, cursor, values) -> None:
         log_error_to_file(model.capitalize(), 'Error', f'{err}')
         log_to_file(model.capitalize(), 'Error', f'Error getting {model.lower()}')
         Notification.send_notification(err)
+
+def fetch_one_entry(model: str, cursor, value, by_name=False, by_phone=False, by_email=False):
+    if not model:
+        raise ValueError('No Model provide for update')
+    if not hasattr(cursor, 'execute'):
+        raise ValueError('Invalid cursor object')
+    if not value:
+        raise ValueError('Value is required')
+    
+    query = f'''
+        SELECT * FROM {model.lower()} WHERE {model.lower()}_id = %s;
+    '''
+
+    if by_name:
+        query = f'''
+            SELECT * FROM {model.lower()}  WHERE {model.lower()}_name = %s;
+        '''
+    elif by_phone and model.lower() == 'client':
+        query = '''
+            SELECT * FROM client WHERE phone = %s;
+        '''
+
+    elif by_email and model.lower() == 'client':
+        query = '''
+            SELECT * FROM client WHERE email = %s;
+        '''
+
+    try:
+        cursor.execute(query, (value,))
+
+        data = cursor.fetchone()
+
+        if data:
+            return data
+        else:
+            return None
+    except Exception as err:
+        log_to_file(model.capitalize(), 'Error', f'Error getting {model.lower()} from db')
+        log_error_to_file(model.capitalize(), 'Error', f'Error getting {model.lower()} from db')
+        log_error_to_file(model.capitalize(), 'Error', f'{err}')
+        return None
+    
+def fetch_all_entry(model: str, cursor, col_names=False):
+    if not model:
+        raise ValueError('No Model provide for update')
+    if not hasattr(cursor, 'execute'):
+        raise ValueError('Invalid cursor object')
+    
+    query = f'''
+        SELECT * FROM {model.lower()};
+    '''
+
+    try:
+        cursor.execute(query)
+
+        clients = cursor.fetchall()
+
+        if col_names:
+            # Get column names
+            column_names = [description[0] for description in cursor.description]
+            clients = (clients, column_names)
+        return clients if clients else []
+    except Exception as err:
+        log_to_file(model.capitalize(), 'Error', f'Error getting {model.lower()} from db')
+        log_error_to_file(model.capitalize(), 'Error', f'Error getting {model.lower()} from db')
+        log_error_to_file(model.capitalize(), 'Error', f'{err}')
+        return None

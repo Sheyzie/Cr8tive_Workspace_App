@@ -7,8 +7,14 @@ from logs.utils import log_error_to_file, log_to_file
 from utils.import_file import ImportManager
 from utils.export_file import ExportManager
 from helpers.export_helper import export_helper
-from helpers.db_helpers import generate_id, insert_to_db, update_in_db
 from notification.notification import Notification
+from helpers.db_helpers import (
+    generate_id, 
+    insert_to_db, 
+    update_in_db, 
+    fetch_one_entry, 
+    fetch_all_entry
+)
 
 
 
@@ -136,60 +142,36 @@ class Client(InitDB):
     @classmethod
     def fetch_one(cls, value, by_phone=False, by_email=False):
         conn = cls._connect_to_db()
-        if conn:
-            cursor = conn.cursor(dictionary=True)
-            query = '''
-                SELECT * FROM client WHERE client_id = %s;
-            '''
+        cursor = conn.cursor(dictionary=True)
+        
+        
+        try:
+            client_data = fetch_one_entry('client', cursor, value, by_phone=by_phone, by_email=by_email)
 
-            if by_phone:
-                query = '''
-                    SELECT * FROM client WHERE phone = %s;
-                '''
-
-            if by_email:
-                query = '''
-                    SELECT * FROM client WHERE email = %s;
-                '''
-
-            try:
-                cursor.execute(query, (value,))
-
-                data = cursor.fetchone()
-
-                if data:
-                    client = Client(**data)
-                    return client
-            except Exception as err:
-                log_error_to_file('Client', 'Error', f'Error getting client')
-                log_error_to_file('Client', 'Error', f'{err}')
-                log_to_file('Client', 'Error', f'Error getting client')
-                Notification.send_notification(err)
+            if client_data:
+                client = Client(**client_data)
+                return client
+            else:
+                return None
+        except Exception as err:
+            log_error_to_file('Client', 'Error', f'Error getting client')
+            log_error_to_file('Client', 'Error', f'{err}')
+            log_to_file('Client', 'Error', f'Error getting client')
+            Notification.send_notification(err)
+            return None
 
     @classmethod
     def fetch_all(cls, col_names=False):
         conn = cls._connect_to_db()
-        if conn:
-            cursor = conn.cursor(dictionary=True)
-            query = '''
-                SELECT * FROM client;
-            '''
-
-            try:
-                cursor.execute(query)
-
-                clients = cursor.fetchall()
-
-                if col_names:
-                    # Get column names
-                    column_names = [description[0] for description in cursor.description]
-                    clients = (clients, column_names)
-                return clients if clients else []
-            except Exception as err:
-                log_error_to_file('Client', 'Error', f'Error getting client')
-                log_error_to_file('Client', 'Error', f'{err}')
-                log_to_file('Client', 'Error', f'Error getting client')
-                Notification.send_notification(err)
+        cursor = conn.cursor(dictionary=True)
+        try:
+            clients = fetch_all_entry('client', cursor, col_names=col_names)
+            return clients
+        except Exception as err:
+            log_error_to_file('Client', 'Error', f'Error getting client')
+            log_error_to_file('Client', 'Error', f'{err}')
+            log_to_file('Client', 'Error', f'Error getting client')
+            Notification.send_notification(err)
 
     @classmethod  
     def filter_client(cls, value, name=False, created_at=False):

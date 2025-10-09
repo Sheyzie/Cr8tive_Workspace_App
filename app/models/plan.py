@@ -7,9 +7,15 @@ from logs.utils import log_error_to_file, log_to_file
 from utils.import_file import ImportManager
 from utils.export_file import ExportManager
 from helpers.export_helper import export_helper
-from helpers.db_helpers import insert_to_db, update_in_db
 from helpers.db_helpers import generate_id
 from notification.notification import Notification
+from helpers.db_helpers import (
+    generate_id, 
+    insert_to_db, 
+    update_in_db, 
+    fetch_one_entry, 
+    fetch_all_entry
+)
 
 
 
@@ -110,53 +116,37 @@ class Plan(InitDB):
     @classmethod
     def fetch_one(cls, value, by_name=False):
         conn = cls._connect_to_db()
-        if conn:
-            cursor = conn.cursor(dictionary=True)
-            query = '''
-                SELECT * FROM plan WHERE plan_id = %s;
-            '''
+        cursor = conn.cursor(dictionary=True)
+        
+        
+        try:
+            plan_data = fetch_one_entry('plan', cursor, value, by_name)
 
-            if by_name:
-                query = '''
-                    SELECT * FROM plan WHERE plan_name = %s;
-                '''
-            try:
-                cursor.execute(query, (value,))
-
-                data = cursor.fetchone()
-
-                if data:
-                    plan = Plan(**data)
-                    return plan
-                else:
-                    return None
-            except Exception as err:
-                log_to_file('Plan', 'Error', f'Error getting plan from db')
-                log_error_to_file('Plan', 'Error', f'Error getting plan from db')
-                log_error_to_file('Plan', 'Error', f'{err}')
-                Notification.send_notification(err)
+            if plan_data:
+                plan = Plan(**plan_data)
+                return plan
+            else:
                 return None
+        except Exception as err:
+            log_to_file('Plan', 'Error', f'Error getting plan from db')
+            log_error_to_file('Plan', 'Error', f'Error getting plan from db')
+            log_error_to_file('Plan', 'Error', f'{err}')
+            Notification.send_notification(err)
+            return None
 
     @classmethod
-    def fetch_all(cls):
+    def fetch_all(cls, col_names):
         conn = cls._connect_to_db()
-        if conn:
-            cursor = conn.cursor(dictionary=True)
-            query = '''
-                SELECT * FROM plan;
-            '''
-            try:
-                cursor.execute(query)
-
-                plans = cursor.fetchall()
-
-                return plans
-            except Exception as err:
-                log_to_file('Plan', 'Error', f'Error getting plan from db')
-                log_error_to_file('Plan', 'Error', f'Error getting plan from db')
-                log_error_to_file('Plan', 'Error', f'{err}')
-                Notification.send_notification(err)
-                return None
+        cursor = conn.cursor(dictionary=True)
+        try:
+            plans = fetch_all_entry('plan', cursor, col_names=col_names)
+            return plans
+        except Exception as err:
+            log_to_file('Plan', 'Error', f'Error getting plan from db')
+            log_error_to_file('Plan', 'Error', f'Error getting plan from db')
+            log_error_to_file('Plan', 'Error', f'{err}')
+            Notification.send_notification(err)
+            return None
 
     @classmethod  
     def filter_plan(cls, value, plan_type=False, created_at=False):

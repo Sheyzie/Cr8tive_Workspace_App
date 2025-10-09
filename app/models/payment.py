@@ -7,9 +7,15 @@ from logs.utils import log_error_to_file, log_to_file
 from utils.import_file import ImportManager
 from utils.export_file import ExportManager
 from helpers.export_helper import export_helper
-from helpers.db_helpers import insert_to_db, update_in_db
 from helpers.db_helpers import generate_id
 from notification.notification import Notification
+from helpers.db_helpers import (
+    generate_id, 
+    insert_to_db, 
+    update_in_db, 
+    fetch_one_entry, 
+    fetch_all_entry
+)
 
 
 class Payment(InitDB):
@@ -116,56 +122,41 @@ class Payment(InitDB):
                 log_error_to_file('Plan', 'Error', f'{err}')
                 log_to_file('Plan', 'Error', f'Error saving plan')
                 Notification.send_notification(err)
-                
+
     # TODO: setup payment    
     @classmethod
     def fetch_one(cls, value, by_name=False):
         conn = cls._connect_to_db()
-        if conn:
-            cursor = conn.cursor(dictionary=True)
-            query = '''
-                SELECT * FROM plan WHERE plan_id = %s;
-            '''
+        cursor = conn.cursor(dictionary=True)
+        
+        
+        try:
+            payment_data = fetch_one_entry('payment', cursor, value, by_name)
 
-            if by_name:
-                query = '''
-                    SELECT * FROM plan WHERE plan_name = %s;
-                '''
-            try:
-                cursor.execute(query, (value,))
-
-                data = cursor.fetchone()
-
-                if data:
-                    plan = Plan(**data)
-                    return plan
-                else:
-                    return None
-            except Exception as err:
-                log_to_file('Plan', 'Error', f'Error getting plan from db')
-                log_error_to_file('Plan', 'Error', f'Error getting plan from db')
-                log_error_to_file('Plan', 'Error', f'{err}')
+            if payment_data:
+                payment = Payment(**payment_data)
+                return payment
+            else:
                 return None
+        except Exception as err:
+            log_to_file('Payment', 'Error', f'Error getting payment from db')
+            log_error_to_file('Payment', 'Error', f'Error getting payment from db')
+            log_error_to_file('Payment', 'Error', f'{err}')
+            return None
 
     @classmethod
     def fetch_all(cls):
         conn = cls._connect_to_db()
-        if conn:
-            cursor = conn.cursor(dictionary=True)
-            query = '''
-                SELECT * FROM plan;
-            '''
-            try:
-                cursor.execute(query)
-
-                plans = cursor.fetchall()
-
-                return plans
-            except Exception as err:
-                log_to_file('Plan', 'Error', f'Error getting plan from db')
-                log_error_to_file('Plan', 'Error', f'Error getting plan from db')
-                log_error_to_file('Plan', 'Error', f'{err}')
-                return None
+        cursor = conn.cursor(dictionary=True)
+        try:
+            clients = fetch_all_entry('payment', cursor)
+            return clients
+        except Exception as err:
+            log_to_file('Payment', 'Error', f'Error getting payment from db')
+            log_error_to_file('Payment', 'Error', f'Error getting payment from db')
+            log_error_to_file('Payment', 'Error', f'{err}')
+            Notification.send_notification(err)
+            return None
 
     @classmethod  
     def filter_plan(cls, value, plan_type=False, created_at=False):
