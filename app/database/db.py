@@ -125,8 +125,6 @@ class DB:
                         subscription_id TEXT PRIMARY KEY,
                         plan_id TEXT NOT NULL,
                         client_id TEXT NOT NULL,
-                        total_price INTEGER NOT NULL,
-                        amount_paid INTEGER NOT NULL,
                         payment_id TEXT NOT NULL,
                         expiration TEXT NOT NULL,
                         status TEXT NOT NULL,
@@ -150,7 +148,7 @@ class DB:
         try:
             cursor.execute('''
                     CREATE TABLE IF NOT EXISTS visit (
-                        subscription_id TEXT PRIMARY KEY,
+                        subscription_id TEXT NOT NULL,
                         timestamp TEXT NOT NULL,
                         FOREIGN KEY (subscription_id) REFERENCES subscription(subscription_id) ON DELETE CASCADE ON UPDATE NO ACTION
                     );

@@ -1,4 +1,5 @@
 import uuid
+import time
 from pathlib import Path
 
 from database.db import InitDB
@@ -102,13 +103,14 @@ class Client(InitDB):
         self._connect_to_db()
         if self.conn:
             cursor = self.conn.cursor(dictionary=True)
+            created_at = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
             try:
                 if update:
                     values = (self.first_name, self.last_name, self.company_name, self.email, self.phone, self.client_id)
                     update_in_db('client', cursor, values)
                     return
 
-                values = (self.client_id, self.first_name, self.last_name, self.company_name, self.email, self.phone)
+                values = (self.client_id, self.first_name, self.last_name, self.company_name, self.email, self.phone, created_at)
                 insert_to_db('client', cursor, values)
             except ValueError as err:
                 log_error_to_file('Client', 'Error', f'Error saving client')

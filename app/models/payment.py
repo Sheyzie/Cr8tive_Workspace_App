@@ -1,12 +1,10 @@
 import uuid
+import time
 from pathlib import Path
 
 from database.db import InitDB
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
-from utils.import_file import ImportManager
-from utils.export_file import ExportManager
-from helpers.export_helper import export_helper
 from helpers.db_helpers import generate_id
 from notification.notification import Notification
 from helpers.db_helpers import (
@@ -99,7 +97,7 @@ class Payment(InitDB):
             
             self.payment_id = id_string
             
-            log_to_file('Plan', 'Success', f'Payment ID generated')
+            log_to_file('Payment', 'Success', f'Payment ID generated')
             
             cursor.close()
             self.conn.close()
@@ -109,26 +107,25 @@ class Payment(InitDB):
         self._connect_to_db()
         if self.conn:
             cursor = self.conn.cursor(dictionary=True)
+            created_at = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
             try:
                 if update:
-                    values = (self.plan_name, self.duration, self.type, self.price, self.plan_id)
-                    update_in_db('plan', cursor, values)
+                    values = (self.discount, self.tax, self.total_price, self.amount_paid, self.payment_id)
+                    update_in_db('payment', cursor, values)
                     return
 
-                values = (self.plan_id, self.plan_name, self.duration, self.type, self.price)
-                insert_to_db('plan', cursor, values)
+                values = (self.payment_id, self.discount, self.tax, self.total_price, self.amount_paid, created_at)
+                insert_to_db('payment', cursor, values)
             except ValueError as err:
-                log_error_to_file('Plan', 'Error', f'Error saving plan')
-                log_error_to_file('Plan', 'Error', f'{err}')
-                log_to_file('Plan', 'Error', f'Error saving plan')
+                log_error_to_file('Payment', 'Error', f'Error saving payment')
+                log_error_to_file('Payment', 'Error', f'{err}')
+                log_to_file('Payment', 'Error', f'Error saving payment')
                 Notification.send_notification(err)
-
-    # TODO: setup payment    
+   
     @classmethod
     def fetch_one(cls, value, by_name=False):
         conn = cls._connect_to_db()
         cursor = conn.cursor(dictionary=True)
-        
         
         try:
             payment_data = fetch_one_entry('payment', cursor, value, by_name)
@@ -149,8 +146,8 @@ class Payment(InitDB):
         conn = cls._connect_to_db()
         cursor = conn.cursor(dictionary=True)
         try:
-            clients = fetch_all_entry('payment', cursor)
-            return clients
+            payments = fetch_all_entry('payment', cursor)
+            return payments
         except Exception as err:
             log_to_file('Payment', 'Error', f'Error getting payment from db')
             log_error_to_file('Payment', 'Error', f'Error getting payment from db')

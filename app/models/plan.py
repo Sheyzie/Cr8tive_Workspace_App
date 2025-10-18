@@ -1,4 +1,5 @@
 import uuid
+import time
 from pathlib import Path
 
 from database.db import InitDB
@@ -78,6 +79,10 @@ class Plan(InitDB):
         if self.price < 0:
             raise ValidationError('Price cannot be negative')
         
+        if check_id:
+            if not self.plan_id:
+                raise ValidationError('Plan ID is required')
+        
     def get_id(self):
         self._connect_to_db()
         if self.conn:
@@ -85,11 +90,11 @@ class Plan(InitDB):
             id_string = generate_id('payment', cursor)
             
             if not id_string:
-                raise GenerationError('Error generating Payment ID')
+                raise GenerationError('Error generating Plan ID')
             
-            self.payment_id = id_string
+            self.plan_id = id_string
             
-            log_to_file('Client', 'Success', f'Payment ID generated')
+            log_to_file('Plan', 'Success', f'Plan ID generated')
             
             cursor.close()
             self.conn.close()
@@ -99,13 +104,14 @@ class Plan(InitDB):
         self._connect_to_db()
         if self.conn:
             cursor = self.conn.cursor(dictionary=True)
+            created_at = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
             try:
                 if update:
                     values = (self.plan_name, self.duration, self.plan_type, self.price, self.plan_id)
                     update_in_db('plan', cursor, values)
                     return
 
-                values = (self.plan_id, self.plan_name, self.duration, self.plan_type, self.price)
+                values = (self.plan_id, self.plan_name, self.duration, self.plan_type, self.price, created_at)
                 insert_to_db('plan', cursor, values)
             except ValueError as err:
                 log_error_to_file('Plan', 'Error', f'Error saving plan')

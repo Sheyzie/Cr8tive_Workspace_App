@@ -42,15 +42,19 @@ def insert_to_db(model: str, cursor, values) -> None:
 
     if model.lower() == 'client':
         query = '''
-            INSERT INTO client VALUES (%s, %s, %s, %s, %s, %s);
+            INSERT INTO client VALUES (%s, %s, %s, %s, %s, %s, %s);
         '''
     elif model.lower() == 'plan':
         query = '''
-            INSERT INTO plan VALUES (%s, %s, %s, %s, %s);
+            INSERT INTO plan VALUES (%s, %s, %s, %s, %s, %s);
         '''
     elif model.lower() == 'payment':
         query = '''
-            INSERT INTO plan VALUES (%s, %s, %s, %s, %s);
+            INSERT INTO payment VALUES (%s, %s, %s, %s, %s, %s);
+        '''
+    elif model.lower() == 'subscription':
+        query = '''
+            INSERT INTO subscription VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
         '''
     else:
         raise ValueError('Invalid model argument')
@@ -80,11 +84,15 @@ def update_in_db(model: str, cursor, values) -> None:
         '''
     elif model.lower() == 'plan':
         query = '''
-            UPDATE plan SET plan_name = %s, duration = %s, type = %s, price = %s WHERE plan_id = %s;
+            UPDATE plan SET plan_name = %s, duration = %s, plan_type = %s, price = %s WHERE plan_id = %s;
         '''
     elif model.lower() == 'payment':
         query = '''
-            UPDATE plan SET plan_name = %s, duration = %s, type = %s, price = %s WHERE plan_id = %s;
+            UPDATE payment SET discount = %s, tax = %s, total_price = %s, amount_paid = %s WHERE payment_id = %s;
+        '''
+    elif model.lower() == 'subscription':
+        query = '''
+            UPDATE subscription SET plan_id = %s, client_id = %s, expiration = %s, status = %s, updated_at = %s WHERE subscription_id = %s;
         '''
     else:
         raise ValueError('Invalid model argument')
