@@ -56,6 +56,14 @@ def insert_to_db(model: str, cursor, values) -> None:
         query = '''
             INSERT INTO subscription VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
         '''
+    elif model.lower() == 'visit':
+        query = '''
+            INSERT INTO visit VALUES (%s, %s, %s);
+        '''
+    elif model.lower() == 'assigned_client':
+        query = '''
+            INSERT INTO assigned_client VALUES (%s, %s, %s);
+        '''
     else:
         raise ValueError('Invalid model argument')
     

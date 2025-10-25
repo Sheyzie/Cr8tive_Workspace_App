@@ -19,12 +19,12 @@ from helpers.db_helpers import (
 )
 
 
-class Visit(InitDB):
+class AssignedClient(InitDB):
     def __init__(self, **kwargs):
         super().__init__()
         self.subscription_id = None
         self.client_id = None
-        self.timestamp = None
+        self. created_at = None
         if kwargs:
             self._get_from_kwargs(kwargs)
         try:
@@ -43,75 +43,70 @@ class Visit(InitDB):
             self.client_id = client_id
 
 
-        timestamp = kwargs.get('timestamp')
-        if timestamp:
-            self.timestamp = timestamp
+        created_at = kwargs.get('created_at')
+        if created_at:
+            self.created_at = created_at
 
     def _validate(self, check_id=False):
         if not self.subscription_id:
             raise ValidationError('Subscription ID is required')
         if not self.client_id:
             raise ValidationError('Client ID is required')
-        if not self.timestamp:
-            raise ValidationError('Timestamp is required')
+        if not self.created_at:
+            raise ValidationError('Created at field  is required')
         
     def save_to_db(self):
         self._connect_to_db()
         if self.conn:
             cursor = self.conn.cursor(dictionary=True)
-            timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+            created_at = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
             try:
-                values = (self.subscription_id, self.client_id, timestamp)
-                insert_to_db('visit', cursor, values)
+                values = (self.subscription_id, self.client_id, created_at)
+                insert_to_db('assigned_client', cursor, values)
             except ValueError as err:
-                log_error_to_file('Visit', 'Error', f'Error saving visit')
-                log_error_to_file('Visit', 'Error', f'{err}')
-                log_to_file('Visit', 'Error', f'Error saving visit')
+                log_error_to_file('Assigned_client', 'Error', f'Error saving assigned_client')
+                log_error_to_file('Assigned_client', 'Error', f'{err}')
+                log_to_file('Assigned_client', 'Error', f'Error saving assigned_client')
                 Notification.send_notification(err)
             
     @classmethod
-    def get_visits(cls, sub_id, get_count=False):
+    def get_user(cls, sub_id, client_id):
         conn = cls._connect_to_db()
         cursor = conn.cursor(dictionary=True)
     
         try:
             query = '''
-                SELECT timestamp FROM visit WHERE subscription_id = %s
+                SELECT client_id FROM assigned_client WHERE subscription_id = %s AND client_id = %s
             '''
-            if get_count:
-                query = '''
-                    SELECT Count(subscription_id) FROM visit WHERE subscription_id = %s
-                '''
 
-            visits = cursor.execute(query, (sub_id,))
+            assigned_client = cursor.execute(query, (sub_id,client_id))
 
-            return visits
+            return assigned_client
         except Exception as err:
-            log_to_file('Visit', 'Error', f'Error getting visit from db')
-            log_error_to_file('Visit', 'Error', f'Error getting visit from db')
-            log_error_to_file('Visit', 'Error', f'{err}')
+            log_to_file('Assigned_client', 'Error', f'Error getting assigned_client from db')
+            log_error_to_file('Assigned_client', 'Error', f'Error getting assigned_client from db')
+            log_error_to_file('Assigned_client', 'Error', f'{err}')
             Notification.send_notification(err)
             return None
 
     @classmethod  
-    def filter_sub(cls, value):
+    def filter_sub(cls, sub_id):
         conn = cls._connect_to_db()
+        cursor = conn.cursor(dictionary=True)
+    
         try:
-            if conn:
-                cursor = conn.cursor(dictionary=True)
+            query = '''
+                SELECT client_id FROM assigned_client WHERE subscription_id = %s
+            '''
 
-                query = '''
-                    SELECT * FROM visit WHERE timestamp LIKE %s;
-                '''
-                cursor.execute(query, ('%' + value + '%',))
+            assigned_clients = cursor.execute(query, (sub_id,))
 
-                clients = cursor.fetchall()
-
-                return clients
+            return assigned_clients
         except Exception as err:
-            log_to_file('Visit', 'Error', f'Error getting visit from db')
-            log_error_to_file('Visit', 'Error', f'Error getting visit from db')
-            log_error_to_file('Visit', 'Error', f'{err}')
+            log_to_file('Assigned_client', 'Error', f'Error getting assigned_client from db')
+            log_error_to_file('Assigned_client', 'Error', f'Error getting assigned_client from db')
+            log_error_to_file('Assigned_client', 'Error', f'{err}')
             Notification.send_notification(err)
+            return None
 
 

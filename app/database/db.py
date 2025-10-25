@@ -49,6 +49,7 @@ class DB:
             self._create_payment_table()
             self._create_subscription_table()
             self._create_visit_table()
+            self._create_assigned_client_table()
             self.conn.close()
 
     def _create_client_table(self):
@@ -150,7 +151,9 @@ class DB:
                     CREATE TABLE IF NOT EXISTS visit (
                         subscription_id TEXT NOT NULL,
                         timestamp TEXT NOT NULL,
+                        client_id TEXT NOT NULL,
                         FOREIGN KEY (subscription_id) REFERENCES subscription(subscription_id) ON DELETE CASCADE ON UPDATE NO ACTION
+                        FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE CASCADE ON UPDATE NO ACTION
                     );
             ''')
             self.conn.commit()
@@ -158,6 +161,26 @@ class DB:
             log_error_to_file('Database', 'Error', f'Error creating visit table')
             log_error_to_file('Database', 'Error', f'{err}')
             log_to_file('Database', 'Error', f'Error creating visit table')
+            Notification.send_notification(err)
+
+    def _create_assigned_client_table(self):
+        log_to_file('Database', 'Init', 'Initializing visit table')
+        cursor = self.conn.cursor()
+        try:
+            cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS assigned_client (
+                        subscription_id TEXT NOT NULL,
+                        client_id TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        FOREIGN KEY (subscription_id) REFERENCES subscription(subscription_id) ON DELETE CASCADE ON UPDATE NO ACTION
+                        FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE CASCADE ON UPDATE NO ACTION
+                    );
+            ''')
+            self.conn.commit()
+        except Exception as err:
+            log_error_to_file('Database', 'Error', f'Error creating assigned_client table')
+            log_error_to_file('Database', 'Error', f'{err}')
+            log_to_file('Database', 'Error', f'Error creating assigned_client table')
             Notification.send_notification(err)
 
     def save_to_db(self):
