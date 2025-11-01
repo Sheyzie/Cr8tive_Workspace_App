@@ -17,16 +17,17 @@ from helpers.db_helpers import (
 
 
 class Plan(InitDB):
-    def __init__(self, using=None, **kwargs):
+    def __init__(self, using: str=None, **kwargs):
         super().__init__(using=using)
-        self.plan_id = None
-        self.plan_name = None
-        self.duration = None
-        self.plan_type = None
-        self.price = None
-        self.created_at = None
-        data = kwargs.get('kwargs')
+        self.plan_id: str = None
+        self.plan_name: str = None
+        self.duration: int = 0
+        self.plan_type: str  = None
+        self.price: int = 0
+        self.created_at: str = None
+    
         if kwargs:
+            data = kwargs.get('kwargs')
             self._get_from_kwargs(kwargs=data)
         try:
             self._validate()
@@ -55,7 +56,7 @@ class Plan(InitDB):
             self.plan_type = plan_type.strip()
 
         price = data.get('price')
-        if price:
+        if price and isinstance(price, (int, float)) and price >= 0:
             self.price = price
 
         created_at = data.get('created_at')
@@ -107,13 +108,15 @@ class Plan(InitDB):
             created_at = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
             try:
                 if update:
-                    values = (self.plan_name, self.duration, self.plan_type, self.price, self.plan_id)
+                    # convert price to kobo
+                    values = (self.plan_name, self.duration, self.plan_type, (self.price * 100), self.plan_id)
                     update_in_db('plan', cursor, values)
                     self.conn.commit()
                     self.conn.close()
                     return
 
-                values = (self.plan_id, self.plan_name, self.duration, self.plan_type, self.price, created_at)
+                # convert price to kobo
+                values = (self.plan_id, self.plan_name, self.duration, self.plan_type, (self.price * 100), created_at)
                 insert_to_db('plan', cursor, values)
                 self.conn.commit()
                 self.conn.close()
@@ -165,7 +168,7 @@ class Plan(InitDB):
                 'plan_name': plan_data[1],
                 'duration': plan_data[2],
                 'plan_type': plan_data[3],
-                'price': plan_data[4],
+                'price': float(plan_data[4]) / 100, # convert back from kobo
                 'created_at': plan_data[5],
             }
 
@@ -182,7 +185,7 @@ class Plan(InitDB):
             return None
 
     @classmethod
-    def fetch_all(cls, col_names=False, using=None):
+    def fetch_all(cls, col_names=False, using: str=None):
         if using:
             # give class the datebase property to enable db connection
             cls._db = using + '.db'
@@ -191,26 +194,27 @@ class Plan(InitDB):
         plans = []
         try:
             plans_data = fetch_all_entry('plan', cursor, col_names=col_names)
-            
+
             if not len(plans_data) > 0:
                 return []
             
             # only exports will set col_name to true so no need to create client obj
             if col_names:
                 return plans_data
+            
             for plan_data in plans_data:
                 plan_data_obj = {
                     'plan_id': plan_data[0],
                     'plan_name': plan_data[1],
                     'duration': plan_data[2],
                     'plan_type': plan_data[3],
-                    'price': plan_data[4],
+                    'price': float(plan_data[4]) / 100, # convert back from kobo
                     'created_at': plan_data[5],
                 }
 
                 plan = Plan(kwargs=plan_data_obj, using=using)
                 plans.append(plan)
-
+            
             return plans
         except Exception as err:
             log_to_file('Plan', 'Error', f'Error getting plan from db')
@@ -220,7 +224,7 @@ class Plan(InitDB):
             return None
 
     @classmethod  
-    def filter_plan(cls, value, plan_type=False, created_at=False, using=None):
+    def filter_plan(cls, value, plan_type=False, by_date=False, using=None):
         if using:
             # give class the datebase property to enable db connection
             cls._db = using + '.db'
@@ -235,7 +239,7 @@ class Plan(InitDB):
                     '''
                     cursor.execute(query, (value,))
 
-                if created_at:
+                if by_date:
                     query = '''
                         SELECT * FROM plan WHERE created_at LIKE ?;
                     '''
@@ -252,7 +256,7 @@ class Plan(InitDB):
                         'plan_name': plan_data[1],
                         'duration': plan_data[2],
                         'plan_type': plan_data[3],
-                        'price': plan_data[4],
+                        'price': float(plan_data[4]) / 100, # convert back from kobo
                         'created_at': plan_data[5],
                     }
 
@@ -266,8 +270,7 @@ class Plan(InitDB):
             log_error_to_file('Plan', 'Error', f'{err}')
             Notification.send_notification(err)
             return None
-
-        
+     
     @classmethod
     def import_plans(cls, filepath, file_type, has_header, using=None):
         manager = ImportManager(file_path=filepath, file_type=file_type, has_header=has_header)

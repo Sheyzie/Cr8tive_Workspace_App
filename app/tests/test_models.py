@@ -7,12 +7,14 @@ from models.payment import Payment
 from models.subscription import Subscription
 from models.visit import Visit
 from models.assigned_client import AssignedClient
+from helpers.db_helpers import delete_db
 import os
 # import sqlite3
 
 from .test_data import (
     clients as clients_data,
-    plans as plans_data
+    plans as plans_data,
+    payments as payments_data
 )
 
 
@@ -22,6 +24,8 @@ DB_NAME = db_config.TEST_DB_NAME
 
 if not DB_NAME:
     raise Exception('Database name not provided. Please check env.')
+
+delete_db(app_config.BASE_DIR, DB_NAME)
 
 # Monkey-patch the default before creating instances
 # Client.__init__ = lambda self, using=None: super(Client, self).__init__(using=DB_NAME)
@@ -34,6 +38,12 @@ def get_client():
 def get_plan():
     for plan in plans_data:
         yield plan
+
+def get_payments():
+    for payment in payments_data:
+        yield payment
+
+    
 
 class TestClient:
 
@@ -76,7 +86,7 @@ class TestClient:
         filter_by_name = Client.filter_client('Client', name=True, using=DB_NAME)
         assert len(filter_by_name) > 0
 
-        filter_by_date = Client.filter_client('2025', created_at=True, using=DB_NAME)
+        filter_by_date = Client.filter_client('2025', by_date=True, using=DB_NAME)
         assert len(filter_by_date) > 0
 
         print('Test 2: Passed ✅')
@@ -217,7 +227,7 @@ class TestPlan:
 
         cls._test_create_plan(cls)
         cls._test_fetch_plans(cls)
-        cls._test_update_client(cls)
+        cls._test_update_plan(cls)
         cls._test_delete_plan(cls)
         cls._test_export_csv(cls)
         cls._test_export_xlsx(cls)
@@ -252,12 +262,12 @@ class TestPlan:
         filter_by_name = Plan.filter_plan('daily', plan_type=True, using=DB_NAME)
         assert len(filter_by_name) > 0
 
-        filter_by_date = Plan.filter_plan('2025', created_at=True, using=DB_NAME)
+        filter_by_date = Plan.filter_plan('2025', by_date=True, using=DB_NAME)
         assert len(filter_by_date) > 0
 
         print('Test 2: Passed ✅')
 
-    def _test_update_client(self):
+    def _test_update_plan(self):
         print('\nTest 3: Updating plans in DB')
 
         fetched_plans = Plan.fetch_all(using=DB_NAME)
@@ -384,4 +394,83 @@ class TestPlan:
 
         print('Test 11: Passed ✅')
  
+
+class TestPayment:
+
+    @classmethod
+    def start_test(cls):
+        print(f'Initializing Payment Model with {Payment(using=DB_NAME)._db}...')
+
+        cls._test_create_payments(cls)
+        cls._test_fetch_payments(cls)
+        cls._test_update_payment(cls)
+        cls._test_delete_payment(cls)
+
+    def _test_create_payments(self):
+        print('\nTest 1: Creating payments from test data')
+
+        for payment in get_payments():
+            new_payment = Payment(kwargs=payment, using=DB_NAME)
+            new_payment.get_id()
+            new_payment.save_to_db()
+            # time.sleep(5)
+
+        print('Test 1: Passed ✅')
+
+    def _test_fetch_payments(self):
+        print('\nTest 2: Fetching payments from DB')
+
+        fetched_payments = Payment.fetch_all(using=DB_NAME)
+        assert len(fetched_payments) > 0
+
+        one_payment = Payment.fetch_one(fetched_payments[1].payment_id, using=DB_NAME)
+        assert one_payment.tax == 7.5
+        assert one_payment.total_price == 6000.0
+        assert one_payment.amount_paid == 6000.0
+
+        filter_by_amount = Payment.filter_payments(6000, by_amount=True, using=DB_NAME)
+        assert len(filter_by_amount) > 0
+
+        filter_by_date = Payment.filter_payments('2025', by_date=True, using=DB_NAME)
+        assert len(filter_by_date) > 0
+
+        print('Test 2: Passed ✅')
+
+    def _test_update_payment(self):
+        print('\nTest 3: Updating payment in DB')
+
+        fetched_payment = Payment.fetch_all(using=DB_NAME)
+
+        assert len(fetched_payment) > 0
+
+        one_payment = fetched_payment[0]
+        
+        one_payment.discount = 10
+
+        one_payment.update()
+    
+        one_payment_refetched = Payment.fetch_one(one_payment.payment_id, using=DB_NAME)
+
+        assert one_payment_refetched.discount == one_payment.discount
+
+        print('Test 3: Passed ✅')
+
+    def _test_delete_payment(self):
+        print('\nTest 4: Delete payment in DB')
+
+        fetched_payment = Payment.fetch_all(using=DB_NAME)
+
+        assert len(fetched_payment) > 0
+
+        one_payment = fetched_payment[0]
+
+        one_payment.delete()
+    
+        one_payment_refetched = Payment.fetch_one(one_payment.payment_id, using=DB_NAME)
+
+        assert one_payment_refetched is None
+
+        print('Test 4: Passed ✅')
+
+   
 

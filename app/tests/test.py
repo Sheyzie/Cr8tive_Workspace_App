@@ -5,8 +5,11 @@
 # sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from configs import db_config
-from .test_models import TestClient, TestPlan
-from models.client import Client
+from .test_models import (
+    TestClient, 
+    TestPlan, 
+    TestPayment
+)
 
 # DB_NAME = db_config.TEST_DB_NAME
 
@@ -16,8 +19,7 @@ from models.client import Client
 # # Monkey-patch the default before creating instances
 # Client.__init__ = lambda self, using=None: super(Client, self).__init__(using=DB_NAME)
 
-# client = Client()
-# print(client._db)  # test
 
 TestClient.start_test()
 TestPlan.start_test()
+TestPayment.start_test()

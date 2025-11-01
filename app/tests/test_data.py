@@ -55,3 +55,24 @@ plans = [
         'price': 950000,
     },
 ]
+
+payments = [
+    {
+        'discount': 3,
+        'tax': 7.5,
+        'total_price': 12000,
+        'amount_paid': 12000,
+    },
+    {
+        'discount': 0,
+        'tax': 7.5,
+        'total_price': 6000,
+        'amount_paid': 6000
+    },
+    {
+        'discount': 5,
+        'tax': 7.5,
+        'total_price': 290000,
+        'amount_paid': 290000
+    }
+]

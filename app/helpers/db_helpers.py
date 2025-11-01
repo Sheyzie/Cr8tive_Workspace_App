@@ -1,3 +1,4 @@
+import os
 import uuid
 from logs.utils import log_to_file, log_error_to_file
 from notification.notification import Notification
@@ -190,7 +191,12 @@ def fetch_all_entry(model: str, cursor, col_names=False):
         log_error_to_file(model.capitalize(), 'Error', f'{err}')
         print(err)
         return None
-    
+
+def delete_db(db_path, db: str):
+    if os.path.isfile(db_path / (db + '.db')):
+        print(f'Deleting {db}')
+        os.remove(db_path / (db + '.db'))
+
 # def validate_model_data(model: str, data):
 #     fields = None
     

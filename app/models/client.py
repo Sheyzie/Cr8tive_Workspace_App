@@ -27,8 +27,9 @@ class Client(InitDB):
         self.phone = None
         self.created_at = None
         self.query = ""
-        data = kwargs.get('kwargs')
+        
         if kwargs:
+            data = kwargs.get('kwargs')
             self._get_from_kwargs(kwargs=data)
         try:
             self._validate()
@@ -231,7 +232,7 @@ class Client(InitDB):
             return None
 
     @classmethod  
-    def filter_client(cls, value, name=False, created_at=False, using=None):
+    def filter_client(cls, value, name=False, by_date=False, using=None):
         if using:
             # give class the datebase property to enable db connection
             cls._db = using + '.db'
@@ -247,7 +248,7 @@ class Client(InitDB):
                     '''
                     cursor.execute(query, (value, value, value))
 
-                if created_at:
+                if by_date:
                     query = '''
                         SELECT * FROM client WHERE created_at LIKE ?;
                     '''
