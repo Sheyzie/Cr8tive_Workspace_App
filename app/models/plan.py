@@ -21,7 +21,7 @@ from helpers.db_helpers import (
 
 
 class Plan(InitDB):
-    def __init__(self, **kwargs):
+    def __init__(self, using=None, **kwargs):
         super().__init__()
         self.plan_id = None
         self.plan_name = None
@@ -29,35 +29,40 @@ class Plan(InitDB):
         self.plan_type = None
         self.price = None
         self.created_at = None
+        data = kwargs.get('kwargs')
         if kwargs:
-            self._get_from_kwargs(kwargs)
+            self._get_from_kwargs(kwargs=data)
         try:
             self._validate()
         except ValidationError as err:
             Notification.send_notification(err)
 
+    def __str__(self):
+        return self.plan_name
+
     def _get_from_kwargs(self, **kwargs):
-        plan_id = kwargs.get('plan_id')
+        data = kwargs.get('kwargs')
+        plan_id = data.get('plan_id')
         if plan_id:
             self.plan_id = plan_id
 
-        plan_name = kwargs.get('plan_name')
+        plan_name = data.get('plan_name')
         if plan_name:
             self.plan_name = plan_name.strip()
 
-        duration = kwargs.get('duration')
+        duration = data.get('duration')
         if duration:
             self.duration = duration
         
-        plan_type = kwargs.get('plan_type')
+        plan_type = data.get('plan_type')
         if plan_type:
             self.plan_type = plan_type.strip()
 
-        price = kwargs.get('price')
+        price = data.get('price')
         if price:
             self.price = price
 
-        created_at = kwargs.get('created_at')
+        created_at = data.get('created_at')
         if created_at:
             self.created_at = created_at
 
@@ -86,7 +91,7 @@ class Plan(InitDB):
     def get_id(self):
         self._connect_to_db()
         if self.conn:
-            cursor = self.conn.cursor(dictionary=True)
+            cursor = self.conn.cursor()
             id_string = generate_id('payment', cursor)
             
             if not id_string:
@@ -98,38 +103,74 @@ class Plan(InitDB):
             
             cursor.close()
             self.conn.close()
-
-        
+   
     def save_to_db(self, update=False):
         self._connect_to_db()
         if self.conn:
-            cursor = self.conn.cursor(dictionary=True)
+            cursor = self.conn.cursor()
             created_at = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
             try:
                 if update:
                     values = (self.plan_name, self.duration, self.plan_type, self.price, self.plan_id)
                     update_in_db('plan', cursor, values)
+                    self.conn.commit()
+                    self.conn.close()
                     return
 
                 values = (self.plan_id, self.plan_name, self.duration, self.plan_type, self.price, created_at)
                 insert_to_db('plan', cursor, values)
+                self.conn.commit()
+                self.conn.close()
             except ValueError as err:
                 log_error_to_file('Plan', 'Error', f'Error saving plan')
                 log_error_to_file('Plan', 'Error', f'{err}')
                 log_to_file('Plan', 'Error', f'Error saving plan')
                 Notification.send_notification(err)
             
+    def update(self):
+        self._validate(check_id=True)
+        self.save_to_db(update=True)
+
+    def delete(self):
+        self._validate(check_id=True)
+        self._connect_to_db()
+        if self.conn:
+            cursor = self.conn.cursor()
+            self.query = '''
+                DELETE FROM plan WHERE plan_id = ?;
+            '''
+
+            try:
+                cursor.execute(self.query, (self.plan_id,))
+                self.conn.commit()
+                self.conn.close()
+            except Exception as err:
+                log_error_to_file('Plan', 'Error', f'Error deleting plan')
+                log_error_to_file('Plan', 'Error', f'{err}')
+                log_to_file('Plan', 'Error', f'Error deleting plan')
+                Notification.send_notification(err)
+
     @classmethod
-    def fetch_one(cls, value, by_name=False):
-        conn = cls._connect_to_db()
-        cursor = conn.cursor(dictionary=True)
-        
+    def fetch_one(cls, value, by_name=False, using=None):
+        if using:
+            # give class the datebase property to enable db connection
+            cls._db = using + '.db'
+        conn = cls._connect_to_db(cls)
+        cursor = conn.cursor()
         
         try:
             plan_data = fetch_one_entry('plan', cursor, value, by_name)
+            plan_data_obj = {
+                'plan_id': plan_data[0],
+                'plan_name': plan_data[1],
+                'duration': plan_data[2],
+                'plan_type': plan_data[3],
+                'price': plan_data[4],
+                'created_at': plan_data[5],
+            }
 
             if plan_data:
-                plan = Plan(**plan_data)
+                plan = Plan(kwargs=plan_data, using=using)
                 return plan
             else:
                 return None
@@ -141,7 +182,7 @@ class Plan(InitDB):
             return None
 
     @classmethod
-    def fetch_all(cls, col_names):
+    def fetch_all(cls, col_names=False, using=None):
         conn = cls._connect_to_db()
         cursor = conn.cursor(dictionary=True)
         try:

@@ -11,5 +11,5 @@ def log_to_file(sender: str, log_type: str, log: str) -> None:
 
 def log_error_to_file(sender: str, log_type: str, log: str) -> None:
     entry: str = f'{datetime.now()}-{sender.upper()}-[{log_type.upper()}]-{log}\n'
-    with open(log_file, 'a') as file:
+    with open(error_log, 'a') as file:
         file.write(entry)

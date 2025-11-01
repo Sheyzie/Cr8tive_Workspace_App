@@ -36,7 +36,7 @@ class ExportManager:
             writer = csv.writer(f)
             if column_names:
                 writer.writerow(column_names)  # write header
-            writer.writedata(data)
+            writer.writerows(data)
 
     def export_to_excel(self, data, column_names=None):
         wb = Workbook()
@@ -60,12 +60,12 @@ class ExportManager:
         if column_names:
             data_list = [column_names] + data
         # Create a PDF document
-        pdf_file = "output.pdf"
+        pdf_file = 'clients_export.pdf'
         doc = SimpleDocTemplate(pdf_file, pagesize=A4)
         elements = []
 
         # Create a Table
-        table = Table(data)
+        table = Table(data_list)
 
         # Add table style
         style = TableStyle([

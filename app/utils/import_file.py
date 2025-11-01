@@ -31,17 +31,19 @@ class ImportManager:
     def import_from_csv(self):
         if self.file_type != '.csv':
             raise ValidationError('Incorrect file type. Expected a CSV file.')
-    
-        if not self.has_header:
-            with open(self.file_path, mode='r', newline='') as file:
-                reader = csv.reader(file)
-                for row in reader:
-                    yield row
-        else:
-            with open(self.file_path, mode='r', newline='') as file:
-                reader = csv.DictReader(file)
-                for row in reader:
-                    yield row
+        try:
+            if not self.has_header:
+                with open(self.file_path, mode='r', newline='') as file:
+                    reader = csv.reader(file)
+                    for row in reader:
+                        yield row
+            else:
+                with open(self.file_path, mode='r', newline='') as file:
+                    reader = csv.DictReader(file)
+                    for row in reader:
+                        yield row
+        except Exception as err:
+            print(err)
 
     def import_from_excel(self):
         if self.file_type not in {'.xls', '.xlsx'}:

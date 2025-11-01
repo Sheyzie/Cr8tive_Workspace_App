@@ -15,10 +15,12 @@ class DB:
             log_to_file('Database', 'Error', 'No Database provided. Ensure DB config is set')
             raise ValidationError('No Database provided. Ensure DB config is set')
         try:
+            self._db = using + '.db'
             conn = sqlite3.connect(self._db)
             conn.execute("PRAGMA foreign_keys = ON")
             log_to_file('Database','Init', 'Connection completed')
             conn.close()
+            self.create_tables()
         except Exception as err:
             log_error_to_file('Database', 'Error', f'Error connecting to {self._db}: {err}')
             log_to_file('Database', 'Error', f'Error connecting to {self._db}')
@@ -30,12 +32,16 @@ class DB:
     def _connect_to_db(self):
         try:
             self.conn = sqlite3.connect(self._db)
+
+            # access column by name (like a dictionary)
+            # self.conn.row_factory = sqlite3.Row
+
             self.conn.execute("PRAGMA foreign_keys = ON")
             log_to_file('Database','Connect', 'Connection established')
             return self.conn
         except Exception as err:
-            log_error_to_file('Database', 'Error', f'Error connecting to {self._db}: {err}')
-            log_to_file('Database', 'Error', f'Error connecting to {self._db}')
+            log_error_to_file('Database', 'Error', f'Error connecting to DB: {err}')
+            log_to_file('Database', 'Error', f'Error connecting to DB')
             Notification.send_notification(err)
             self.conn = None
             return None
@@ -164,7 +170,7 @@ class DB:
             Notification.send_notification(err)
 
     def _create_assigned_client_table(self):
-        log_to_file('Database', 'Init', 'Initializing visit table')
+        log_to_file('Database', 'Init', 'Initializing assigned_client table')
         cursor = self.conn.cursor()
         try:
             cursor.execute('''
@@ -199,5 +205,7 @@ class DB:
 
 
 class InitDB(DB):
-    def __init__(self, using=db_config.DB_NAME):
+    def __init__(self, using=None):
+        if not using:
+            using = db_config.DB_NAME
         super().__init__(using)
