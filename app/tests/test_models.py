@@ -10,7 +10,10 @@ from models.assigned_client import AssignedClient
 import os
 # import sqlite3
 
-from .test_data import clients as clients_data
+from .test_data import (
+    clients as clients_data,
+    plans as plans_data
+)
 
 
 DB_NAME = db_config.TEST_DB_NAME
@@ -29,7 +32,7 @@ def get_client():
         yield client
 
 def get_plan():
-    for plan in plan_data:
+    for plan in plans_data:
         yield plan
 
 class TestClient:
@@ -48,6 +51,7 @@ class TestClient:
         cls._test_delete_all_clients(cls)
         cls._test_import_csv(cls)
         cls._test_import_xlsx(cls)
+        cls._test_import_pdf(cls)
 
     def _test_create_client(self):
         print('\nTest 1: Creating clients from test data')
@@ -131,7 +135,7 @@ class TestClient:
         print('\nTest 7: Export clients to pdf')
         path = app_config.BASE_DIR / 'tests'
         Client.export_clients('.pdf', path, using=DB_NAME)
-        assert os.path.isfile(app_config.BASE_DIR / 'clients_export.pdf')
+        assert os.path.isfile(app_config.BASE_DIR / 'tests/clients_export.pdf')
         print('Test 7: Passed ✅')
 
     def _test_delete_all_clients(self):
@@ -188,7 +192,7 @@ class TestClient:
 
     def _test_import_pdf(self):
         print('\nTest 11: Importing clients from pdf')
-        path = app_config.BASE_DIR / 'clients_export.pdf'
+        path = app_config.BASE_DIR / 'tests/clients_export.pdf'
         Client.import_clients(path, '.pdf', has_header=True, using=DB_NAME)
 
         fetched_clients = Client.fetch_all(using=DB_NAME)
@@ -212,15 +216,16 @@ class TestPlan:
         print(f'Initializing Plan Model with {Plan(using=DB_NAME)._db}...')
 
         cls._test_create_plan(cls)
-        # cls._test_fetch_plan(cls)
-        # cls._test_update_plan(cls)
-        # cls._test_delete_plan(cls)
-        # cls._test_export_csv(cls)
-        # cls._test_export_xlsx(cls)
-        # cls._test_export_pdf(cls)
-        # cls._test_delete_all_plans(cls)
-        # cls._test_import_csv(cls)
-        # cls._test_import_xlsx(cls)
+        cls._test_fetch_plans(cls)
+        cls._test_update_client(cls)
+        cls._test_delete_plan(cls)
+        cls._test_export_csv(cls)
+        cls._test_export_xlsx(cls)
+        cls._test_export_pdf(cls)
+        cls._test_delete_all_plans(cls)
+        cls._test_import_csv(cls)
+        cls._test_import_xlsx(cls)
+        cls._test_import_pdf(cls)
 
     def _test_create_plan(self):
         print('\nTest 1: Creating plans from test data')
@@ -233,16 +238,18 @@ class TestPlan:
 
         print('Test 1: Passed ✅')
 
-    def _test_fetch_plan(self):
+    def _test_fetch_plans(self):
         print('\nTest 2: Fetching plans from DB')
 
         fetched_plans = Plan.fetch_all(using=DB_NAME)
         assert len(fetched_plans) > 0
 
         one_plan = Plan.fetch_one(fetched_plans[1].plan_id, using=DB_NAME)
-        assert one_plan.plan_name == '1 Slot'
+        assert one_plan.plan_name == '5 Slot'
+        assert one_plan.duration == 5
+        assert one_plan.price == 29000
 
-        filter_by_name = Plan.filter_plan('Plan', name=True, using=DB_NAME)
+        filter_by_name = Plan.filter_plan('daily', plan_type=True, using=DB_NAME)
         assert len(filter_by_name) > 0
 
         filter_by_date = Plan.filter_plan('2025', created_at=True, using=DB_NAME)
@@ -251,129 +258,129 @@ class TestPlan:
         print('Test 2: Passed ✅')
 
     def _test_update_client(self):
-        print('\nTest 3: Updating clients in DB')
+        print('\nTest 3: Updating plans in DB')
 
-        fetched_clients = Client.fetch_all(using=DB_NAME)
+        fetched_plans = Plan.fetch_all(using=DB_NAME)
 
-        assert len(fetched_clients) > 0
+        assert len(fetched_plans) > 0
 
-        one_client = fetched_clients[0]
+        one_plan = fetched_plans[0]
         
-        one_client.first_name = 'Updated Client'
+        one_plan.plan_name = 'Updated 1 Slot'
 
-        one_client.update()
+        one_plan.update()
     
-        one_client_refetched = Client.fetch_one(one_client.client_id, using=DB_NAME)
+        one_plan_refetched = Plan.fetch_one(one_plan.plan_id, using=DB_NAME)
 
-        assert one_client_refetched.first_name == one_client.first_name
+        assert one_plan_refetched.plan_name == one_plan.plan_name
 
         print('Test 3: Passed ✅')
 
-    def _test_delete_client(self):
-        print('\nTest 4: Delete clients in DB')
+    def _test_delete_plan(self):
+        print('\nTest 4: Delete plans in DB')
 
-        fetched_clients = Client.fetch_all(using=DB_NAME)
+        fetched_plans = Plan.fetch_all(using=DB_NAME)
 
-        assert len(fetched_clients) > 0
+        assert len(fetched_plans) > 0
 
-        one_client = fetched_clients[0]
+        one_plan = fetched_plans[0]
 
-        one_client.delete()
+        one_plan.delete()
     
-        one_client_refetched = Client.fetch_one(one_client.client_id, using=DB_NAME)
+        one_plan_refetched = Plan.fetch_one(one_plan.plan_id, using=DB_NAME)
 
-        assert one_client_refetched is None
+        assert one_plan_refetched is None
 
         print('Test 4: Passed ✅')
 
     def _test_export_csv(self):
-        print('\nTest 5: Export clients to csv')
+        print('\nTest 5: Export plans to csv')
         path = app_config.BASE_DIR / 'tests'
-        Client.export_clients('.csv', path, using=DB_NAME)
-        assert os.path.isfile(path / 'clients_export.csv')
+        Plan.export_plans('.csv', path, using=DB_NAME)
+        assert os.path.isfile(path / 'plans_export.csv')
         print('Test 5: Passed ✅')
 
     def _test_export_xlsx(self):
-        print('\nTest 6: Export clients to xlsx')
+        print('\nTest 6: Export plans to xlsx')
         path = app_config.BASE_DIR / 'tests'
-        Client.export_clients('.xlsx', path, using=DB_NAME)
-        assert os.path.isfile(path / 'clients_export.xlsx')
+        Plan.export_plans('.xlsx', path, using=DB_NAME)
+        assert os.path.isfile(path / 'plans_export.xlsx')
         print('Test 6: Passed ✅')
 
     def _test_export_pdf(self):
-        print('\nTest 7: Export clients to pdf')
+        print('\nTest 7: Export plans to pdf')
         path = app_config.BASE_DIR / 'tests'
-        Client.export_clients('.pdf', path, using=DB_NAME)
-        assert os.path.isfile(app_config.BASE_DIR / 'clients_export.pdf')
+        Plan.export_plans('.pdf', path, using=DB_NAME)
+        assert os.path.isfile(app_config.BASE_DIR / 'tests/plans_export.pdf')
         print('Test 7: Passed ✅')
 
-    def _test_delete_all_clients(self):
-        print('\nTest 8: Delete all clients in DB')
+    def _test_delete_all_plans(self):
+        print('\nTest 8: Delete all plans in DB')
 
-        fetched_clients = Client.fetch_all(using=DB_NAME)
+        fetched_plans = Plan.fetch_all(using=DB_NAME)
 
-        assert len(fetched_clients) > 0
+        assert len(fetched_plans) > 0
 
-        for client in fetched_clients:
+        for client in fetched_plans:
             client.delete()
 
-        refetched_clients = Client.fetch_all(using=DB_NAME)
+        refetched_plans = Plan.fetch_all(using=DB_NAME)
 
-        assert len(refetched_clients) == 0
+        assert len(refetched_plans) == 0
 
         print('Test 8: Passed ✅')
 
     def _test_import_csv(self):
-        print('\nTest 9: Importing clients from csv')
-        path = app_config.BASE_DIR / 'tests/clients_export.csv'
-        Client.import_clients(path, '.csv', has_header=True, using=DB_NAME)
+        print('\nTest 9: Importing plans from csv')
+        path = app_config.BASE_DIR / 'tests/plans_export.csv'
+        Plan.import_plans(path, '.csv', has_header=True, using=DB_NAME)
 
-        fetched_clients = Client.fetch_all(using=DB_NAME)
-        assert len(fetched_clients) > 0
+        fetched_plans = Plan.fetch_all(using=DB_NAME)
+        assert len(fetched_plans) > 0
 
         
-        for client in fetched_clients:
-            client.delete()
+        for plan in fetched_plans:
+            plan.delete()
 
-        refetched_clients = Client.fetch_all(using=DB_NAME)
+        refetched_plans = Plan.fetch_all(using=DB_NAME)
 
-        assert len(refetched_clients) == 0
+        assert len(refetched_plans) == 0
 
         print('Test 9: Passed ✅')
 
     def _test_import_xlsx(self):
-        print('\nTest 10: Importing clients from xlsx')
-        path = app_config.BASE_DIR / 'tests/clients_export.xlsx'
-        Client.import_clients(path, '.xlsx', has_header=True, using=DB_NAME)
+        print('\nTest 10: Importing plans from xlsx')
+        path = app_config.BASE_DIR / 'tests/plans_export.xlsx'
+        Plan.import_plans(path, '.xlsx', has_header=True, using=DB_NAME)
 
-        fetched_clients = Client.fetch_all(using=DB_NAME)
-        assert len(fetched_clients) > 0
+        fetched_plans = Plan.fetch_all(using=DB_NAME)
+        assert len(fetched_plans) > 0
 
         
-        for client in fetched_clients:
-            client.delete()
+        for plan in fetched_plans:
+            plan.delete()
 
-        refetched_clients = Client.fetch_all(using=DB_NAME)
+        refetched_plans = Plan.fetch_all(using=DB_NAME)
 
-        assert len(refetched_clients) == 0
+        assert len(refetched_plans) == 0
 
         print('Test 10: Passed ✅')
 
     def _test_import_pdf(self):
-        print('\nTest 11: Importing clients from pdf')
-        path = app_config.BASE_DIR / 'clients_export.pdf'
-        Client.import_clients(path, '.pdf', has_header=True, using=DB_NAME)
+        print('\nTest 11: Importing plans from pdf')
+        path = app_config.BASE_DIR / 'tests/plans_export.pdf'
+        Plan.import_plans(path, '.pdf', has_header=True, using=DB_NAME)
 
-        fetched_clients = Client.fetch_all(using=DB_NAME)
-        assert len(fetched_clients) > 0
+        fetched_plans = Plan.fetch_all(using=DB_NAME)
+        assert len(fetched_plans) > 0
 
         
-        for client in fetched_clients:
-            client.delete()
+        for plan in fetched_plans:
+            plan.delete()
 
-        refetched_clients = Client.fetch_all(using=DB_NAME)
+        refetched_plans = Plan.fetch_all(using=DB_NAME)
 
-        assert len(refetched_clients) == 0
+        assert len(refetched_plans) == 0
 
         print('Test 11: Passed ✅')
  

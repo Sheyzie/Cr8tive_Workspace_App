@@ -1,12 +1,8 @@
-import uuid
 import time
-from pathlib import Path
-
 from database.db import InitDB
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
 from utils.import_file import ImportManager
-from utils.export_file import ExportManager
 from helpers.export_helper import export_helper
 from helpers.db_helpers import generate_id
 from notification.notification import Notification
@@ -22,7 +18,7 @@ from helpers.db_helpers import (
 
 class Plan(InitDB):
     def __init__(self, using=None, **kwargs):
-        super().__init__()
+        super().__init__(using=using)
         self.plan_id = None
         self.plan_name = None
         self.duration = None
@@ -160,6 +156,10 @@ class Plan(InitDB):
         
         try:
             plan_data = fetch_one_entry('plan', cursor, value, by_name)
+            
+            if plan_data is None:
+                return None
+            
             plan_data_obj = {
                 'plan_id': plan_data[0],
                 'plan_name': plan_data[1],
@@ -170,7 +170,7 @@ class Plan(InitDB):
             }
 
             if plan_data:
-                plan = Plan(kwargs=plan_data, using=using)
+                plan = Plan(kwargs=plan_data_obj, using=using)
                 return plan
             else:
                 return None
@@ -183,10 +183,34 @@ class Plan(InitDB):
 
     @classmethod
     def fetch_all(cls, col_names=False, using=None):
-        conn = cls._connect_to_db()
-        cursor = conn.cursor(dictionary=True)
+        if using:
+            # give class the datebase property to enable db connection
+            cls._db = using + '.db'
+        conn = cls._connect_to_db(cls)
+        cursor = conn.cursor()
+        plans = []
         try:
-            plans = fetch_all_entry('plan', cursor, col_names=col_names)
+            plans_data = fetch_all_entry('plan', cursor, col_names=col_names)
+            
+            if not len(plans_data) > 0:
+                return []
+            
+            # only exports will set col_name to true so no need to create client obj
+            if col_names:
+                return plans_data
+            for plan_data in plans_data:
+                plan_data_obj = {
+                    'plan_id': plan_data[0],
+                    'plan_name': plan_data[1],
+                    'duration': plan_data[2],
+                    'plan_type': plan_data[3],
+                    'price': plan_data[4],
+                    'created_at': plan_data[5],
+                }
+
+                plan = Plan(kwargs=plan_data_obj, using=using)
+                plans.append(plan)
+
             return plans
         except Exception as err:
             log_to_file('Plan', 'Error', f'Error getting plan from db')
@@ -196,26 +220,46 @@ class Plan(InitDB):
             return None
 
     @classmethod  
-    def filter_plan(cls, value, plan_type=False, created_at=False):
-        conn = cls._connect_to_db()
+    def filter_plan(cls, value, plan_type=False, created_at=False, using=None):
+        if using:
+            # give class the datebase property to enable db connection
+            cls._db = using + '.db'
+        conn = cls._connect_to_db(cls)
+        plans = []
         try:
             if conn:
-                cursor = conn.cursor(dictionary=True)
+                cursor = conn.cursor()
                 if plan_type:
                     query = '''
-                        SELECT * FROM plan WHERE plan_type = %s;
+                        SELECT * FROM plan WHERE plan_type = ?;
                     '''
                     cursor.execute(query, (value,))
 
                 if created_at:
                     query = '''
-                        SELECT * FROM plan WHERE created_at LIKE %s;
+                        SELECT * FROM plan WHERE created_at LIKE ?;
                     '''
                     cursor.execute(query, ('%' + value + '%',))
 
-                clients = cursor.fetchall()
+                plans_data = cursor.fetchall()
 
-                return clients
+                if not len(plans_data) > 0:
+                    return []
+                
+                for plan_data in plans_data:
+                    plan_data_obj = {
+                        'plan_id': plan_data[0],
+                        'plan_name': plan_data[1],
+                        'duration': plan_data[2],
+                        'plan_type': plan_data[3],
+                        'price': plan_data[4],
+                        'created_at': plan_data[5],
+                    }
+
+                    plan = Plan(kwargs=plan_data_obj, using=using)
+                    plans.append(plan)
+
+                return plans
         except Exception as err:
             log_to_file('Plan', 'Error', f'Error getting plan from db')
             log_error_to_file('Plan', 'Error', f'Error getting plan from db')
@@ -225,7 +269,7 @@ class Plan(InitDB):
 
         
     @classmethod
-    def import_plans(ccls, filepath, file_type, has_header):
+    def import_plans(cls, filepath, file_type, has_header, using=None):
         manager = ImportManager(file_path=filepath, file_type=file_type, has_header=has_header)
         plans = []
         failed = []
@@ -240,8 +284,8 @@ class Plan(InitDB):
                 }
 
                 try:
-                    plan = Plan(data)
-                    plan.register()
+                    plan = Plan(kwargs=data, using=using)
+                    plan.get_id()
                     plan.save_to_db()
                     plans.append(plan)
                 except Exception as err:
@@ -252,8 +296,8 @@ class Plan(InitDB):
             for plan_data in manager.import_from_csv():
                 
                 try:
-                    plan = Plan(data)
-                    plan.register()
+                    plan = Plan(kwargs=plan_data, using=using)
+                    plan.get_id()
                     plan.save_to_db()
                     plans.append(plan)
                 except Exception as err:
@@ -269,8 +313,8 @@ class Plan(InitDB):
                     'price': plan_data[3],
                 }
                 try:
-                    plan = Plan(data)
-                    plan.register()
+                    plan = Plan(kwargs=data, using=using)
+                    plan.get_id()
                     plan.save_to_db()
                     plans.append(plan)
                 except Exception as err:
@@ -279,9 +323,16 @@ class Plan(InitDB):
 
         else:
             for plan_data in manager.import_from_pdf():
+                data = {
+                    'plan_name': plan_data[0],
+                    'duration': plan_data[1],
+                    'plan_type': plan_data[2],
+                    'price': plan_data[3],
+                }
+
                 try:
-                    plan = Plan(plan_data)
-                    plan.register()
+                    plan = Plan(kwargs=data, using=using)
+                    plan.get_id()
                     plan.save_to_db()
                     plans.append(plan)
                 except Exception as err:
@@ -289,7 +340,7 @@ class Plan(InitDB):
                     Notification.send_notification(err)
 
     @classmethod
-    def export_clients(cls, file_type, path):
-        export_helper(cls, file_type, path, 'clients_export')
+    def export_plans(cls, file_type, path, using=None):
+        export_helper(cls, file_type, path, 'plans_export', using=using)
         print('Export complete')
 

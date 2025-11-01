@@ -1,12 +1,8 @@
-import uuid
 import time
-from pathlib import Path
-
 from database.db import InitDB
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
 from utils.import_file import ImportManager
-from utils.export_file import ExportManager
 from helpers.export_helper import export_helper
 from notification.notification import Notification
 from helpers.db_helpers import (
@@ -167,6 +163,10 @@ class Client(InitDB):
         
         try:
             client_data = fetch_one_entry('client', cursor, value, by_phone=by_phone, by_email=by_email)
+            
+            if client_data is None:
+                return None
+            
             client_data_obj = {
                 'client_id': client_data[0],
                 'first_name': client_data[1],
@@ -228,6 +228,7 @@ class Client(InitDB):
             log_error_to_file('Client', 'Error', f'{err}')
             log_to_file('Client', 'Error', f"Error getting client @ {__name__} 'line 179'")
             Notification.send_notification(err)
+            return None
 
     @classmethod  
     def filter_client(cls, value, name=False, created_at=False, using=None):
@@ -280,6 +281,7 @@ class Client(InitDB):
                 log_error_to_file('Client', 'Error', f'{err}')
                 log_to_file('Client', 'Error', f'Error getting client')
                 Notification.send_notification(err)
+                return None
         
     @classmethod
     def import_clients(cls, filepath, file_type, has_header, using=None):
@@ -341,8 +343,15 @@ class Client(InitDB):
 
         else:
             for client_data in manager.import_from_pdf():
+                data = {
+                    'first_name': client_data[0],
+                    'last_name': client_data[1],
+                    'company_name': client_data[2],
+                    'email': client_data[3],
+                    'phone': client_data[4]
+                }
                 try:
-                    client = Client(kwargs=client_data, using=using)
+                    client = Client(kwargs=data, using=using)
                     client.get_id()
                     client.save_to_db()
                     clients.append(client)
@@ -352,6 +361,6 @@ class Client(InitDB):
 
     @classmethod
     def export_clients(cls, file_type, path, using=None):
-        export_helper(cls, file_type, path, 'clients_export', using)
+        export_helper(cls, file_type, path, 'clients_export', using=using)
         print('Export complete')
         

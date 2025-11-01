@@ -53,14 +53,26 @@ class ImportManager:
         sheet = wb.active
         start_row = sheet.min_row + 1 if self.has_header else sheet.min_row
         for row in sheet.iter_rows(min_row=start_row, max_row=sheet.max_row, min_col=sheet.min_column, max_col=sheet.max_column):
-            data = [
-                row[0].value,
-                row[1].value,
-                row[2].value,
-                row[3].value,
-                row[4].value if row[4].value else ""
-            ]
-        
+            data = []
+
+            for i in range(len(row)):
+                data.append(row[i].value)
+            # if len(row) > 4:
+            #     data = [
+            #         row[0].value,
+            #         row[1].value,
+            #         row[2].value,
+            #         row[3].value,
+            #         row[4].value
+            #     ]
+            # else:
+            #      data = [
+            #         row[0].value,
+            #         row[1].value,
+            #         row[2].value,
+            #         row[3].value,
+            #     ]
+
             yield data
 
     def import_from_pdf(self):
@@ -72,5 +84,6 @@ class ImportManager:
                 table = page.extract_table()
             
                 if table:
+                    table.pop(0) # remove header
                     for row in table:
                         yield row

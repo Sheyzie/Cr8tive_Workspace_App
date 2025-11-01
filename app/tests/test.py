@@ -5,7 +5,7 @@
 # sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from configs import db_config
-from .test_models import TestClient
+from .test_models import TestClient, TestPlan
 from models.client import Client
 
 # DB_NAME = db_config.TEST_DB_NAME
@@ -20,3 +20,4 @@ from models.client import Client
 # print(client._db)  # test
 
 TestClient.start_test()
+TestPlan.start_test()

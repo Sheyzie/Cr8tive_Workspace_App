@@ -30,5 +30,28 @@ clients = [
 ]
 
 plans = [
-    
+    {
+        'plan_name': '1 Slot',
+        'duration': 1,
+        'plan_type': 'daily',
+        'price': 6000,
+    },
+    {
+        'plan_name': '5 Slot',
+        'duration': 5,
+        'plan_type': 'monthly',
+        'price': 29000,
+    },
+    {
+        'plan_name': '100 Slot',
+        'duration': 30,
+        'plan_type': 'monthly',
+        'price': 500000,
+    },
+    {
+        'plan_name': '200 Slot',
+        'duration': 365,
+        'plan_type': 'yearly',
+        'price': 950000,
+    },
 ]

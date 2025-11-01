@@ -60,7 +60,7 @@ class ExportManager:
         if column_names:
             data_list = [column_names] + data
         # Create a PDF document
-        pdf_file = 'clients_export.pdf'
+        pdf_file = str(self.file_name)
         doc = SimpleDocTemplate(pdf_file, pagesize=A4)
         elements = []
 

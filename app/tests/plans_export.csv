@@ -1,0 +1,4 @@
+plan_name,duration,plan_type,price
+5 Slot,5,monthly,29000
+100 Slot,30,monthly,500000
+200 Slot,365,yearly,950000
