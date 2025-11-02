@@ -18,10 +18,11 @@ from helpers.db_helpers import (
 from .plan import Plan
 from .client import Client
 from .payment import Payment
+from .assigned_client import AssignedClient
 
 
 class Subscription(InitDB):
-    def __init__(self,using: str=None, **kwargs):
+    def __init__(self, using: str=None, **kwargs):
         super().__init__(using=using)
         self.subscription_id: str = None
         self.plan = None
@@ -33,7 +34,7 @@ class Subscription(InitDB):
         self.created_at: str = None
         self.updated_at: str = None
 
-        self.assigned_users = []
+        self.assigned_users: list[Client] = []
 
         if kwargs:
             data = kwargs.get('kwargs')
@@ -185,11 +186,24 @@ class Subscription(InitDB):
                 log_to_file('Subscription', 'Error', f"Error deleting subscription @ {__name__} 'line {inspect.currentframe().f_lineno}'")
                 Notification.send_notification(err)
 
+    def set_assigned_client(self, client: Client):
+        if client not in self.assigned_users:
+            AssignedClient.save_to_db(sub_id=self.subscription_id, client_id=client.client_id, using=self._db)
+            self.assigned_users.append(client)
+
+    def remove_assigned_client(self, client: Client):
+        if not len(self.assigned_users) > 0:
+            return
+        
+        if client in self.assigned_users:
+            AssignedClient.delete_user(sub_id=self.subscription_id,client_id=client.client_id, using=self._db)
+            self.assigned_users.remove(client)
+
     @classmethod
     def fetch_one(cls, sub_id, using=None):
         if using:
             # give class the datebase property to enable db connection
-            cls._db = using + '.db'
+            cls._db = using
         conn = cls._connect_to_db(cls)
         cursor = conn.cursor()
     
@@ -210,6 +224,14 @@ class Subscription(InitDB):
                 payment_id = sub_data[3]
                 payment = Payment.fetch_one(payment_id, using=using)
 
+                assigned_clients_id = AssignedClient.filter_sub(sub_id=sub_data[0], using=using)
+
+                assigned_users = []
+                if len(assigned_clients_id) > 0:
+                    for assigned_client_id in assigned_clients_id:
+                        assigned_user = Client.fetch_one(assigned_client_id, using=using)
+                        assigned_users.append(assigned_user)
+
                 # screat subscription data obj
                 sub_data_obj = {
                     'subscription_id': sub_data[0],
@@ -221,6 +243,7 @@ class Subscription(InitDB):
                     'status': sub_data[6],
                     'created_at': sub_data[7],
                     'updated_at': sub_data[8],
+                    'assigned_users': assigned_users if len(assigned_users) > 0 else []
                 }
 
                 subscription = Subscription(kwargs=sub_data_obj, using=using)
@@ -238,7 +261,7 @@ class Subscription(InitDB):
     def fetch_all(cls, col_names=False, using: str=None):
         if using:
             # give class the datebase property to enable db connection
-            cls._db = using + '.db'
+            cls._db = using
         conn = cls._connect_to_db(cls)
         cursor = conn.cursor()
         subscriptions = []
@@ -264,6 +287,14 @@ class Subscription(InitDB):
 
                 payment_id = subscription_data[3]
                 payment = Payment.fetch_one(payment_id, using=using)
+
+                assigned_clients_id = AssignedClient.filter_sub(sub_id=subscription_data[0], using=using)
+
+                assigned_users = []
+                if len(assigned_clients_id) > 0:
+                    for assigned_client_id in assigned_clients_id:
+                        assigned_user = Client.fetch_one(assigned_client_id, using=using)
+                        assigned_users.append(assigned_user)
                 
                 # create subscription data obj
                 subscription_data_obj = {
@@ -276,6 +307,7 @@ class Subscription(InitDB):
                     'status': subscription_data[6],
                     'created_at': subscription_data[7],
                     'updated_at': subscription_data[8],
+                    'assigned_users': assigned_users if len(assigned_users) > 0 else []
                 }
 
                 subscription = Subscription(kwargs=subscription_data_obj, using=using)
@@ -297,7 +329,7 @@ class Subscription(InitDB):
     def filter_sub(cls, value, by_user=False, by_plan=False, by_payment=False, created_at=False, col_names=False, using=None):
         if using:
             # give class the datebase property to enable db connection
-            cls._db = using + '.db'
+           cls._db = using
         conn = cls._connect_to_db(cls)
         subscriptions = []
         try:
@@ -344,6 +376,14 @@ class Subscription(InitDB):
                     payment_id = subscription_data[3]
                     payment = Payment.fetch_one(payment_id, using=using)
 
+                    assigned_clients_id = AssignedClient.filter_sub(sub_id=subscription_data[0], using=using)
+
+                    assigned_users = []
+                    if len(assigned_clients_id) > 0:
+                        for assigned_client_id in assigned_clients_id:
+                            assigned_user = Client.fetch_one(assigned_client_id, using=using)
+                            assigned_users.append(assigned_user)
+
                     # screat subscription data obj
                     subscription_data_obj = {
                         'subscription_id': subscription_data[0],
@@ -355,6 +395,7 @@ class Subscription(InitDB):
                         'status': subscription_data[6],
                         'created_at': subscription_data[7],
                         'updated_at': subscription_data[8],
+                        'assigned_users': assigned_users if len(assigned_users) > 0 else []
                     }
 
                     subscription = Subscription(kwargs=subscription_data_obj, using=using)

@@ -158,7 +158,7 @@ class Payment(InitDB):
     def fetch_one(cls, value, by_name=False, using: str=None):
         if using:
             # give class the datebase property to enable db connection
-            cls._db = using + '.db'
+            cls._db = using
         conn = cls._connect_to_db(cls)
         cursor = conn.cursor()
         
@@ -192,7 +192,7 @@ class Payment(InitDB):
     def fetch_all(cls, using: str=None):
         if using:
             # give class the datebase property to enable db connection
-            cls._db = using + '.db'
+            cls._db = using
         conn = cls._connect_to_db(cls)
         cursor = conn.cursor()
         payments = []
@@ -227,7 +227,7 @@ class Payment(InitDB):
     def filter_payments(cls, value, by_amount=False, by_date=False, using=None):
         if using:
             # give class the datebase property to enable db connection
-            cls._db = using + '.db'
+            cls._db = using
         conn = cls._connect_to_db(cls)
         payments = []
         try:

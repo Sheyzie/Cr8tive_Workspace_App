@@ -487,6 +487,7 @@ class TestSubscription:
         cls._test_export_csv(cls)
         cls._test_export_xlsx(cls)
         cls._test_export_pdf(cls)
+        cls._test_assigned_users(cls)
 
     def _test_setup(self):
         print('Setting up db with users, plan and payment')
@@ -618,5 +619,28 @@ class TestSubscription:
         assert os.path.isfile(app_config.BASE_DIR / 'tests/subscription_export.pdf')
         print('Test 6: Passed ✅')
 
+    def _test_assigned_users(self):
+        print('\nTest 7: Assign a user to subscription')
 
+        fetched_clients = Client.fetch_all(using=DB_NAME)
+        assert len(fetched_clients) > 0
+
+        one_client = fetched_clients[0]
+
+        fetched_subscriptions = Subscription.fetch_all(using=DB_NAME)
+
+        assert len(fetched_subscriptions) > 0
+
+        one_subscription = fetched_subscriptions[0]
+
+        one_subscription.set_assigned_client(one_client)
+
+        assert len(one_subscription.assigned_users) > 0
+        assert one_subscription.assigned_users[0].client_id == one_client.client_id
+
+        assigned_user = AssignedClient.get_user(one_subscription.subscription_id, one_client.client_id, using=DB_NAME)
+
+        assert assigned_user[0][0] == one_subscription.assigned_users[0].client_id
+
+        print('Test 7: Passed ✅')
 

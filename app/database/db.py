@@ -16,7 +16,7 @@ class DB:
             log_to_file('Database', 'Error', f"No Database provided. Ensure DB config is set @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             raise ValidationError('No Database provided. Ensure DB config is set')
         try:
-            self._db = using + '.db'
+            self._db = using
             conn = sqlite3.connect(self._db)
             conn.execute("PRAGMA foreign_keys = ON")
             log_to_file('Database','Init', 'Connection completed')

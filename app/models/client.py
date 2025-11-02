@@ -159,7 +159,7 @@ class Client(InitDB):
     def fetch_one(cls, value, by_phone=False, by_email=False, using=None):
         if using:
             # give class the datebase property to enable db connection
-            cls._db = using + '.db'
+            cls._db = using
         conn = cls._connect_to_db(cls)
         cursor = conn.cursor()
         
@@ -196,7 +196,7 @@ class Client(InitDB):
     def fetch_all(cls, col_names=False, using=None):
         if using:
             # give class the datebase property to enable db connection
-            cls._db = using + '.db'
+            cls._db = using
         conn = cls._connect_to_db(cls)
         cursor = conn.cursor()
         clients = []
@@ -237,7 +237,7 @@ class Client(InitDB):
     def filter_client(cls, value, name=False, by_date=False, using=None):
         if using:
             # give class the datebase property to enable db connection
-            cls._db = using + '.db'
+            cls._db = using
         conn = cls._connect_to_db(cls)
         clients = []
     
