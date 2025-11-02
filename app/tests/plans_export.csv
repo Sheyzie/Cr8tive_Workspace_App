@@ -1,4 +1,4 @@
-plan_name,duration,plan_type,price
-5 Slot,5,monthly,2900000
-100 Slot,30,monthly,50000000
-200 Slot,365,yearly,95000000
+plan_name,duration,plan_type,slot,guest_pass,price,created_at
+5 Slot,1,monthly,5,1,2900000,2025-11-02 17:02:26
+100 Slot,1,monthly,100,7,50000000,2025-11-02 17:02:26
+200 Slot,1,yearly,200,10,95000000,2025-11-02 17:02:26

@@ -1,10 +1,10 @@
 import time
+import inspect
 from database.db import InitDB
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
 from utils.import_file import ImportManager
 from helpers.export_helper import export_helper
-from helpers.db_helpers import generate_id
 from notification.notification import Notification
 from helpers.db_helpers import (
     generate_id, 
@@ -15,7 +15,6 @@ from helpers.db_helpers import (
 )
 
 
-
 class Plan(InitDB):
     def __init__(self, using: str=None, **kwargs):
         super().__init__(using=using)
@@ -23,6 +22,8 @@ class Plan(InitDB):
         self.plan_name: str = None
         self.duration: int = 0
         self.plan_type: str  = None
+        self.slot: int = 0
+        self.guest_pass: int = 0
         self.price: int = 0
         self.created_at: str = None
     
@@ -55,6 +56,14 @@ class Plan(InitDB):
         if plan_type:
             self.plan_type = plan_type.strip()
 
+        slot = data.get('slot')
+        if slot and isinstance(slot, (int, float)) and slot >= 0:
+            self.slot = slot
+
+        guest_pass = data.get('guest_pass')
+        if guest_pass and isinstance(guest_pass, (int, float)) and guest_pass >= 0:
+            self.guest_pass = guest_pass
+
         price = data.get('price')
         if price and isinstance(price, (int, float)) and price >= 0:
             self.price = price
@@ -64,7 +73,7 @@ class Plan(InitDB):
             self.created_at = created_at
 
     def _validate(self, check_id=False):
-        VALID_PLAN_TYPES = {'hourly', 'daily', 'weekly', 'monthly', 'yearly'}
+        VALID_PLAN_TYPES = {'hourly', 'daily', 'weekly', 'monthly', 'half-year', 'yearly'}
 
         if not self.plan_name:
             raise ValidationError('Plan name cannot be less than three letters')
@@ -76,6 +85,10 @@ class Plan(InitDB):
             raise ValidationError('Plan cannot be less than 1')
         if self.plan_type not in VALID_PLAN_TYPES:
             raise ValidationError(f'Plan type: {self.plan_type} is not valid. Must be one of {', '.join(VALID_PLAN_TYPES)}')
+        if not isinstance(self.slot, (int, float)) and not self.slot >= 0:
+            raise ValidationError('Slot cannot be less than zero')
+        if not isinstance(self.guest_pass, (int, float)) and not self.guest_pass >= 0:
+            raise ValidationError('Guest Pass cannot be less than zero')
         if not isinstance(self.price, (int, float)):
             raise ValidationError('Price cannot have letters')
         if self.price < 0:
@@ -109,21 +122,21 @@ class Plan(InitDB):
             try:
                 if update:
                     # convert price to kobo
-                    values = (self.plan_name, self.duration, self.plan_type, (self.price * 100), self.plan_id)
+                    values = (self.plan_name, self.duration, self.plan_type, self.slot, self.guest_pass, (self.price * 100), self.plan_id)
                     update_in_db('plan', cursor, values)
                     self.conn.commit()
                     self.conn.close()
                     return
 
                 # convert price to kobo
-                values = (self.plan_id, self.plan_name, self.duration, self.plan_type, (self.price * 100), created_at)
+                values = (self.plan_id, self.plan_name, self.duration, self.plan_type, self.slot, self.guest_pass, (self.price * 100), created_at)
                 insert_to_db('plan', cursor, values)
                 self.conn.commit()
                 self.conn.close()
             except ValueError as err:
-                log_error_to_file('Plan', 'Error', f'Error saving plan')
+                log_error_to_file('Plan', 'Error', f"Error saving plan @ {__name__} 'line {inspect.currentframe().f_lineno}'")
                 log_error_to_file('Plan', 'Error', f'{err}')
-                log_to_file('Plan', 'Error', f'Error saving plan')
+                log_to_file('Plan', 'Error', f"Error saving plan @ {__name__} 'line {inspect.currentframe().f_lineno}'")
                 Notification.send_notification(err)
             
     def update(self):
@@ -144,9 +157,9 @@ class Plan(InitDB):
                 self.conn.commit()
                 self.conn.close()
             except Exception as err:
-                log_error_to_file('Plan', 'Error', f'Error deleting plan')
+                log_error_to_file('Plan', 'Error', f"Error deleting plan @ {__name__} 'line {inspect.currentframe().f_lineno}'")
                 log_error_to_file('Plan', 'Error', f'{err}')
-                log_to_file('Plan', 'Error', f'Error deleting plan')
+                log_to_file('Plan', 'Error', f"Error deleting plan @ {__name__} 'line {inspect.currentframe().f_lineno}'")
                 Notification.send_notification(err)
 
     @classmethod
@@ -168,8 +181,10 @@ class Plan(InitDB):
                 'plan_name': plan_data[1],
                 'duration': plan_data[2],
                 'plan_type': plan_data[3],
-                'price': float(plan_data[4]) / 100, # convert back from kobo
-                'created_at': plan_data[5],
+                'slot': plan_data[4],
+                'guest_pass': plan_data[5],
+                'price': float(plan_data[6]) / 100, # convert back from kobo
+                'created_at': plan_data[7],
             }
 
             if plan_data:
@@ -178,8 +193,8 @@ class Plan(InitDB):
             else:
                 return None
         except Exception as err:
-            log_to_file('Plan', 'Error', f'Error getting plan from db')
-            log_error_to_file('Plan', 'Error', f'Error getting plan from db')
+            log_to_file('Plan', 'Error', f"Error fetching plan @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+            log_error_to_file('Plan', 'Error', f"Error fetching plan @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             log_error_to_file('Plan', 'Error', f'{err}')
             Notification.send_notification(err)
             return None
@@ -208,8 +223,10 @@ class Plan(InitDB):
                     'plan_name': plan_data[1],
                     'duration': plan_data[2],
                     'plan_type': plan_data[3],
-                    'price': float(plan_data[4]) / 100, # convert back from kobo
-                    'created_at': plan_data[5],
+                    'slot': plan_data[4],
+                    'guest_pass': plan_data[5],
+                    'price': float(plan_data[6]) / 100, # convert back from kobo
+                    'created_at': plan_data[7],
                 }
 
                 plan = Plan(kwargs=plan_data_obj, using=using)
@@ -217,8 +234,8 @@ class Plan(InitDB):
             
             return plans
         except Exception as err:
-            log_to_file('Plan', 'Error', f'Error getting plan from db')
-            log_error_to_file('Plan', 'Error', f'Error getting plan from db')
+            log_to_file('Plan', 'Error', f"Error fetching plan @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+            log_error_to_file('Plan', 'Error', f"Error fetching plan @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             log_error_to_file('Plan', 'Error', f'{err}')
             Notification.send_notification(err)
             return None
@@ -256,8 +273,10 @@ class Plan(InitDB):
                         'plan_name': plan_data[1],
                         'duration': plan_data[2],
                         'plan_type': plan_data[3],
-                        'price': float(plan_data[4]) / 100, # convert back from kobo
-                        'created_at': plan_data[5],
+                        'slot': plan_data[4],
+                        'guest_pass': plan_data[5],
+                        'price': float(plan_data[6]) / 100, # convert back from kobo
+                        'created_at': plan_data[7],
                     }
 
                     plan = Plan(kwargs=plan_data_obj, using=using)
@@ -265,8 +284,8 @@ class Plan(InitDB):
 
                 return plans
         except Exception as err:
-            log_to_file('Plan', 'Error', f'Error getting plan from db')
-            log_error_to_file('Plan', 'Error', f'Error getting plan from db')
+            log_to_file('Plan', 'Error', f"Error fetching plan @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+            log_error_to_file('Plan', 'Error', f"Error fetching plan @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             log_error_to_file('Plan', 'Error', f'{err}')
             Notification.send_notification(err)
             return None
@@ -344,6 +363,30 @@ class Plan(InitDB):
 
     @classmethod
     def export_plans(cls, file_type, path, using=None):
-        export_helper(cls, file_type, path, 'plans_export', using=using)
+        plans, column_names = Plan.fetch_all(col_names=True, using=using)
+
+        column_names = column_names if column_names else None
+
+        # remove unnecessary data like subcription_id
+        formated_plans = []
+
+        for plan in plans:
+            plan = list(plan)
+            plan.pop(0)
+            formated_plans.append(plan)
+        
+        column_names.pop(0)
+
+        data = {
+            'entries': formated_plans,
+            'headers': column_names
+        }
+
+        export_helper(cls, file_type, path, data=data, name='plans_export', using=using)
         print('Export complete')
 
+
+# https://www.cargopal.tonisoft.co.ke/
+
+# Account: UAZ2MB
+# Username: mzansilogisticske@gmail.com       password mwanikistan11

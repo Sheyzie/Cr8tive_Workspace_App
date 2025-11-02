@@ -256,7 +256,8 @@ class TestPlan:
 
         one_plan = Plan.fetch_one(fetched_plans[1].plan_id, using=DB_NAME)
         assert one_plan.plan_name == '5 Slot'
-        assert one_plan.duration == 5
+        assert one_plan.duration == 1
+        print(one_plan.price)
         assert one_plan.price == 29000
 
         filter_by_name = Plan.filter_plan('daily', plan_type=True, using=DB_NAME)
@@ -472,5 +473,150 @@ class TestPayment:
 
         print('Test 4: Passed ✅')
 
-   
+
+class TestSubscription:
+
+    @classmethod
+    def start_test(cls):
+        print(f'Initializing Subscription Model with {Subscription(using=DB_NAME)._db}...')
+
+        cls._test_setup(cls)
+        cls._test_create_subscription(cls)
+        cls._test_update_subscription(cls)
+        cls._test_delete_subscription(cls)
+        cls._test_export_csv(cls)
+        cls._test_export_xlsx(cls)
+        cls._test_export_pdf(cls)
+
+    def _test_setup(self):
+        print('Setting up db with users, plan and payment')
+
+        for client in get_client():
+            new_client = Client(kwargs=client, using=DB_NAME)
+            new_client.get_id()
+            new_client.save_to_db()
+
+        fetched_clients = Client.fetch_all(using=DB_NAME)
+        assert len(fetched_clients) > 0
+
+        for plan in get_plan():
+            new_plan = Plan(kwargs=plan, using=DB_NAME)
+            new_plan.get_id()
+            new_plan.save_to_db()
+
+        fetched_plans = Plan.fetch_all(using=DB_NAME)
+        assert len(fetched_plans) > 0
+
+        for payment in get_payments():
+            new_payment = Payment(kwargs=payment, using=DB_NAME)
+            new_payment.get_id()
+            new_payment.save_to_db()
+
+        fetched_payments = Payment.fetch_all(using=DB_NAME)
+        assert len(fetched_payments) > 0
+
+        print('Setup complete ✅')
+
+    def _test_create_subscription(self):
+        print('\nTest 1: Creating Subscription from test data')
+
+        fetched_clients = Client.fetch_all(using=DB_NAME)
+        client = fetched_clients[0]
+
+        fetched_plans = Plan.fetch_all(using=DB_NAME)
+        plan = fetched_plans[0]
+
+        fetched_payments = Payment.fetch_all(using=DB_NAME)
+        payment = fetched_payments[0]
+
+        sub_obj = {
+            'plan': plan,
+            'client': client,
+            'payment': payment,
+            'plan_unit': 1,
+            'status': 'booked',
+        }
+
+        sub_obj2 = {
+            'plan': plan,
+            'client': client,
+            'payment': payment,
+            'plan_unit': 2,
+            'status': 'booked',
+        }
+
+        new_subscription = Subscription(kwargs=sub_obj, using=DB_NAME)
+        new_subscription.get_id()
+        new_subscription.save_to_db()
+
+        second_subscription = Subscription(kwargs=sub_obj2, using=DB_NAME)
+        second_subscription.get_id()
+        second_subscription.save_to_db()
+
+
+        refetch_subscription = Subscription.fetch_one(new_subscription.subscription_id, using=DB_NAME)
+
+        assert new_subscription.subscription_id == refetch_subscription.subscription_id
+
+        print('Test 1: Passed ✅')
+
+    def _test_update_subscription(self):
+        print('\nTest 2: Updating subscriptions in DB')
+
+        fetched_subscriptions = Subscription.fetch_all(using=DB_NAME)
+
+        assert len(fetched_subscriptions) > 0
+
+        one_subscription = fetched_subscriptions[0]
+        
+        one_subscription.status = 'running'
+
+        one_subscription.update()
+    
+        one_subscription_refetched = Subscription.fetch_one(one_subscription.subscription_id, using=DB_NAME)
+
+        assert one_subscription_refetched.status == one_subscription.status
+
+        print('Test 2: Passed ✅')
+
+    def _test_delete_subscription(self):
+
+        print('\nTest 3: Delete Subscription in DB')
+
+        fetched_subscriptions = Subscription.fetch_all(using=DB_NAME)
+
+        assert len(fetched_subscriptions) > 0
+
+        one_subscription = fetched_subscriptions[0]
+
+        one_subscription.delete()
+    
+        one_subscription_refetched = Subscription.fetch_one(one_subscription.subscription_id, using=DB_NAME)
+
+        assert one_subscription_refetched is None
+
+        print('Test 3: Passed ✅')
+
+    def _test_export_csv(self):
+        print('\nTest 4: Export Subscription to csv')
+        path = app_config.BASE_DIR / 'tests'
+        Subscription.export_subscription('.csv', path, using=DB_NAME)
+        assert os.path.isfile(path / 'subscription_export.csv')
+        print('Test 4: Passed ✅')
+
+    def _test_export_xlsx(self):
+        print('\nTest 5: Export Subscription to xlsx')
+        path = app_config.BASE_DIR / 'tests'
+        Subscription.export_subscription('.xlsx', path, using=DB_NAME)
+        assert os.path.isfile(path / 'subscription_export.xlsx')
+        print('Test 5: Passed ✅')
+
+    def _test_export_pdf(self):
+        print('\nTest 6: Export Subscription to pdf')
+        path = app_config.BASE_DIR / 'tests'
+        Subscription.export_subscription('.pdf', path, using=DB_NAME)
+        assert os.path.isfile(app_config.BASE_DIR / 'tests/subscription_export.pdf')
+        print('Test 6: Passed ✅')
+
+
 

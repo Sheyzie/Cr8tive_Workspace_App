@@ -1,3 +1,4 @@
+import inspect
 import sqlite3
 from logs.utils import log_to_file, log_error_to_file
 from notification.notification import Notification
@@ -11,8 +12,8 @@ class DB:
         log_to_file('Database','Init', 'Initializing connection')
         conn = None
         if not using:
-            log_error_to_file('Database', 'Error', 'No Database provided. Ensure DB config is set')
-            log_to_file('Database', 'Error', 'No Database provided. Ensure DB config is set')
+            log_error_to_file('Database', 'Error', f"No Database provided. Ensure DB config is set @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+            log_to_file('Database', 'Error', f"No Database provided. Ensure DB config is set @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             raise ValidationError('No Database provided. Ensure DB config is set')
         try:
             self._db = using + '.db'
@@ -22,8 +23,9 @@ class DB:
             conn.close()
             self.create_tables()
         except Exception as err:
-            log_error_to_file('Database', 'Error', f'Error connecting to {self._db}: {err}')
-            log_to_file('Database', 'Error', f'Error connecting to {self._db}')
+            log_error_to_file('Database', 'Error', f"Error connecting to {self._db} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+            log_error_to_file('Database', 'Error', f'{err}')
+            log_to_file('Database', 'Error', f"Error connecting to {self._db} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             if conn:
                 conn.close()
             Notification.send_notification(err)
@@ -40,7 +42,8 @@ class DB:
             log_to_file('Database','Connect', 'Connection established')
             return self.conn
         except Exception as err:
-            log_error_to_file('Database', 'Error', f'Error connecting to DB: {err}')
+            log_error_to_file('Database', 'Error', f"Error connecting to {self._db} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+            log_error_to_file('Database', 'Error', f'{err}')
             log_to_file('Database', 'Error', f'Error connecting to DB')
             Notification.send_notification(err)
             self.conn = None
@@ -75,9 +78,9 @@ class DB:
             ''')
             self.conn.commit()
         except Exception as err:
-            log_error_to_file('Database', 'Error', f'Error creating client table')
+            log_error_to_file('Database', 'Error', f"Error creating client table @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             log_error_to_file('Database', 'Error', f'{err}')
-            log_to_file('Database', 'Error', f'Error creating client table')
+            log_to_file('Database', 'Error', f"Error creating client table @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             Notification.send_notification(err)
 
     def _create_plan_table(self):
@@ -90,15 +93,17 @@ class DB:
                         plan_name TEXT NOT NULL,
                         duration INTEGER NOT NULL,
                         plan_type TEXT NOT NULL,
+                        slot INTEGER NOT NULL,
+                        guest_pass INTEGER NOT NULL,
                         price INTEGER NOT NULL,
                         created_at TEXT NOT NULL
                     );
             ''')
             self.conn.commit()
         except Exception as err:
-            log_error_to_file('Database', 'Error', f'Error creating plan table')
+            log_error_to_file('Database', 'Error', f"Error creating plan table @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             log_error_to_file('Database', 'Error', f'{err}')
-            log_to_file('Database', 'Error', f'Error creating plan table')
+            log_to_file('Database', 'Error', f"Error creating plan table @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             Notification.send_notification(err)
 
 
@@ -118,9 +123,9 @@ class DB:
             ''')
             self.conn.commit()
         except Exception as err:
-            log_error_to_file('Database', 'Error', f'Error creating payment table')
+            log_error_to_file('Database', 'Error', f"Error creating payment table @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             log_error_to_file('Database', 'Error', f'{err}')
-            log_to_file('Database', 'Error', f'Error creating payment table')
+            log_to_file('Database', 'Error', f"Error creating payment table @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             Notification.send_notification(err)
 
     def _create_subscription_table(self):
@@ -133,7 +138,8 @@ class DB:
                         plan_id TEXT NOT NULL,
                         client_id TEXT NOT NULL,
                         payment_id TEXT NOT NULL,
-                        expiration TEXT NOT NULL,
+                        plan_unit INTEGER NOT NULL,
+                        expiration_date TEXT NOT NULL,
                         status TEXT NOT NULL,
                         created_at TEXT NOT NULL,
                         updated_at TEXT NOT NULL,
@@ -144,9 +150,9 @@ class DB:
             ''')
             self.conn.commit()
         except Exception as err:
-            log_error_to_file('Database', 'Error', f'Error creating subscription table')
+            log_error_to_file('Database', 'Error', f"Error creating subscription table @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             log_error_to_file('Database', 'Error', f'{err}')
-            log_to_file('Database', 'Error', f'Error creating subscription table')
+            log_to_file('Database', 'Error', f"Error creating subscription table @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             Notification.send_notification(err)
 
     def _create_visit_table(self):
@@ -164,9 +170,9 @@ class DB:
             ''')
             self.conn.commit()
         except Exception as err:
-            log_error_to_file('Database', 'Error', f'Error creating visit table')
+            log_error_to_file('Database', 'Error', f"Error creating visit table @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             log_error_to_file('Database', 'Error', f'{err}')
-            log_to_file('Database', 'Error', f'Error creating visit table')
+            log_to_file('Database', 'Error', f"Error creating visit table @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             Notification.send_notification(err)
 
     def _create_assigned_client_table(self):
@@ -184,9 +190,9 @@ class DB:
             ''')
             self.conn.commit()
         except Exception as err:
-            log_error_to_file('Database', 'Error', f'Error creating assigned_client table')
+            log_error_to_file('Database', 'Error', f"Error creating assigned_client table @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             log_error_to_file('Database', 'Error', f'{err}')
-            log_to_file('Database', 'Error', f'Error creating assigned_client table')
+            log_to_file('Database', 'Error', f"Error creating assigned_client table @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             Notification.send_notification(err)
 
     def save_to_db(self):

@@ -1,4 +1,5 @@
 import time
+import inspect
 from database.db import InitDB
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
@@ -125,9 +126,9 @@ class Payment(InitDB):
                 self.conn.commit()
                 self.conn.close()
             except ValueError as err:
-                log_error_to_file('Payment', 'Error', f'Error saving payment')
+                log_error_to_file('Payment', 'Error', f"Error saving payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
                 log_error_to_file('Payment', 'Error', f'{err}')
-                log_to_file('Payment', 'Error', f'Error saving payment')
+                log_to_file('Payment', 'Error', f"Error saving payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
                 Notification.send_notification(err)
 
     def update(self):
@@ -148,9 +149,9 @@ class Payment(InitDB):
                 self.conn.commit()
                 self.conn.close()
             except Exception as err:
-                log_error_to_file('Payment', 'Error', f'Error deleting payment')
+                log_error_to_file('Payment', 'Error', f"Error deleting payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
                 log_error_to_file('Payment', 'Error', f'{err}')
-                log_to_file('Payment', 'Error', f'Error deleting payment')
+                log_to_file('Payment', 'Error', f"Error deleting payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
                 Notification.send_notification(err)
 
     @classmethod
@@ -182,8 +183,8 @@ class Payment(InitDB):
             else:
                 return None
         except Exception as err:
-            log_to_file('Payment', 'Error', f'Error getting payment from db')
-            log_error_to_file('Payment', 'Error', f'Error getting payment from db')
+            log_to_file('Payment', 'Error', f"Error fetching payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+            log_error_to_file('Payment', 'Error', f"Error fetching payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             log_error_to_file('Payment', 'Error', f'{err}')
             return None
 
@@ -216,8 +217,8 @@ class Payment(InitDB):
             
             return payments
         except Exception as err:
-            log_to_file('Payment', 'Error', f'Error getting payment from db')
-            log_error_to_file('Payment', 'Error', f'Error getting payment from db')
+            log_to_file('Payment', 'Error', f"Error fetching payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+            log_error_to_file('Payment', 'Error', f"Error fetching payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             log_error_to_file('Payment', 'Error', f'{err}')
             Notification.send_notification(err)
             return None
@@ -268,8 +269,8 @@ class Payment(InitDB):
 
                 return payments
         except Exception as err:
-            log_to_file('Payment', 'Error', f'Error getting payments from db')
-            log_error_to_file('Payments', 'Error', f'Error getting payments from db')
+            log_to_file('Payment', 'Error', f"Error fetching payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+            log_error_to_file('Payments', 'Error', f"Error fetching payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             log_error_to_file('Payments', 'Error', f'{err}')
             return None
 

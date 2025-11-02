@@ -1,5 +1,6 @@
 import os
 import uuid
+import inspect
 from logs.utils import log_to_file, log_error_to_file
 from notification.notification import Notification
 
@@ -25,9 +26,9 @@ def generate_id(model: str, cursor) -> str:
             if not entry:
                 id_exist = False
         except Exception as err:
-            log_error_to_file(model.capitalize(), 'Error', f"Error generating ID @ {__name__} 'line 27'")
+            log_error_to_file(model.capitalize(), 'Error', f"Error generating ID @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             log_error_to_file(model.capitalize(), 'Error', f'{err}')
-            log_to_file(model.capitalize(), 'Error', f"Error generating ID @ {__name__} 'line 29'")
+            log_to_file(model.capitalize(), 'Error', f"Error generating ID @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             return None
     return id_string
 
@@ -48,7 +49,7 @@ def insert_to_db(model: str, cursor, values, many=False) -> None:
         '''
     elif model.lower() == 'plan':
         query = '''
-            INSERT INTO plan VALUES (?, ?, ?, ?, ?, ?);
+            INSERT INTO plan VALUES (?, ?, ?, ?, ?, ?, ?, ?);
         '''
     elif model.lower() == 'payment':
         query = '''
@@ -56,7 +57,7 @@ def insert_to_db(model: str, cursor, values, many=False) -> None:
         '''
     elif model.lower() == 'subscription':
         query = '''
-            INSERT INTO subscription VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+            INSERT INTO subscription VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
         '''
     elif model.lower() == 'visit':
         query = '''
@@ -75,9 +76,9 @@ def insert_to_db(model: str, cursor, values, many=False) -> None:
         else:
             cursor.execute(query, values)
     except Exception as err:
-        log_error_to_file(model.capitalize(), 'Error', f"Error inserting {model.lower()} from db @ {__name__} 'line 77'")
+        log_error_to_file(model.capitalize(), 'Error', f"Error inserting into {model.lower()} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
         log_error_to_file(model.capitalize(), 'Error', f'{err}')
-        log_to_file(model.capitalize(), 'Error',f"Error inserting {model.lower()} from db @ {__name__} 'line 79'")
+        log_to_file(model.capitalize(), 'Error',f"Error inserting into {model.lower()} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
         Notification.send_notification(err)
 
 def update_in_db(model: str, cursor, values) -> None:
@@ -98,7 +99,7 @@ def update_in_db(model: str, cursor, values) -> None:
         '''
     elif model.lower() == 'plan':
         query = '''
-            UPDATE plan SET plan_name = ?, duration = ?, plan_type = ?, price = ? WHERE plan_id = ?;
+            UPDATE plan SET plan_name = ?, duration = ?, plan_type = ?, slot = ?, guest_pass = ?, price = ? WHERE plan_id = ?;
         '''
     elif model.lower() == 'payment':
         query = '''
@@ -106,17 +107,17 @@ def update_in_db(model: str, cursor, values) -> None:
         '''
     elif model.lower() == 'subscription':
         query = '''
-            UPDATE subscription SET plan_id = ?, client_id = ?, expiration = ?, status = ?, updated_at = ? WHERE subscription_id = ?;
-        '''
+            UPDATE subscription SET plan_id = ?, client_id = ?, payment_id = ?, plan_unit = ?, expiration_date = ?, status = ?, updated_at = ? WHERE subscription_id = ?;
+        ''' 
     else:
         raise ValueError('Invalid model argument')
 
     try:
         cursor.execute(query, values)
     except Exception as err:
-        log_error_to_file(model.capitalize(), 'Error', f"Error updating {model.lower()} from db @ {__name__} 'line 116'")
+        log_error_to_file(model.capitalize(), 'Error', f"Error updating {model.lower()} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
         log_error_to_file(model.capitalize(), 'Error', f'{err}')
-        log_to_file(model.capitalize(), 'Error', f"Error updating {model.lower()} from db @ {__name__} 'line 118'")
+        log_to_file(model.capitalize(), 'Error', f"Error updating {model.lower()} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
         Notification.send_notification(err)
 
 def fetch_one_entry(model: str, cursor, value, by_name=False, by_phone=False, by_email=False):
@@ -148,16 +149,12 @@ def fetch_one_entry(model: str, cursor, value, by_name=False, by_phone=False, by
     try:
         cursor.execute(query, (value,))
 
-        data = cursor.fetchone()
+        entry = cursor.fetchone()
     
-        if data:
-            log_to_file(model.capitalize(), 'Success', f"Fetch data from db @ {__name__} 'line 153'")
-            return data
-        else:
-            return None
+        return entry
     except Exception as err:
-        log_to_file(model.capitalize(), 'Error', f"Error getting {model.lower()} from db @ {__name__} 'line 158'")
-        log_error_to_file(model.capitalize(), 'Error', f"Error getting {model.lower()} from db @ {__name__} 'line 159'")
+        log_to_file(model.capitalize(), 'Error', f"Error fetching {model.lower()} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+        log_error_to_file(model.capitalize(), 'Error', f"Error fetching {model.lower()} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
         log_error_to_file(model.capitalize(), 'Error', f'{err}')
         return None
     
@@ -173,21 +170,18 @@ def fetch_all_entry(model: str, cursor, col_names=False):
 
     try:
         cursor.execute(query)
-
-        clients = cursor.fetchall()
+        entries = cursor.fetchall()
 
         if col_names:
             # Get column names
             column_names = [description[0] for description in cursor.description]
-            log_to_file(model.capitalize(), 'Success', f"Fetch data from db @ {__name__} 'line 183'")
-            
-            return (clients, column_names) if clients else []
+
+            return (entries, column_names)
     
-        log_to_file(model.capitalize(), 'Success', f"Fetch data from db @ {__name__} 'line 183'")
-        return clients if clients else []
+        return entries if entries else []
     except Exception as err:
-        log_to_file(model.capitalize(), 'Error', f"Error getting {model.lower()} from db @ {__name__} 'line 186'")
-        log_error_to_file(model.capitalize(), 'Error', f"Error getting {model.lower()} from db @ {__name__} 'line 187'")
+        log_to_file(model.capitalize(), 'Error', f"Error fetching {model.lower()} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+        log_error_to_file(model.capitalize(), 'Error', f"Error fetching {model.lower()} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
         log_error_to_file(model.capitalize(), 'Error', f'{err}')
         print(err)
         return None

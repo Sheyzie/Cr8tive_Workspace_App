@@ -1,4 +1,5 @@
 import time
+import inspect
 from database.db import InitDB
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
@@ -125,9 +126,10 @@ class Client(InitDB):
                 self.conn.commit()
                 self.conn.close()
             except ValueError as err:
-                log_error_to_file('Client', 'Error', f'Error saving client')
+                log_error_to_file('Client', 'Error', f"Error saving client @ {__name__} 'line {inspect.currentframe().f_lineno}'")
                 log_error_to_file('Client', 'Error', f'{err}')
-                log_to_file('Client', 'Error', f'Error saving client')
+                log_to_file('Client', 'Error', f"Error saving client @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+
                 Notification.send_notification(err)
                        
     def update(self):
@@ -148,9 +150,9 @@ class Client(InitDB):
                 self.conn.commit()
                 self.conn.close()
             except Exception as err:
-                log_error_to_file('Client', 'Error', f'Error deleting client')
+                log_error_to_file('Client', 'Error', f"Error deleting client @ {__name__} 'line {inspect.currentframe().f_lineno}'")
                 log_error_to_file('Client', 'Error', f'{err}')
-                log_to_file('Client', 'Error', f'Error deleting client')
+                log_to_file('Client', 'Error', f"Error deleting client @ {__name__} 'line {inspect.currentframe().f_lineno}'")
                 Notification.send_notification(err)
 
     @classmethod
@@ -184,9 +186,9 @@ class Client(InitDB):
             else:
                 return None
         except Exception as err:
-            log_error_to_file('Client', 'Error', f"Error getting client @ {__name__} 'line 163'")
+            log_error_to_file('Client', 'Error', f"Error fetching client @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             log_error_to_file('Client', 'Error', f'{err}')
-            log_to_file('Client', 'Error', f"Error getting client @ {__name__} 'line 163'")
+            log_to_file('Client', 'Error', f"Error fetching client @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             Notification.send_notification(err)
             return None
 
@@ -225,9 +227,9 @@ class Client(InitDB):
 
             return clients
         except Exception as err:
-            log_error_to_file('Client', 'Error', f"Error getting client @ {__name__} 'line 179'")
+            log_error_to_file('Client', 'Error', f"Error fetching client @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             log_error_to_file('Client', 'Error', f'{err}')
-            log_to_file('Client', 'Error', f"Error getting client @ {__name__} 'line 179'")
+            log_to_file('Client', 'Error', f"Error fetching client @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             Notification.send_notification(err)
             return None
 
@@ -278,9 +280,9 @@ class Client(InitDB):
 
                 return clients
             except Exception as err:
-                log_error_to_file('Client', 'Error', f'Error getting client')
+                log_error_to_file('Client', 'Error', f"Error fetching client @ {__name__} 'line {inspect.currentframe().f_lineno}'")
                 log_error_to_file('Client', 'Error', f'{err}')
-                log_to_file('Client', 'Error', f'Error getting client')
+                log_to_file('Client', 'Error', f"Error fetching client @ {__name__} 'line {inspect.currentframe().f_lineno}'")
                 Notification.send_notification(err)
                 return None
         
@@ -362,6 +364,26 @@ class Client(InitDB):
 
     @classmethod
     def export_clients(cls, file_type, path, using=None):
-        export_helper(cls, file_type, path, 'clients_export', using=using)
+
+        clients, column_names = Client.fetch_all(col_names=True, using=using)
+
+        column_names = column_names if column_names else None
+
+        # remove unnecessary data like subcription_id
+        formated_clients = []
+
+        for client in clients:
+            client = list(client)
+            client.pop(0)
+            formated_clients.append(client)
+        
+        column_names.pop(0)
+
+        data = {
+            'entries': formated_clients,
+            'headers': column_names
+        }
+
+        export_helper(cls, file_type, path, data=data, name='clients_export', using=using)
         print('Export complete')
         

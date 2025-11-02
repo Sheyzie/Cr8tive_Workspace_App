@@ -3,7 +3,7 @@ from exceptions.exception import ValidationError
 from utils.export_file import ExportManager
 
 
-def export_helper(cls, file_type, path, name, using=None):
+def export_helper(cls, file_type, path, data: dict[str, list]=None, name=None, using=None):
     ACCEPTED_TYPES = {'.csv', '.pdf', '.xlsx'}
 
     if file_type not in ACCEPTED_TYPES:
@@ -12,31 +12,38 @@ def export_helper(cls, file_type, path, name, using=None):
     file_path = Path(path)
     if not file_path.exists():
         raise ValidationError('Invalid path')
+    
+    if not name:
+        name = 'export'
 
     file = name + file_type
 
     file_name = file_path / file
    
-    clients, column_names = cls.fetch_all(col_names=True, using=using)
+    # clients, column_names = cls.fetch_all(col_names=True, using=using)
     
-    column_names = column_names if column_names else None
+    # column_names = column_names if column_names else None
 
-    # remove client_id and created_at
-    formated_clients = []
-    for client in clients:
-        client = list(client)
-        client.pop(0)
-        client.pop(-1)
-        formated_clients.append(client)
+    # # remove client_id and created_at
+    # formated_clients = []
+    # for client in clients:
+    #     client = list(client)
+    #     client.pop(0)
+    #     client.pop(-1)
+    #     formated_clients.append(client)
     
-    column_names.pop(0)
-    column_names.pop(-1)
+    # column_names.pop(0)
+    # column_names.pop(-1)
 
     manager = ExportManager(file_name, file_type)
 
+    if data:
+        headers: list = data.get('headers')
+        entries: list = data.get('entries')
+
     if file_type == '.csv':
-        manager.export_to_csv(formated_clients, column_names)
+        manager.export_to_csv(entries, headers)
     elif file_type == '.xlsx':
-        manager.export_to_excel(formated_clients, column_names)
+        manager.export_to_excel(entries, headers)
     elif file_type == '.pdf':
-        manager.export_to_pdf(formated_clients, column_names)
+        manager.export_to_pdf(entries, headers)
