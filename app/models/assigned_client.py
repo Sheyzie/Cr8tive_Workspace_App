@@ -1,16 +1,11 @@
 import time
 import inspect
+from typing import Self
 from database.db import InitDB
 from exceptions.exception import ValidationError
 from logs.utils import log_error_to_file, log_to_file
 from notification.notification import Notification
-from helpers.db_helpers import (
-    generate_id, 
-    insert_to_db, 
-    update_in_db, 
-    fetch_one_entry, 
-    fetch_all_entry
-)
+from helpers.db_helpers import insert_to_db
 
 
 class AssignedClient(InitDB):
@@ -27,8 +22,7 @@ class AssignedClient(InitDB):
         except ValidationError as err:
             Notification.send_notification(err)
 
-
-    def _get_from_kwargs(self, **kwargs):
+    def _get_from_kwargs(self, **kwargs) -> None:
         data = kwargs.get('kwargs')
         subscription_id = data.get('subscription_id')
         if subscription_id:
@@ -42,7 +36,7 @@ class AssignedClient(InitDB):
         if created_at:
             self.created_at = created_at
 
-    def _validate(self, check_id=False):
+    def _validate(self) -> None:
         if not self.subscription_id:
             raise ValidationError('Subscription ID is required')
         if not self.client_id:
@@ -51,7 +45,7 @@ class AssignedClient(InitDB):
             raise ValidationError('Created at field  is required')
 
     @classmethod    
-    def save_to_db(cls, sub_id: str, client_id: str, using: str=None):
+    def save_to_db(cls, sub_id: str, client_id: str, using: str=None) -> None:
         if using:
             # give class the datebase property to enable db connection
             cls._db = using
@@ -71,7 +65,7 @@ class AssignedClient(InitDB):
             Notification.send_notification(err)
 
     @classmethod
-    def delete_user(cls, sub_id: str, client_id: str, using: str=None):
+    def delete_user(cls, sub_id: str, client_id: str, using: str=None) -> None:
         if using:
             # give class the datebase property to enable db connection
             cls._db = using
@@ -93,7 +87,7 @@ class AssignedClient(InitDB):
             Notification.send_notification(err)
 
     @classmethod
-    def get_user(cls, sub_id, client_id, using=None):
+    def get_user(cls, sub_id, client_id, using=None) -> Self | None:
         if using:
             # give class the datebase property to enable db connection
             cls._db = using
@@ -117,7 +111,7 @@ class AssignedClient(InitDB):
             return None
 
     @classmethod  
-    def filter_sub(cls, sub_id, using=None):
+    def filter_sub(cls, sub_id: str, using: str=None) -> list:
         if using:
             # give class the datebase property to enable db connection
             cls._db = using

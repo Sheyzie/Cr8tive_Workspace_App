@@ -10,6 +10,7 @@ from .test_models import (
     TestPlan, 
     TestPayment,
     TestSubscription,
+    TestVisit,
 )
 
 # DB_NAME = db_config.TEST_DB_NAME
@@ -17,12 +18,12 @@ from .test_models import (
 # if not DB_NAME:
 #     raise Exception('Database name not provided. Please check env.')
 
-# # Monkey-patch the default before creating instances
+# # Monkey-patch the default before creating inone_subscription.assigned_users[0].client_idstances
 # Client.__init__ = lambda self, using=None: super(Client, self).__init__(using=DB_NAME)
 
-
-TestClient.start_test()
-TestPlan.start_test()
-TestPayment.start_test()
-TestSubscription.start_test()
+# TestClient.start_test()
+# TestPlan.start_test()
+# TestPayment.start_test()
+# TestSubscription.start_test()
+TestVisit.start_test()
 

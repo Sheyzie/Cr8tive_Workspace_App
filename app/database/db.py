@@ -164,7 +164,7 @@ class DB:
                         subscription_id TEXT NOT NULL,
                         timestamp TEXT NOT NULL,
                         client_id TEXT NOT NULL,
-                        FOREIGN KEY (subscription_id) REFERENCES subscription(subscription_id) ON DELETE CASCADE ON UPDATE NO ACTION
+                        FOREIGN KEY (subscription_id) REFERENCES subscription(subscription_id) ON DELETE CASCADE ON UPDATE NO ACTION,
                         FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE CASCADE ON UPDATE NO ACTION
                     );
             ''')
@@ -184,7 +184,7 @@ class DB:
                         subscription_id TEXT NOT NULL,
                         client_id TEXT NOT NULL,
                         created_at TEXT NOT NULL,
-                        FOREIGN KEY (subscription_id) REFERENCES subscription(subscription_id) ON DELETE CASCADE ON UPDATE NO ACTION
+                        FOREIGN KEY (subscription_id) REFERENCES subscription(subscription_id) ON DELETE CASCADE ON UPDATE NO ACTION,
                         FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE CASCADE ON UPDATE NO ACTION
                     );
             ''')

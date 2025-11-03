@@ -1,5 +1,6 @@
 import time
 import inspect
+from typing import Self
 from datetime import datetime, timedelta
 from database.db import InitDB
 from exceptions.exception import ValidationError, GenerationError
@@ -19,6 +20,7 @@ from .plan import Plan
 from .client import Client
 from .payment import Payment
 from .assigned_client import AssignedClient
+from .visit import Visit
 
 
 class Subscription(InitDB):
@@ -44,7 +46,7 @@ class Subscription(InitDB):
         except ValidationError as err:
             Notification.send_notification(err)
 
-    def _get_from_kwargs(self, **kwargs):
+    def _get_from_kwargs(self, **kwargs) -> None:
         data = kwargs.get('kwargs')
         subscription_id = data.get('subscription_id')
         if subscription_id:
@@ -86,8 +88,8 @@ class Subscription(InitDB):
         if updated_at:
             self.updated_at = updated_at
 
-    def _validate(self, check_id=False):
-        STATUS_TYPE = ['booked', 'running', 'expired']
+    def _validate(self, check_id=False) -> None:
+        STATUS_TYPE = ['booked', 'running', 'expired', 'exhausted']
         if not self.plan:
             raise ValidationError('Plan is required')
         if not self.client:
@@ -105,7 +107,7 @@ class Subscription(InitDB):
             if not self.expiration_date:
                 raise ValidationError('Expiration Date is required')
         
-    def get_id(self):
+    def get_id(self) -> None:
         self._connect_to_db()
         if self.conn:
             cursor = self.conn.cursor()
@@ -121,7 +123,7 @@ class Subscription(InitDB):
             cursor.close()
             self.conn.close()
 
-    def save_to_db(self, update=False):
+    def save_to_db(self, update=False) -> None:
         self._connect_to_db()
         if self.conn:
             cursor = self.conn.cursor()
@@ -146,7 +148,7 @@ class Subscription(InitDB):
                 log_to_file('Subscription', 'Error', f"Error saving subscription @ {__name__} 'line {inspect.currentframe().f_lineno}'")
                 Notification.send_notification(err)
 
-    def _set_expiration(self):
+    def _set_expiration(self) -> None:
         match(self.plan.plan_type):
             case 'hourly':
                 expiration_date = datetime.now() + timedelta(hours=(self.plan.duration * self.plan_unit))
@@ -163,7 +165,7 @@ class Subscription(InitDB):
                 expiration_date = datetime.now() + timedelta(days=(self.plan.duration * self.plan_unit * 365))
         self.expiration_date = expiration_date.strftime('%Y-%m-%d %H:%M:%S')
 
-    def update(self):
+    def update(self) -> None:
         self._validate(check_id=True)
         self.save_to_db(update=True)
 
@@ -186,21 +188,51 @@ class Subscription(InitDB):
                 log_to_file('Subscription', 'Error', f"Error deleting subscription @ {__name__} 'line {inspect.currentframe().f_lineno}'")
                 Notification.send_notification(err)
 
-    def set_assigned_client(self, client: Client):
+    def set_assigned_client(self, client: Client) -> None:
         if client not in self.assigned_users:
             AssignedClient.save_to_db(sub_id=self.subscription_id, client_id=client.client_id, using=self._db)
             self.assigned_users.append(client)
 
-    def remove_assigned_client(self, client: Client):
+    def remove_assigned_client(self, client: Client) -> None:
         if not len(self.assigned_users) > 0:
-            return
+            return None
         
         if client in self.assigned_users:
             AssignedClient.delete_user(sub_id=self.subscription_id,client_id=client.client_id, using=self._db)
             self.assigned_users.remove(client)
 
+    def is_user(self, client: Client) -> bool:
+        return self.client == client or client in self.assigned_users
+    
+    def log_user_to_visit(self, user: Client) -> None:
+        is_user: bool = self.is_user(user)
+        
+        if not is_user:
+            Notification.send_notification(f'User: {user} is not a listed assigned user for this subscription')
+            return
+        # client = Client.fetch_one(user.client_id, using=self._db)
+        # if client is None:
+        #     Notification.send_notification(f'User: {user} does not exist please remove user from assigned user')
+        #     return
+        
+        Visit.save_to_db(self.subscription_id, user.client_id, using=self._db)
+
+    def remove_user_visit(self, user: Client, date_value: str) -> None:
+        # date_value is expecting date in YYYY-MM-DD format
+        is_user: bool = self.is_user(user)
+        
+        if not is_user:
+            Notification.send_notification(f'User: {user} is not a listed assigned user for this subscription')
+            return
+        # client = Client.fetch_one(user.client_id, using=self._db)
+        # if client is None:
+        #     Notification.send_notification(f'User: {user} does not exist please remove user from assigned user')
+        #     return
+        
+        Visit.delete(self.subscription_id, user.client_id, date_value, using=self._db)
+
     @classmethod
-    def fetch_one(cls, sub_id, using=None):
+    def fetch_one(cls, sub_id, using=None) -> Self | None:
         if using:
             # give class the datebase property to enable db connection
             cls._db = using
@@ -228,9 +260,10 @@ class Subscription(InitDB):
 
                 assigned_users = []
                 if len(assigned_clients_id) > 0:
-                    for assigned_client_id in assigned_clients_id:
-                        assigned_user = Client.fetch_one(assigned_client_id, using=using)
-                        assigned_users.append(assigned_user)
+                    for assigned_client_id_tuple in assigned_clients_id:
+                        assigned_user = Client.fetch_one(assigned_client_id_tuple[0], using=using)
+                        if assigned_user is not None:
+                            assigned_users.append(assigned_user)
 
                 # screat subscription data obj
                 sub_data_obj = {
@@ -258,7 +291,7 @@ class Subscription(InitDB):
             return None
 
     @classmethod
-    def fetch_all(cls, col_names=False, using: str=None):
+    def fetch_all(cls, col_names=False, using: str=None) -> list:
         if using:
             # give class the datebase property to enable db connection
             cls._db = using
@@ -289,12 +322,12 @@ class Subscription(InitDB):
                 payment = Payment.fetch_one(payment_id, using=using)
 
                 assigned_clients_id = AssignedClient.filter_sub(sub_id=subscription_data[0], using=using)
-
                 assigned_users = []
                 if len(assigned_clients_id) > 0:
-                    for assigned_client_id in assigned_clients_id:
-                        assigned_user = Client.fetch_one(assigned_client_id, using=using)
-                        assigned_users.append(assigned_user)
+                    for assigned_client_id_tuple in assigned_clients_id:
+                        assigned_user = Client.fetch_one(assigned_client_id_tuple[0], using=using)
+                        if assigned_user is not None:
+                            assigned_users.append(assigned_user)
                 
                 # create subscription data obj
                 subscription_data_obj = {
@@ -326,7 +359,7 @@ class Subscription(InitDB):
             return None
 
     @classmethod  
-    def filter_sub(cls, value, by_user=False, by_plan=False, by_payment=False, created_at=False, col_names=False, using=None):
+    def filter_sub(cls, value, by_user=False, by_plan=False, by_payment=False, created_at=False, col_names=False, using=None) -> list:
         if using:
             # give class the datebase property to enable db connection
            cls._db = using
@@ -380,9 +413,10 @@ class Subscription(InitDB):
 
                     assigned_users = []
                     if len(assigned_clients_id) > 0:
-                        for assigned_client_id in assigned_clients_id:
-                            assigned_user = Client.fetch_one(assigned_client_id, using=using)
-                            assigned_users.append(assigned_user)
+                        for assigned_client_id_tuple in assigned_clients_id:
+                            assigned_user = Client.fetch_one(assigned_client_id_tuple[0], using=using)
+                            if assigned_user is not None:
+                                assigned_users.append(assigned_user)
 
                     # screat subscription data obj
                     subscription_data_obj = {
@@ -416,7 +450,7 @@ class Subscription(InitDB):
             return None
 
     @classmethod
-    def export_subscription(cls, file_type, path, value=None, by_user=False, by_month=False, by_year=False, using: str=None):
+    def export_subscription(cls, file_type, path, value=None, by_user=False, by_month=False, by_year=False, using: str=None) -> None:
         if not value:
             subscriptions, column_names = Subscription.fetch_all(col_names=True, using=using)
     

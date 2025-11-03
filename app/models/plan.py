@@ -1,5 +1,6 @@
 import time
 import inspect
+from typing import Self
 from database.db import InitDB
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
@@ -35,10 +36,10 @@ class Plan(InitDB):
         except ValidationError as err:
             Notification.send_notification(err)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.plan_name
 
-    def _get_from_kwargs(self, **kwargs):
+    def _get_from_kwargs(self, **kwargs) -> None:
         data = kwargs.get('kwargs')
         plan_id = data.get('plan_id')
         if plan_id:
@@ -72,7 +73,7 @@ class Plan(InitDB):
         if created_at:
             self.created_at = created_at
 
-    def _validate(self, check_id=False):
+    def _validate(self, check_id=False) -> None:
         VALID_PLAN_TYPES = {'hourly', 'daily', 'weekly', 'monthly', 'half-year', 'yearly'}
 
         if not self.plan_name:
@@ -98,7 +99,7 @@ class Plan(InitDB):
             if not self.plan_id:
                 raise ValidationError('Plan ID is required')
         
-    def get_id(self):
+    def get_id(self) -> None:
         self._connect_to_db()
         if self.conn:
             cursor = self.conn.cursor()
@@ -114,7 +115,7 @@ class Plan(InitDB):
             cursor.close()
             self.conn.close()
    
-    def save_to_db(self, update=False):
+    def save_to_db(self, update=False) -> None:
         self._connect_to_db()
         if self.conn:
             cursor = self.conn.cursor()
@@ -139,11 +140,11 @@ class Plan(InitDB):
                 log_to_file('Plan', 'Error', f"Error saving plan @ {__name__} 'line {inspect.currentframe().f_lineno}'")
                 Notification.send_notification(err)
             
-    def update(self):
+    def update(self) -> None:
         self._validate(check_id=True)
         self.save_to_db(update=True)
 
-    def delete(self):
+    def delete(self) -> None:
         self._validate(check_id=True)
         self._connect_to_db()
         if self.conn:
@@ -163,7 +164,7 @@ class Plan(InitDB):
                 Notification.send_notification(err)
 
     @classmethod
-    def fetch_one(cls, value, by_name=False, using=None):
+    def fetch_one(cls, value, by_name=False, using=None) -> Self | None:
         if using:
             # give class the datebase property to enable db connection
             cls._db = using
@@ -200,7 +201,7 @@ class Plan(InitDB):
             return None
 
     @classmethod
-    def fetch_all(cls, col_names=False, using: str=None):
+    def fetch_all(cls, col_names=False, using: str=None) -> list:
         if using:
             # give class the datebase property to enable db connection
             cls._db = using
@@ -241,7 +242,7 @@ class Plan(InitDB):
             return None
 
     @classmethod  
-    def filter_plan(cls, value, plan_type=False, by_date=False, using=None):
+    def filter_plan(cls, value, plan_type=False, by_date=False, using=None) -> list:
         if using:
             # give class the datebase property to enable db connection
             cls._db = using
@@ -291,7 +292,7 @@ class Plan(InitDB):
             return None
      
     @classmethod
-    def import_plans(cls, filepath, file_type, has_header, using=None):
+    def import_plans(cls, filepath, file_type, has_header, using=None) -> None:
         manager = ImportManager(file_path=filepath, file_type=file_type, has_header=has_header)
         plans = []
         failed = []
@@ -362,7 +363,7 @@ class Plan(InitDB):
                     Notification.send_notification(err)
 
     @classmethod
-    def export_plans(cls, file_type, path, using=None):
+    def export_plans(cls, file_type, path, using=None) -> None:
         plans, column_names = Plan.fetch_all(col_names=True, using=using)
 
         column_names = column_names if column_names else None
@@ -377,9 +378,16 @@ class Plan(InitDB):
         
         column_names.pop(0)
 
+        formatted_header = []
+        
+        for header in column_names:
+            if file_type == '.pdf':
+                header = header.replace('_', ' ').upper()
+            formatted_header.append(header)
+
         data = {
             'entries': formated_plans,
-            'headers': column_names
+            'headers': formatted_header
         }
 
         export_helper(cls, file_type, path, data=data, name='plans_export', using=using)

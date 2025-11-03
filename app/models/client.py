@@ -1,5 +1,6 @@
 import time
 import inspect
+from typing import Self
 from database.db import InitDB
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
@@ -40,7 +41,7 @@ class Client(InitDB):
     def __str__(self):
         return f'{self.first_name} {self.last_name}' if self.first_name else self.company_name
 
-    def _get_from_kwargs(self, **kwargs):
+    def _get_from_kwargs(self, **kwargs) -> None:
         data = kwargs.get('kwargs')
         client_id = data.get('client_id')
         if client_id:
@@ -70,7 +71,7 @@ class Client(InitDB):
         if created_at:
             self.created_at = created_at
 
-    def _validate(self, check_id=False):
+    def _validate(self, check_id=False) -> None:
         # validating first_name and company name
         if not self.first_name and not self.company_name:
             raise ValidationError('First Name and Company Name cannot both be empty')
@@ -92,7 +93,7 @@ class Client(InitDB):
             if not self.client_id:
                 raise ValidationError('Client ID cannot be empty')
             
-    def get_id(self):
+    def get_id(self) -> None:
         self._connect_to_db()
         if self.conn:
             cursor = self.conn.cursor()
@@ -108,7 +109,7 @@ class Client(InitDB):
             cursor.close()
             self.conn.close()
 
-    def save_to_db(self, update=False):
+    def save_to_db(self, update=False) -> None:
         self._connect_to_db()
         if self.conn:
             cursor = self.conn.cursor()
@@ -120,7 +121,13 @@ class Client(InitDB):
                     self.conn.commit()
                     self.conn.close()
                     return
-             
+
+                # check if user already exist with the phone number
+                client_exist = Client.fetch_one(self.phone, True, using=self._db)
+                if client_exist:
+                    log_to_file('Client', 'Fail', f"User already exist with {self.phone} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+                    Notification.send_notification(f'User already exist with {self.phone}')
+                    return
                 values = (self.client_id, self.first_name, self.last_name, self.company_name, self.email, self.phone, created_at)
                 insert_to_db('client', cursor, values)
                 self.conn.commit()
@@ -132,11 +139,11 @@ class Client(InitDB):
 
                 Notification.send_notification(err)
                        
-    def update(self):
+    def update(self) -> None:
         self._validate(check_id=True)
         self.save_to_db(update=True)
 
-    def delete(self):
+    def delete(self) -> None:
         self._validate(check_id=True)
         self._connect_to_db()
         if self.conn:
@@ -156,7 +163,7 @@ class Client(InitDB):
                 Notification.send_notification(err)
 
     @classmethod
-    def fetch_one(cls, value, by_phone=False, by_email=False, using=None):
+    def fetch_one(cls, value, by_phone=False, by_email=False, using=None) -> Self | None:
         if using:
             # give class the datebase property to enable db connection
             cls._db = using
@@ -193,7 +200,7 @@ class Client(InitDB):
             return None
 
     @classmethod
-    def fetch_all(cls, col_names=False, using=None):
+    def fetch_all(cls, col_names=False, using=None) -> list:
         if using:
             # give class the datebase property to enable db connection
             cls._db = using
@@ -234,7 +241,7 @@ class Client(InitDB):
             return None
 
     @classmethod  
-    def filter_client(cls, value, name=False, by_date=False, using=None):
+    def filter_client(cls, value, name=False, by_date=False, using=None) -> list:
         if using:
             # give class the datebase property to enable db connection
             cls._db = using
@@ -379,9 +386,17 @@ class Client(InitDB):
         
         column_names.pop(0)
 
+        formatted_header = []
+        
+        for header in column_names:
+            if file_type == '.pdf':
+                header = header.replace('_', ' ').upper()
+            formatted_header.append(header)
+            
+
         data = {
             'entries': formated_clients,
-            'headers': column_names
+            'headers': formatted_header
         }
 
         export_helper(cls, file_type, path, data=data, name='clients_export', using=using)

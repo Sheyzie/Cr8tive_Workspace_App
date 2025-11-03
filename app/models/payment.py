@@ -1,5 +1,6 @@
 import time
 import inspect
+from typing import Self
 from database.db import InitDB
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
@@ -32,10 +33,10 @@ class Payment(InitDB):
         except ValidationError as err:
             Notification.send_notification(err)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'Total Price: {self.total_price}, Amount Paid: {self.amount_paid}'
 
-    def _get_from_kwargs(self, **kwargs):
+    def _get_from_kwargs(self, **kwargs) -> None:
         data = kwargs.get('kwargs')
         payment_id = data.get('payment_id')
         if payment_id:
@@ -61,7 +62,7 @@ class Payment(InitDB):
         if created_at:
             self.created_at = created_at
 
-    def _validate(self, check_id=False):
+    def _validate(self, check_id=False) -> None:
         if check_id:
             if not self.payment_id:
                 raise ValidationError('Payment ID is required')
@@ -90,7 +91,7 @@ class Payment(InitDB):
         if not isinstance(self.amount_paid, (int, float)):
             raise ValidationError('Payment amount_paid cannot be letters')
     
-    def get_id(self):
+    def get_id(self) -> None:
         self._connect_to_db()
         if self.conn:
             cursor = self.conn.cursor()
@@ -106,7 +107,7 @@ class Payment(InitDB):
             cursor.close()
             self.conn.close()
     
-    def save_to_db(self, update=False):
+    def save_to_db(self, update=False) -> None:
         self._connect_to_db()
         if self.conn:
             cursor = self.conn.cursor()
@@ -131,11 +132,11 @@ class Payment(InitDB):
                 log_to_file('Payment', 'Error', f"Error saving payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
                 Notification.send_notification(err)
 
-    def update(self):
+    def update(self) -> None:
         self._validate(check_id=True)
         self.save_to_db(update=True)
 
-    def delete(self):
+    def delete(self) -> None:
         self._validate(check_id=True)
         self._connect_to_db()
         if self.conn:
@@ -155,7 +156,7 @@ class Payment(InitDB):
                 Notification.send_notification(err)
 
     @classmethod
-    def fetch_one(cls, value, by_name=False, using: str=None):
+    def fetch_one(cls, value, by_name=False, using: str=None) -> Self | None:
         if using:
             # give class the datebase property to enable db connection
             cls._db = using
@@ -189,7 +190,7 @@ class Payment(InitDB):
             return None
 
     @classmethod
-    def fetch_all(cls, using: str=None):
+    def fetch_all(cls, using: str=None) -> list:
         if using:
             # give class the datebase property to enable db connection
             cls._db = using
@@ -224,7 +225,7 @@ class Payment(InitDB):
             return None
 
     @classmethod  
-    def filter_payments(cls, value, by_amount=False, by_date=False, using=None):
+    def filter_payments(cls, value, by_amount=False, by_date=False, using=None) -> list:
         if using:
             # give class the datebase property to enable db connection
             cls._db = using

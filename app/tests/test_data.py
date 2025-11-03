@@ -48,7 +48,7 @@ plans = [
     },
     {
         'plan_name': '100 Slot',
-        'duration': 1,
+        'duration': 6,
         'plan_type': 'monthly',
         'slot': 100,
         'guest_pass': 7,
@@ -80,7 +80,7 @@ payments = [
     {
         'discount': 5,
         'tax': 7.5,
-        'total_price': 290000,
-        'amount_paid': 290000
+        'total_price': 29000,
+        'amount_paid': 29000
     }
 ]
