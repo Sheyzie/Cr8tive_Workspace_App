@@ -1,8 +1,12 @@
 import os
+import sys
 import uuid
 import inspect
 from logs.utils import log_to_file, log_error_to_file
 from notification.notification import Notification
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def generate_id(model: str, cursor) -> str:
@@ -26,9 +30,9 @@ def generate_id(model: str, cursor) -> str:
             if not entry:
                 id_exist = False
         except Exception as err:
-            log_error_to_file(model.capitalize(), 'Error', f"Error generating ID @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-            log_error_to_file(model.capitalize(), 'Error', f'{err}')
-            log_to_file(model.capitalize(), 'Error', f"Error generating ID @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+            logging.error(str(err))
+            sys.stderr.write(f'\n{err}\n')
+            sys.stderr.flush()
             return None
     return id_string
 
@@ -40,12 +44,12 @@ def insert_to_db(model: str, cursor, values, many=False) -> None:
 
     if len(values) == 0:
         raise ValueError('Insert values cannot be zero')
-
+  
     query = ''
 
     if model.lower() == 'client':
         query = '''
-            INSERT INTO client(client_id, first_name, last_name, company_name, email, phone, created_at) VALUES(?, ?, ?, ?, ?, ?, ?);
+            INSERT INTO client(client_id, first_name, last_name, company_name, email, phone, display_name, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);
         '''
     elif model.lower() == 'plan':
         query = '''
@@ -53,15 +57,23 @@ def insert_to_db(model: str, cursor, values, many=False) -> None:
         '''
     elif model.lower() == 'payment':
         query = '''
-            INSERT INTO payment VALUES (?, ?, ?, ?, ?, ?);
+            INSERT INTO payment(
+                            payment_id, 
+                            client_id, 
+                            subscription_id,
+                            amount,
+                            created_at,
+                            updated_at
+                        ) 
+            VALUES (?, ?, ?, ?, ?, ?);
         '''
     elif model.lower() == 'subscription':
         query = '''
-            INSERT INTO subscription VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+            INSERT INTO subscription VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         '''
     elif model.lower() == 'visit':
         query = '''
-            INSERT INTO visit VALUES (?, ?, ?);
+            INSERT INTO visit VALUES (?, ?, ?, ?);
         '''
     elif model.lower() == 'assigned_client':
         query = '''
@@ -76,10 +88,11 @@ def insert_to_db(model: str, cursor, values, many=False) -> None:
         else:
             cursor.execute(query, values)
     except Exception as err:
-        log_error_to_file(model.capitalize(), 'Error', f"Error inserting into {model.lower()} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-        log_error_to_file(model.capitalize(), 'Error', f'{err}')
-        log_to_file(model.capitalize(), 'Error',f"Error inserting into {model.lower()} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+        logger.error(str(err))
+        sys.stderr.write(f'\n{err}\n')
+        sys.stderr.flush()
         Notification.send_notification(err)
+        exit(1)
 
 def update_in_db(model: str, cursor, values) -> None:
     if not model:
@@ -94,7 +107,7 @@ def update_in_db(model: str, cursor, values) -> None:
 
     if model.lower() == 'client':    
         query = '''
-            UPDATE client SET first_name = ?, last_name = ?, company_name = ?, email = ?, phone = ? 
+            UPDATE client SET first_name = ?, last_name = ?, company_name = ?, email = ?, phone = ?, display_name = ?, updated_at = ?
             WHERE client_id = ?;
         '''
     elif model.lower() == 'plan':
@@ -103,11 +116,11 @@ def update_in_db(model: str, cursor, values) -> None:
         '''
     elif model.lower() == 'payment':
         query = '''
-            UPDATE payment SET discount = ?, tax = ?, total_price = ?, amount_paid = ? WHERE payment_id = ?;
+            UPDATE payment SET client_id = ?, subscription_id = ?, amount = ?, updated_at = ? WHERE payment_id = ?;
         '''
     elif model.lower() == 'subscription':
         query = '''
-            UPDATE subscription SET plan_id = ?, client_id = ?, payment_id = ?, plan_unit = ?, expiration_date = ?, status = ?, updated_at = ? WHERE subscription_id = ?;
+            UPDATE subscription SET plan_id = ?, client_id = ?, plan_unit = ?, expiration_date = ?,  discount = ?, discount_type = ?, vat = ?, status = ?, payment_status = ?, updated_at = ? WHERE subscription_id = ?;
         ''' 
     else:
         raise ValueError('Invalid model argument')
@@ -115,9 +128,9 @@ def update_in_db(model: str, cursor, values) -> None:
     try:
         cursor.execute(query, values)
     except Exception as err:
-        log_error_to_file(model.capitalize(), 'Error', f"Error updating {model.lower()} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-        log_error_to_file(model.capitalize(), 'Error', f'{err}')
-        log_to_file(model.capitalize(), 'Error', f"Error updating {model.lower()} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+        logging.error(str(err))
+        sys.stderr.write(f'\n{err}\n')
+        sys.stderr.flush()
         Notification.send_notification(err)
 
 def fetch_one_entry(model: str, cursor, value, by_name=False, by_phone=False, by_email=False):
@@ -127,6 +140,7 @@ def fetch_one_entry(model: str, cursor, value, by_name=False, by_phone=False, by
         raise ValueError('Invalid cursor object')
     if not value:
         raise ValueError('Value is required')
+    
     
     query = f'''
         SELECT * FROM {model.lower()} WHERE {model.lower()}_id = ?;
@@ -150,12 +164,11 @@ def fetch_one_entry(model: str, cursor, value, by_name=False, by_phone=False, by
         cursor.execute(query, (value,))
 
         entry = cursor.fetchone()
-    
         return entry
     except Exception as err:
-        log_to_file(model.capitalize(), 'Error', f"Error fetching {model.lower()} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-        log_error_to_file(model.capitalize(), 'Error', f"Error fetching {model.lower()} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-        log_error_to_file(model.capitalize(), 'Error', f'{err}')
+        logger.exception(str(err))
+        sys.stderr.write(f'\n{err}\n')
+        sys.stderr.flush()
         return None
     
 def fetch_all_entry(model: str, cursor, col_names=False):
@@ -180,16 +193,15 @@ def fetch_all_entry(model: str, cursor, col_names=False):
     
         return entries if entries else []
     except Exception as err:
-        log_to_file(model.capitalize(), 'Error', f"Error fetching {model.lower()} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-        log_error_to_file(model.capitalize(), 'Error', f"Error fetching {model.lower()} @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-        log_error_to_file(model.capitalize(), 'Error', f'{err}')
-        print(err)
+        logger.exception(str(err))
+        sys.stderr.write(f'\n{err}\n')
+        sys.stderr.flush()
         return None
 
 def delete_db(db_path, db: str):
-    if os.path.isfile(db_path / (db + '.db')):
+    if os.path.isfile(db_path / db):
         print(f'Deleting {db}')
-        os.remove(db_path / (db + '.db'))
+        os.remove(db_path / db)
 
 # def validate_model_data(model: str, data):
 #     fields = None

@@ -62,6 +62,11 @@ class ExportManager:
         # Create a PDF document
         pdf_file = str(self.file_name)
         doc = SimpleDocTemplate(pdf_file, pagesize=A4)
+        doc.leftMargin = 2
+        doc.rightMargin = 2
+        # 'leftMargin':inch,
+        # 'rightMargin':inch,
+        # 'topMargin':inch,
         elements = []
 
         # Create a Table

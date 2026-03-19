@@ -3,7 +3,7 @@ from exceptions.exception import ValidationError
 from utils.export_file import ExportManager
 
 
-def export_helper(cls, file_type, path, data: dict[str, list]=None, name=None, using=None):
+def export_helper(cls, file_type, path, data: dict[str, list]=None, name=None):
     ACCEPTED_TYPES = {'.csv', '.pdf', '.xlsx'}
 
     if file_type not in ACCEPTED_TYPES:

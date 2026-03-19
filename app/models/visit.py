@@ -5,100 +5,144 @@ from database.db import InitDB
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
 from helpers.export_helper import export_helper
+from helpers.db_helpers import generate_id
 from notification.notification import Notification
 from helpers.db_helpers import insert_to_db
 
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 class Visit(InitDB):
-    def __init__(self, using: str=None, **kwargs):
-        super().__init__(using=using)
-        self.subscription_id: str = None
-        self.client_id: str = None
+    def __init__(self, **kwargs):
+        super().__init__()
+        self.visit_id: str = None
+        self.subscription: str = None
+        self.client: str = None
         self.timestamp: str = None
         if kwargs:
-            data = kwargs.get('kwargs')
-            self._get_from_kwargs(kwargs=data)
+            self._get_from_kwargs(**kwargs)
         try:
             self._validate()
         except ValidationError as err:
+            self._reset_fields()
+            logger.error(str(err.message))
+            self.stderr.write('\033[31m' + str(err.message + '\033[0m\n'))
+            self.stderr.flush()
             Notification.send_notification(err)
+            exit(1)
 
+    def __str__(self):
+        return f'{self.client.get_diaplay_name()} visited on {self.timestamp}'
+
+    def _reset_fields(self):
+        self.subscription: str = None
+        self.client: str = None
+        self.timestamp: str = None
 
     def _get_from_kwargs(self, **kwargs) -> None:
-        data = kwargs.get('kwargs')
-        subscription_id = data.get('subscription_id')
-        if subscription_id:
-            self.subscription_id = subscription_id
+        from .client import Client
+        from .subscription import Subscription
+
+        visit_id = kwargs.get('visit_id')
+        if visit_id:
+            self.visit_id = visit_id
+
+        client = Client.fetch_one(kwargs.get('client_id'))
+        if client:
+            self.client = client
+
+        subscription = Subscription.fetch_one(kwargs.get('subscription_id'))
+        if subscription:
+            self.subscription = subscription
+
+    def _validate(self, check_id=False) -> None:
+        from .client import Client
+        from .subscription import Subscription
+
+        if check_id:
+            if not self.check_id:
+                raise ValidationError('Visit not set')
+            self._check_visit_id()
+
+        if not self.client:
+            raise ValidationError('Client not set visit')
+        if not isinstance(self.client, Client):
+            raise ValidationError('Client is not valid on visit')
+        if not self.subscription:
+            raise ValidationError('Subscription not set on visit')
+        if not isinstance(self.subscription, Subscription):
+            raise ValidationError('Subscription is not valid on visit')
+        
+    def get_id(self) -> None:
+        self._connect_to_db()
+        if self.conn:
+            cursor = self.conn.cursor()
+            id_string = generate_id('visit', cursor)
             
-        client_id = data.get('client_id')
-        if client_id:
-            self.client_id = client_id
+            if not id_string:
+                logger.warn('ID not generated')
+                self.stderr.write('\033[31m' + 'ID not generated'+ '\033[0m\n')
+                self.stderr.flush()
+            
+            self.visit_id = id_string
+            
+            cursor.close()
+            self.conn.close()
 
+    def _check_visit_id(self):
+        '''
+        check if id changed
+        '''
+        visit = Visit.fetch_one(self.visit_id)
 
-        timestamp = data.get('timestamp')
-        if timestamp:
-            self.timestamp = timestamp
-
-    def _validate(self) -> None:
-        if not self.subscription_id:
-            raise ValidationError('Subscription ID is required')
-        if not self.client_id:
-            raise ValidationError('Client ID is required')
-        if not self.timestamp:
-            raise ValidationError('Timestamp is required')
-
-    @classmethod   
-    def save_to_db(cls, sub_id: str, client_id: str, using: str=None) -> None:
-        if using:
-            # give class the datebase property to enable db connection
-            cls._db = using
-        conn = cls._connect_to_db(cls)
+        if not visit:
+            raise ValidationError('Invalid ID for visit')
+     
+    def save_to_db(self) -> None:
+        conn = self._connect_to_db()
         cursor = conn.cursor()
         if conn:
-            timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+            self.timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
             try:
 
-                values = (sub_id, timestamp, client_id)
+                values = (self.visit_id, self.subscription.subscription_id, self.client.client_id, self.timestamp)
                 insert_to_db('visit', cursor, values)
                 conn.commit()
                 conn.close()
+                self.stderr.write(f'{self.client.get_display_name()} logged in to {self.subscription.plan.plan_name} plan successfully at {self.timestamp}')
+                self.stderr.flush()
                 Notification.send_notification('User logged in successfully')
             except ValueError as err:
-                log_error_to_file('Visit', 'Error', f"Error saving visit @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-                log_error_to_file('Visit', 'Error', f'{err}')
-                log_to_file('Visit', 'Error', f"Error saving visit @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+                logger.warn(str(err))
+                self.stderr.write(str(err))
+                self.stderr.flush()
                 Notification.send_notification(err)
 
-    @classmethod
-    def delete(cls, sub_id: str, client_id: str, date_value: str, using: str=None):
-        if using:
-            # give class the datebase property to enable db connection
-            cls._db = using
-        conn = cls._connect_to_db(cls)
+    def delete(self):
+        conn = self._connect_to_db()
         cursor = conn.cursor()
 
         query = '''
-            DELETE FROM visit 
-            WHERE 
-                subscription_id = ? AND client_id = ? AND timestamp LIKE ?;
+            DELETE FROM visit WHERE visit_id = ?;
         '''
 
         try:
-            cursor.execute(query, (sub_id, client_id, '%' + date_value + '%'))
+            cursor.execute(query, (self.visit_id,))
             conn.commit()
             conn.close()
+            self.stderr.write(f'{self.client.get_display_name()} entry for {self.timestamp} deleted successfully')
+            self._reset_fields()
         except Exception as err:
-            log_error_to_file('Visit', 'Error', f"Error deleting visit @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-            log_error_to_file('Visit', 'Error', f'{err}')
-            log_to_file('Visit', 'Error', f"Error deleting visit @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+            logger.warn(str(err))
+            self.stderr.write(str(err))
+            self.stderr.flush()
             Notification.send_notification(err)
 
-
     @classmethod
-    def get_visits(cls, sub_id: str, get_count: bool=False, col_names=False, using: str=None) -> list:
-        if using:
-            # give class the datebase property to enable db connection
-            cls._db = using
+    def get_client_visits_per_sub(cls, sub_id: str, get_count: bool=False, col_names=False) -> list:
         conn = cls._connect_to_db(cls)
         cursor = conn.cursor()
 
@@ -116,15 +160,12 @@ class Visit(InitDB):
                 WHERE v.subscription_id = ?;
             '''
             if get_count:
-                # query = '''
-                #     SELECT client_id, Count(timestamp) FROM visit WHERE subscription_id = ? GROUP BY client_id;
-                # '''
+
                 query = '''
                     SELECT 
                         c.first_name,
                         c.last_name,
                         c.company_name,
-                        v.client_id,
                         COUNT(v.timestamp) AS visit_count
                     FROM visit AS v
                     INNER JOIN client AS c
@@ -143,17 +184,64 @@ class Visit(InitDB):
             
             return entries
         except Exception as err:
-            log_to_file('Visit', 'Error', f"Error fetching visit @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-            log_error_to_file('Visit', 'Error', f"Error fetching visit @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-            log_error_to_file('Visit', 'Error', f'{err}')
+            logger.warn(str(err))
+            cls.stderr.write(str(err))
+            cls.stderr.flush()
             Notification.send_notification(err)
-            return None
+            return []
+
+
+    @classmethod
+    def get_client_visits(cls, client_id: str, get_count: bool=False, col_names=False) -> list:
+        conn = cls._connect_to_db(cls)
+        cursor = conn.cursor()
+
+        try:
+            query = '''
+                SELECT
+                    c.first_name,
+                    c.last_name,
+                    c.company_name,
+                    v.client_id,
+                    v.timestamp
+                FROM visit AS v
+                INNER JOIN client AS c
+                    ON v.client_id = c.client_id
+                WHERE v.client_id = ?;
+            '''
+            if get_count:
+
+                query = '''
+                    SELECT 
+                        c.first_name,
+                        c.last_name,
+                        c.company_name,
+                        COUNT(v.timestamp) AS visit_count
+                    FROM visit AS v
+                    INNER JOIN client AS c
+                        ON v.client_id = c.client_id
+                    WHERE v.subscription_id = ?
+                    GROUP BY c.client_id, c.first_name, c.last_name, c.company_name;
+                '''
+
+            cursor.execute(query, (client_id,))
+            entries = cursor.fetchall()
+
+            # return (subscriptions, column_names) for export
+            if col_names:        
+                column_names = [description[0] for description in cursor.description]        
+                return (entries, column_names) if entries else []
+            
+            return entries
+        except Exception as err:
+            logger.warn(str(err))
+            cls.stderr.write(str(err))
+            cls.stderr.flush()
+            Notification.send_notification(err)
+            return []
 
     @classmethod  
-    def filter_sub(cls, value, col_names: bool=False, using: str=None):
-        if using:
-            # give class the datebase property to enable db connection
-            cls._db = using
+    def filter_sub(cls, value, col_names: bool=False):
         conn = cls._connect_to_db(cls)
         cursor = conn.cursor()
         try:
@@ -167,7 +255,7 @@ class Visit(InitDB):
                         v.client_id,
                     FROM client AS c
                     INNER JOIN visit AS v
-                        ON c.id = v.client_id
+                        ON c.client_id = v.client_id
                     WHERE timestamp LIKE ?
                 '''
                 
@@ -183,16 +271,43 @@ class Visit(InitDB):
 
                 return entries
         except Exception as err:
-            log_to_file('Visit', 'Error', f"Error fetching visit @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-            log_error_to_file('Visit', 'Error', f"Error fetching visit @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-            log_error_to_file('Visit', 'Error', f'{err}')
+            logger.warn(str(err))
+            cls.stderr.write(str(err))
+            cls.stderr.flush()
             Notification.send_notification(err)
+            return []
+
+
+    @classmethod
+    def get_all_sub_visits_count(cls, sub_id) -> list:
+        conn = cls._connect_to_db(cls)
+        cursor = conn.cursor()
+
+        try:
+            query = '''
+                SELECT
+                    v.client_id
+                FROM visit AS v
+                WHERE v.subscription_id = ?;
+            '''
+
+            cursor.execute(query, (sub_id,))
+            entries = cursor.fetchall()          
+            return len(entries)
+
+        except Exception as err:
+            logger.warn(str(err))
+            cls.stderr.write(str(err))
+            cls.stderr.flush()
+            Notification.send_notification(err)
+            return []
+
 
     @classmethod
     def export_visits(cls, path, sub_id: str, using=None):
 
-        visits_by_date, column_names_by_date = Visit.get_visits(sub_id, col_names=True, using=using)
-        visits_by_count, column_names_by_count = Visit.get_visits(sub_id, get_count=True, col_names=True, using=using)
+        visits_by_date, column_names_by_date = Visit.get_client_visits_per_sub(sub_id, col_names=True, )
+        visits_by_count, column_names_by_count = Visit.get_client_visits_per_sub(sub_id, get_count=True, col_names=True, )
 
         column_names_by_date = column_names_by_date if column_names_by_date else None
         column_names_by_count = column_names_by_count if column_names_by_count else None
@@ -203,19 +318,16 @@ class Visit(InitDB):
 
         for visit in visits_by_date:
             visit = list(visit)
-            # remove sub_id
+            # remove client id
             visit.pop(3)
             formated_visits_by_date.append(visit)
 
         for visit in visits_by_count:
             visit = list(visit)
-            # remove sub_id
-            visit.pop(3)
             formated_visits_by_count.append(visit)
 
-        # remove sub_id header
+        # remove client id from header
         column_names_by_date.pop(3)
-        column_names_by_count.pop(3)
 
         formatted_visit_by_date_header = []
         formatted_visit_by_count_header = []
@@ -238,8 +350,8 @@ class Visit(InitDB):
             'headers': formatted_visit_by_count_header
         }
 
-        export_helper(cls, '.pdf', path, data=data_by_date, name='visits_by_date_export', using=using)
-        export_helper(cls, '.pdf', path, data=data_by_count, name='visits_by_count_export', using=using)
+        export_helper(cls, '.pdf', path, data=data_by_date, name='visits_by_date_export', )
+        export_helper(cls, '.pdf', path, data=data_by_count, name='visits_by_count_export', )
         print('Export complete')
         
 

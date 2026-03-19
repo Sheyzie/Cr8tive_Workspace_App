@@ -13,83 +13,94 @@ from helpers.db_helpers import (
     fetch_one_entry, 
     fetch_all_entry
 )
+from .subscription import Subscription
+from .client import Client
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Payment(InitDB):
-    def __init__(self, using=None, **kwargs):
-        super().__init__(using=using)
+
+    def __init__(self, **kwargs):
+        super().__init__()
+
         self.payment_id = None
-        self.discount = 0
-        self.tax = 0
-        self.total_price = 0
-        self.amount_paid = 0
+        self.client: Client = None
+        self.subscription: Subscription = None
+        self.amount = 0
         self.created_at = None
+        self.updated_at = None
         
         if kwargs:
-            data = kwargs.get('kwargs')
-            self._get_from_kwargs(kwargs=data)
+            self._get_from_kwargs(**kwargs)
         try:
             self._validate()
         except ValidationError as err:
+            self._reset_fields()
+            logger.exception(str(err.message))
+            self.stderr.write('\033[31m' + str(err.message + '\033[0m\n'))
+            self.stderr.flush()
             Notification.send_notification(err)
+            exit(1)
 
     def __str__(self) -> str:
-        return f'Total Price: {self.total_price}, Amount Paid: {self.amount_paid}'
+        return f'₦{self.amount} paid for {self.subscription.plan.plan_name}'
+
+    def _reset_fields(self):
+        self.payment_id = None
+        self.client = None
+        self.subscription = None
+        self.amount = 0
+        self.created_at = None
 
     def _get_from_kwargs(self, **kwargs) -> None:
-        data = kwargs.get('kwargs')
-        payment_id = data.get('payment_id')
+        payment_id = kwargs.get('payment_id')
         if payment_id:
             self.payment_id = payment_id
 
-        discount = data.get('discount')
-        if discount and isinstance(discount, (int, float)):
-            self.discount = discount
+        client = Client.fetch_one(kwargs.get('client_id'))
+        if client:
+            self.client = client
 
-        tax = data.get('tax')
-        if tax and isinstance(tax, (int, float)):
-            self.tax = tax
+        subscription = Subscription.fetch_one(kwargs.get('subscription_id'))
+        if subscription:
+            self.subscription = subscription
         
-        total_price = data.get('total_price')
-        if total_price and isinstance(total_price, (int, float)):
-            self.total_price = total_price
+        amount = kwargs.get('amount')
+        if amount:
+            self.amount = amount
 
-        amount_paid = data.get('amount_paid')
-        if amount_paid and isinstance(amount_paid, (int, float)):
-            self.amount_paid = amount_paid
-
-        created_at = data.get('created_at')
+        created_at = kwargs.get('created_at')
         if created_at:
             self.created_at = created_at
+
+        updated_at = kwargs.get('updated_at')
+        if updated_at:
+            self.updated_at = updated_at
 
     def _validate(self, check_id=False) -> None:
         if check_id:
             if not self.payment_id:
-                raise ValidationError('Payment ID is required')
-        if not self.discount:
-            raise ValidationError('Payment discount is required')
-        if self.discount < 0:
-            raise ValidationError('Payment discount cannot be less than zero')
-        if not isinstance(self.discount, (int, float)):
-            raise ValidationError('Payment discount cannot be letters')
-        if not self.tax:
-            raise ValidationError('Payment tax is required')
-        if self.tax < 0:
-            raise ValidationError('Payment tax cannot be less than zero')
-        if not isinstance(self.tax, (int, float)):
-            raise ValidationError('Payment tax cannot be letters')
-        if not self.total_price:
-            raise ValidationError('Payment total_price is required')
-        if self.total_price < 0:
-            raise ValidationError('Payment total_price cannot be less than zero')
-        if not isinstance(self.total_price, (int, float)):
-            raise ValidationError('Payment total_price cannot be letters')
-        if not self.amount_paid:
-            raise ValidationError('Payment amount_paid is required')
-        if self.amount_paid < 0:
-            raise ValidationError('Payment amount_paid cannot be less than zero')
-        if not isinstance(self.amount_paid, (int, float)):
-            raise ValidationError('Payment amount_paid cannot be letters')
+                raise ValidationError('Payment not set')
+            self._check_payment_id()
+
+        if not self.client:
+            raise ValidationError('Client not set payment')
+        if not isinstance(self.client, Client):
+            raise ValidationError('Client is not valid on payment')
+        if not self.subscription:
+            raise ValidationError('Subscription not set on payment')
+        if not isinstance(self.subscription, Subscription):
+            raise ValidationError('Subscription is not valid on payment')
+        if not self.amount:
+            raise ValidationError('Payment amount is required')
+        if not isinstance(self.amount, (int, float)):
+            raise ValidationError('Payment amount cannot be letters')
+        if self.amount < 0:
+            raise ValidationError('Payment amount cannot be less than zero')
+        if self.amount > self._get_balance_from_db():
+            raise ValidationError('Payment amount cannot be greater than subscription amount')
     
     def get_id(self) -> None:
         self._connect_to_db()
@@ -98,68 +109,120 @@ class Payment(InitDB):
             id_string = generate_id('payment', cursor)
             
             if not id_string:
-                raise GenerationError('Error generating Payment ID')
+                logger.warn('ID not generated')
+                self.stderr.write('\033[31m' + 'ID not generated'+ '\033[0m\n')
+                self.stderr.flush()
             
             self.payment_id = id_string
-            
-            log_to_file('Payment', 'Success', f'Payment ID generated')
             
             cursor.close()
             self.conn.close()
     
+    def _check_payment_id(self):
+        '''
+        check if id changed
+        '''
+        payment = Payment.fetch_one(self.payment_id)
+
+        if not payment:
+            raise ValidationError('Invalid ID for payment')
+
     def save_to_db(self, update=False) -> None:
         self._connect_to_db()
         if self.conn:
             cursor = self.conn.cursor()
             created_at = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+            updated_at = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
             try:
                 if update:
                     # convert float to int for precision
-                    values = (int(self.discount * 100), int(self.tax * 100), int(self.total_price * 100), int(self.amount_paid * 100), self.payment_id)
+                    values = (self.client.client_id, self.subscription.subscription_id, int(self.amount * 100), updated_at, self.payment_id)
                     update_in_db('payment', cursor, values)
                     self.conn.commit()
                     self.conn.close()
                     return
 
                 # convert float to int for precision
-                values = (self.payment_id, int(self.discount * 100), int(self.tax * 100), int(self.total_price * 100), int(self.amount_paid * 100), created_at)
+                values = (self.payment_id, self.client.client_id, self.subscription.subscription_id, int(self.amount * 100), created_at, updated_at)
                 insert_to_db('payment', cursor, values)
                 self.conn.commit()
                 self.conn.close()
             except ValueError as err:
-                log_error_to_file('Payment', 'Error', f"Error saving payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-                log_error_to_file('Payment', 'Error', f'{err}')
-                log_to_file('Payment', 'Error', f"Error saving payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+                logger.warn(str(err))
+                self.stderr.write(str(err))
+                self.stderr.flush()
                 Notification.send_notification(err)
 
     def update(self) -> None:
-        self._validate(check_id=True)
-        self.save_to_db(update=True)
+        try:
+            self._validate(check_id=True)
+            self.save_to_db(update=True)
+        except ValidationError as err:
+            logger.error(str(err.message))
+            self.stderr.write('\033[31m' + str(err.message + '\033[0m\n'))
+            self.stderr.flush()
+            Notification.send_notification(err)
+            exit(1)
 
     def delete(self) -> None:
-        self._validate(check_id=True)
-        self._connect_to_db()
-        if self.conn:
-            cursor = self.conn.cursor()
-            self.query = '''
-                DELETE FROM payment WHERE payment_id = ?;
-            '''
+        try:
+            self._validate(check_id=True)
+            self._connect_to_db()
+            if self.conn:
+                cursor = self.conn.cursor()
+                self.query = '''
+                    DELETE FROM payment WHERE payment_id = ?;
+                '''
 
-            try:
-                cursor.execute(self.query, (self.payment_id,))
-                self.conn.commit()
-                self.conn.close()
-            except Exception as err:
-                log_error_to_file('Payment', 'Error', f"Error deleting payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-                log_error_to_file('Payment', 'Error', f'{err}')
-                log_to_file('Payment', 'Error', f"Error deleting payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-                Notification.send_notification(err)
+            cursor.execute(self.query, (self.payment_id,))
+            self.conn.commit()
+            self.conn.close()
+
+            # reset fields
+            self._reset_fields()
+        except ValidationError as err:
+            logger.error(str(err.message))
+            self.stderr.write('\033[31m' + str(err.message + '\033[0m\n'))
+            self.stderr.flush()
+            Notification.send_notification(err)
+            exit(1)
+        
+        except Exception as err:
+            logging.error('Error deleting client')
+            self.stderr.write(str(err.with_traceback()))
+            self.stderr.flush()
+            Notification.send_notification(err)
+            exit(1)
+
+    def _get_balance_from_db(self):
+        '''
+        This function only return the sum of all payments with the 
+        subscription_id.
+
+        using this avoids circular class calling when using Subscription.amount_paid
+        '''
+        conn = self._connect_to_db()
+        cursor = conn.cursor()
+
+        query = '''
+        SELECT 
+            SUM(amount) / 100.0 AS total_amount
+        FROM payment
+        WHERE subscription_id = ?;
+        '''
+        try:
+            cursor.execute(query, (self.subscription.subscription_id,))
+            result = cursor.fetchone()[0]
+            return self.subscription.total_amount - (result / 100) if result else self.subscription.total_amount
+        except Exception as err:
+            logger.warn(str(err))
+            self.stderr.write(str(err))
+            self.stderr.flush()
+            Notification.send_notification(err)
+            return self.subscription.total_amount
 
     @classmethod
-    def fetch_one(cls, value, by_name=False, using: str=None) -> Self | None:
-        if using:
-            # give class the datebase property to enable db connection
-            cls._db = using
+    def fetch_one(cls, value, by_name=False) -> Self | None:
         conn = cls._connect_to_db(cls)
         cursor = conn.cursor()
         
@@ -171,64 +234,62 @@ class Payment(InitDB):
             
             payment_data_obj = {
                 'payment_id': payment_data[0],
-                'discount': float(payment_data[1]) / 100, # convert from integer
-                'tax': float(payment_data[2]) / 100, # convert from integer
-                'total_price': float(payment_data[3]) / 100, # convert from integer
-                'amount_paid': float(payment_data[4]) / 100, # convert from integer
-                'created_at': payment_data[5],
+                'client_id': payment_data[1],
+                'subscription_id': payment_data[2],
+                'amount': float(payment_data[3]) / 100, # convert from integer
+                'created_at': payment_data[4],
+                'updated_at': payment_data[5],
             }
 
             if payment_data:
-                payment = Payment(kwargs=payment_data_obj, using=using)
+                payment = Payment(**payment_data_obj)
                 return payment
             else:
                 return None
         except Exception as err:
-            log_to_file('Payment', 'Error', f"Error fetching payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-            log_error_to_file('Payment', 'Error', f"Error fetching payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-            log_error_to_file('Payment', 'Error', f'{err}')
+            logger.warn(str(err))
+            cls.stderr.write(str(err))
+            cls.stderr.flush()
+            Notification.send_notification(err)
             return None
 
     @classmethod
-    def fetch_all(cls, using: str=None) -> list:
-        if using:
-            # give class the datebase property to enable db connection
-            cls._db = using
+    def fetch_all(cls) -> list:
         conn = cls._connect_to_db(cls)
         cursor = conn.cursor()
         payments = []
         try:
             payments_data = fetch_all_entry('payment', cursor)
-
+            
             if not len(payments_data) > 0:
                 return []
             
             for payment_data in payments_data:
                 payment_data_obj = {
                     'payment_id': payment_data[0],
-                    'discount': float(payment_data[1]) / 100, # convert from integer
-                    'tax': float(payment_data[2]) / 100, # convert from integer
-                    'total_price': float(payment_data[3]) / 100, # convert from integer
-                    'amount_paid': float(payment_data[4]) / 100, # convert from integer
-                    'created_at': payment_data[5],
+                    'client_id': payment_data[1],
+                    'subscription_id': payment_data[2],
+                    'amount': float(payment_data[3]) / 100, # convert from integer
+                    'created_at': payment_data[4],
+                    'updated_at': payment_data[5],
                 }
 
-                payment = Payment(kwargs=payment_data_obj, using=using)
+                payment = Payment(**payment_data_obj)
                 payments.append(payment)
             
             return payments
         except Exception as err:
-            log_to_file('Payment', 'Error', f"Error fetching payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-            log_error_to_file('Payment', 'Error', f"Error fetching payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-            log_error_to_file('Payment', 'Error', f'{err}')
+            logger.warn(str(err))
+            cls.stderr.write(str(err))
+            cls.stderr.flush()
             Notification.send_notification(err)
-            return None
+            return []
 
     @classmethod  
-    def filter_payments(cls, value, by_amount=False, by_date=False, using=None) -> list:
-        if using:
-            # give class the datebase property to enable db connection
-            cls._db = using
+    def filter_payments(cls, value, by_subscription=False, by_amount=False, by_date=False) -> list:
+        '''
+        
+        '''
         conn = cls._connect_to_db(cls)
         payments = []
         try:
@@ -239,16 +300,25 @@ class Payment(InitDB):
                     query = '''
                         SELECT * FROM payment WHERE created_at LIKE ?;
                     '''
-
-                    cursor.execute(query, ('%' + value + '%',))
+                    date_value = value
+                    cursor.execute(query, ('%' + date_value + '%',))
 
                 if by_amount:
                     query = '''
-                        SELECT * FROM payment WHERE total_price = ? OR amount_paid = ?;
+                        SELECT * FROM payment WHERE amount >= ? AND amount <= ?;
                     '''
                     # convert value to kobo
-                    value = int(value * 100)
-                    cursor.execute(query, (value,value))
+                    min_amount = int(value[0] * 100)
+                    max_amount = int(value[1] * 100)
+                    cursor.execute(query, (min_amount,max_amount))
+
+                if by_subscription:
+                    query = '''
+                        SELECT * FROM payment WHERE subscription_id = ?;
+                    '''
+                    # convert value to kobo
+                    subscription_id: str = value
+                    cursor.execute(query, (subscription_id,))
 
                 payments_data = cursor.fetchall()
 
@@ -258,21 +328,22 @@ class Payment(InitDB):
                 for payment_data in payments_data:
                     payment_data_obj = {
                         'payment_id': payment_data[0],
-                        'discount': float(payment_data[1]) / 100, # convert from integer
-                        'tax': float(payment_data[2]) / 100, # convert from integer
-                        'total_price': float(payment_data[3]) / 100, # convert from integer
-                        'amount_paid': float(payment_data[4]) / 100, # convert from integer
-                        'created_at': payment_data[5],
+                        'client_id': payment_data[1],
+                        'subscription_id': payment_data[2],
+                        'amount': float(payment_data[3]) / 100, # convert from integer
+                        'created_at': payment_data[4],
+                        'updated_at': payment_data[5],
                     }
 
-                    payment = Payment(kwargs=payment_data_obj, using=using)
+                    payment = Payment(**payment_data_obj)
                     payments.append(payment)
 
                 return payments
         except Exception as err:
-            log_to_file('Payment', 'Error', f"Error fetching payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-            log_error_to_file('Payments', 'Error', f"Error fetching payment @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-            log_error_to_file('Payments', 'Error', f'{err}')
-            return None
+            logger.warn(str(err))
+            cls.stderr.write(str(err))
+            cls.stderr.flush()
+            Notification.send_notification(err)
+            return []
 
     

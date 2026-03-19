@@ -6,6 +6,10 @@ from exceptions.exception import ValidationError
 from logs.utils import log_error_to_file, log_to_file
 from notification.notification import Notification
 from helpers.db_helpers import insert_to_db
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class AssignedClient(InitDB):
@@ -15,24 +19,22 @@ class AssignedClient(InitDB):
         self.client_id: str = None
         self. created_at: str = None
         if kwargs:
-            data = kwargs.get('kwargs')
-            self._get_from_kwargs(kwargs=data)
+            self._get_from_kwargs(**kwargs)
         try:
             self._validate()
         except ValidationError as err:
             Notification.send_notification(err)
 
     def _get_from_kwargs(self, **kwargs) -> None:
-        data = kwargs.get('kwargs')
-        subscription_id = data.get('subscription_id')
+        subscription_id = kwargs.get('subscription_id')
         if subscription_id:
             self.subscription_id = subscription_id
             
-        client_id = data.get('client_id')
+        client_id = kwargs.get('client_id')
         if client_id:
             self.client_id = client_id
 
-        created_at = data.get('created_at')
+        created_at = kwargs.get('created_at')
         if created_at:
             self.created_at = created_at
 
@@ -45,10 +47,7 @@ class AssignedClient(InitDB):
             raise ValidationError('Created at field  is required')
 
     @classmethod    
-    def save_to_db(cls, sub_id: str, client_id: str, using: str=None) -> None:
-        if using:
-            # give class the datebase property to enable db connection
-            cls._db = using
+    def save_to_db(cls, sub_id: str, client_id: str) -> None:
         conn = cls._connect_to_db(cls)
         cursor = conn.cursor()
 
@@ -58,17 +57,14 @@ class AssignedClient(InitDB):
             insert_to_db('assigned_client', cursor, values)
             conn.commit()
             conn.close()
-        except ValueError as err:
-            log_error_to_file('Assigned_client', 'Error', f"Error saving assigned_client @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-            log_error_to_file('Assigned_client', 'Error', f'{err}')
-            log_to_file('Assigned_client', 'Error', f"Error saving assigned_client @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+        except Exception as err:
+            logger.warn(str(err))
+            cls.stderr.write(str(err))
+            cls.stderr.flush()
             Notification.send_notification(err)
 
     @classmethod
-    def delete_user(cls, sub_id: str, client_id: str, using: str=None) -> None:
-        if using:
-            # give class the datebase property to enable db connection
-            cls._db = using
+    def delete_user(cls, sub_id: str, client_id: str) -> None:
         conn = cls._connect_to_db(cls)
         cursor = conn.cursor()
         
@@ -81,16 +77,13 @@ class AssignedClient(InitDB):
             conn.commit()
             conn.close()
         except Exception as err:
-            log_error_to_file('Assigned_client', 'Error', f"Error deleting assigned_client @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-            log_error_to_file('Assigned_client', 'Error', f'{err}')
-            log_to_file('Assigned_client', 'Error', f"Error deleting assigned_client @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+            logger.warn(str(err))
+            cls.stderr.write(str(err))
+            cls.stderr.flush()
             Notification.send_notification(err)
 
     @classmethod
     def get_user(cls, sub_id, client_id, using=None) -> Self | None:
-        if using:
-            # give class the datebase property to enable db connection
-            cls._db = using
         conn = cls._connect_to_db(cls)
         cursor = conn.cursor()
     
@@ -104,9 +97,9 @@ class AssignedClient(InitDB):
 
             return assigned_client
         except Exception as err:
-            log_to_file('Assigned_client', 'Error', f"Error fetching assigned_client @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-            log_error_to_file('Assigned_client', 'Error', f"Error fetching assigned_client @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-            log_error_to_file('Assigned_client', 'Error', f'{err}')
+            logger.warn(str(err))
+            cls.stderr.write(str(err))
+            cls.stderr.flush()
             Notification.send_notification(err)
             return None
 
@@ -129,9 +122,9 @@ class AssignedClient(InitDB):
 
             return assigned_clients
         except Exception as err:
-            log_to_file('Assigned_client', 'Error', f"Error fetching assigned_client @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-            log_error_to_file('Assigned_client', 'Error', f"Error fetching assigned_client @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-            log_error_to_file('Assigned_client', 'Error', f'{err}')
+            logger.warn(str(err))
+            cls.stderr.write(str(err))
+            cls.stderr.flush()
             Notification.send_notification(err)
             return None
 

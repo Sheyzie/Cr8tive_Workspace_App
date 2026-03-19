@@ -4,28 +4,32 @@ clients = [
         'last_name': 'One',
         'company_name': 'One Company',
         'email': 'clientone@mail.com',
-        'phone': '081000000001'
+        'phone': '081000000001',
+        'display_name': 'client'
     },
     {
         'first_name': 'Client',
         'last_name': 'Two',
         'company_name': 'Two Company',
         'email': 'clienttwo@mail.com',
-        'phone': '081000000002'
+        'phone': '081000000002',
+        'display_name': 'client'
     },
     {
         'first_name': 'Client',
         'last_name': 'Three',
         'company_name': 'Three Company',
         'email': 'clientthree@mail.com',
-        'phone': '081000000003'
+        'phone': '081000000003',
+        'display_name': 'client'
     },
     {
         'first_name': 'Client',
         'last_name': 'Four',
         'company_name': 'Four Company',
         'email': 'clientfour@mail.com',
-        'phone': '081000000004'
+        'phone': '081000000004',
+        'display_name': 'client'
     },
 ]
 
@@ -66,21 +70,12 @@ plans = [
 
 payments = [
     {
-        'discount': 3,
-        'tax': 7.5,
-        'total_price': 6000,
-        'amount_paid': 6000,
+        'amount': 1000,
     },
     {
-        'discount': 0,
-        'tax': 7.5,
-        'total_price': 6000,
-        'amount_paid': 6000
+        'amount': 2000,
     },
     {
-        'discount': 5,
-        'tax': 7.5,
-        'total_price': 29000,
-        'amount_paid': 29000
+        'amount': 1000
     }
 ]
