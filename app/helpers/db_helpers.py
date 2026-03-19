@@ -203,19 +203,3 @@ def delete_db(db_path, db: str):
         print(f'Deleting {db}')
         os.remove(db_path / db)
 
-# def validate_model_data(model: str, data):
-#     fields = None
-    
-#     if model.lower() == 'client':
-#         fields = [
-#             (
-#                 'first_name', [
-#                     lambda f_name: isinstance(f_name, str) and len(f_name) > 3
-#                 ]
-#             ),
-#             (
-#                 'last_name', [
-#                     lambda f_name: isinstance(f_name, str) and len(f_name) > 3
-#                 ]
-#             ),
-#         ]

@@ -1,4 +1,5 @@
-from .arguments import ACTION_MAP, MODULE_MAP
+from collections import deque
+from .arguments import ACTION_MAP, MODULE_MAP, BASE_COMMANDS
 from configs.app_config import BASE_DIR
 import sys
 import time
@@ -18,20 +19,21 @@ class BaseProcess:
 
 
 class Processor(BaseProcess):
-    def __init__(self, command):
+    def __init__(self, base_command={}, arguments=[]):
         super().__init__()
-        self.command = command
-        self.command_module = self._get_command_module()
+        self.data = {}
+        self.base_command = base_command
+        self.arguments = deque(arguments)
+        self.base_command_module = self._get_command_module()
+        self._set_data()
         self.start_subprocess()
-
-    
 
     def _get_command_module(self):
         import importlib
 
         try:
-            module = importlib.import_module(MODULE_MAP.get(self.command))
-            # print(module)
+            module = importlib.import_module(self.base_command.get('module'))
+
             return module
         except Exception as e:
             logger.error(f'Unable to import module {self.command}')
@@ -41,39 +43,95 @@ class Processor(BaseProcess):
             self.stderr.flush()
             exit(1)
 
+    def _set_data(self):
+        self.data = {
+            'command': self.base_command.get('name', None),
+            'module': self.base_command.get('module', None),
+            'validated_args': self.base_command.get('validated_args', {}),
+        }
+
     def start_subprocess(self):
         import subprocess
-        self.command_module.main()
+
+        self.base_command_module.main(**self.data)
         exit(0)
 
 class Commands(BaseProcess):
-    def __init__(self, args: list):
+    arguments: list = None
+    entry_point: str = None
+    command: str = None
+    base_command: dict = None
+
+    def __init__(self, entry_point=None, command=None, *args, **kwargs):
         super().__init__()
-        self.args: list = args
+        self.arguments = []
+        self.entry_point = entry_point
+        self.command = command
+
+        if args or kwargs:
+            self._process_args(*args, **kwargs)
+
         self._validate_args()
-        self._run_command_from_action()
+        self._run_command()
+
+    def _process_args(self, *args, **kwargs):
+        arguments = deque(args)
+        if self.entry_point is None:
+            self.entry_point = arguments.popleft()
+        if self.command is None:
+            self.command = arguments.popleft()
+        if len(self.arguments) == 0:
+            self.arguments = list(arguments)
+
+        entry_point = kwargs.get('entry_point', None)
+        if self.entry_point is None:
+            self.entry_point = entry_point
+        command = kwargs.get('command', None)
+        if self.command is None:
+            self.command = command
+
+        arguments = deque(kwargs.get('arguments', []))
+        if len(self.arguments) == 0:
+            self.arguments = list(arguments)
 
     def _validate_args(self):
-        if len(self.args) < 2:
-            logger.error('Invalid argument length supplied')
-            raise Exception(f'''
-            Invalid length of arguments supplied.
-            Enter -- python main.py help -- for help
-        ''')
+        self.stdout.write('\rValidating commands...')
+        # get base command
+        base_command = BASE_COMMANDS.get(self.command, None)
 
-        if len(self.args) == 2 and self.args[1] == 'help':
-            self.stdout.write('All help comes from the Lord ✌🏾' + '\n')
-            exit(1)
+        # check if base command exist
+        if not base_command:
+            raise Exception(f'Invalid command {self.command}')
 
-        elif len(self.args) == 2 and self.args[1] != 'help':
-            self.stdout.write('You are to old for this for crying out loud' + '\n')
-            exit(1)
+        # validate base command arguments
+        if base_command.get('has_args'):
+            # check length of provided argument
+            expected_args = base_command.get('args')
+  
+            if len(expected_args.keys()) < len(self.arguments):
+                raise Exception(f'Too many arguments provided for command {self.command}')
+            
+            # validate required arguement
+            required_args = base_command.get('require_args')
+            if len(required_args) > len(self.arguments):
+                raise Exception(f'Not enough arguments provided for command {self.command}')
+            
+            validated_args = {}
+            for arg in expected_args:
+                validator = expected_args.get(arg).get('validate')
+                if validator and not validator(self.arguments):
+                    raise Exception(f'Invalid argument for field {arg}')
+                
+                validated_args[arg] = self.arguments
 
-        self.entry_point: str = self.args[0]
-        self.action: str = self.args[1]
-        self.command: str = self.args[2]
+        # add validated argument to base command
+        base_command['validated_args'] = validated_args
+        self.base_command = base_command
+        self.stdout.write('\rValidation completed\n')
+        self.stdout.flush()
 
     def _run_command_from_action(self):
+        
         try:
             if ACTION_MAP.get(self.action) == self.command:
                 self._run_command()
@@ -90,14 +148,14 @@ class Commands(BaseProcess):
             exit(1)
 
     def _run_command(self):
-        self.stdout.write(self.command + '\n')
+        self.stdout.write(f'\nRunning {self.base_command.get('name')} command...\n')
         self.stdout.flush()
-        processor = Processor(self.command)
-
+        if not self.base_command:
+            raise Exception(f'No base command provided for {self.command}\n')
         
+        processor = Processor(self.base_command, self.arguments)
 
 
-
-def process_commands(args: list):
+def process_commands(*args, **kwargs):
     logger.info('Running backend command...')
-    command = Commands(args)
+    command = Commands(*args, **kwargs)

@@ -1,19 +1,48 @@
-from configs import db_config
+from configs import db_config, app_config
+from helpers.db_helpers import delete_db
 from .test_models import (
     TestClient, 
     TestPlan, 
     TestPayment,
     TestSubscription,
     TestVisit,
+    DB_NAME
 )
 
+import os
 
-def main():
-    TestClient.start_test()
-    TestPlan.start_test()
-    TestSubscription.start_test()
-    TestPayment.start_test()
-    TestVisit.start_test()
+os.environ.setdefault('CURRENT_WORKING_DB_ENVIRON', 'test')
+
+
+def main(**kwargs):
+    arguments = {}
+    if kwargs:
+        arguments = kwargs.get('validated_args', {})
+    
+    model = arguments.get('model', [])
+    if len(model) == 0:
+        TestClient.start_test()
+        TestPlan.start_test()
+        TestSubscription.start_test()
+        TestPayment.start_test()
+        TestVisit.start_test()
+    else:
+        match model[0]:
+            case 'client':
+                TestClient.start_test()
+            case 'plan':
+                TestPlan.start_test()
+            case 'subscription':
+                TestSubscription.start_test()
+            case 'payment':
+                TestPayment.start_test()
+            case 'visit':
+                TestVisit.start_test()
+            case _:
+                print('Unknown argument provided for test.')
+
+    # clean up
+    delete_db(app_config.BASE_DIR, DB_NAME)
 
 if __name__ == '__main__':
     main()

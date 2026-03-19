@@ -14,8 +14,18 @@ logging.basicConfig(
     ]
 )
 
-# sys.argv[main.py, run, command] -> to run backend / test
-# sys.argv[main.py, show, command] -> to show logs
+# python main.py command [arguments] -> syntax
+# - python main.py test -> to run backend / test
+# - python main.py test client -> to run test on client table
+# - python main.py GET client -> to run backend / GET request on client
+# - python main.py GET client 2 -> to run backend / GET request on client ID 2
 
 if __name__ == '__main__':
-    process_commands(sys.argv)
+    process_commands(*sys.argv)
+
+    arg_dict = {
+        'arguments': ['test'],
+        'entry_point': 'main.py',
+        'base_command': 'test'
+    }
+    # process_commands(**arg_dict)

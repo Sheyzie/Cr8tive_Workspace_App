@@ -5,7 +5,6 @@ from models.subscription import Subscription
 from models.payment import Payment
 from models.visit import Visit
 from models.assigned_client import AssignedClient
-from helpers.db_helpers import delete_db
 from datetime import datetime
 import os
 import sys
@@ -22,11 +21,6 @@ DB_NAME = db_config.TEST_DB_NAME
 
 if not DB_NAME:
     raise Exception('Database name not provided. Please check env.')
-
-os.environ.setdefault('CURRENT_WORKING_DB_ENVIRON', 'test')
-
-# delete test database if exist
-delete_db(app_config.BASE_DIR, DB_NAME)
 
 
 def get_client():
@@ -480,14 +474,6 @@ class TestSubscription(BaseTestClass):
 
         fetched_plans = Plan.fetch_all()
         assert len(fetched_plans) > 0
-
-        # for payment in get_payments():
-        #     new_payment = Payment(**payment)
-        #     new_payment.get_id()
-        #     new_payment.save_to_db()
-
-        # fetched_payments = Payment.fetch_all()
-        # assert len(fetched_payments) > 0
 
         self.stdout.write('Setup complete ✅\n')
         self.stdout.flush()
