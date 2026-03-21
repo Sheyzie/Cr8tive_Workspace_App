@@ -19,21 +19,6 @@ def export_helper(cls, file_type, path, data: dict[str, list]=None, name=None):
     file = name + file_type
 
     file_name = file_path / file
-   
-    # clients, column_names = cls.fetch_all(col_names=True, using=using)
-    
-    # column_names = column_names if column_names else None
-
-    # # remove client_id and created_at
-    # formated_clients = []
-    # for client in clients:
-    #     client = list(client)
-    #     client.pop(0)
-    #     client.pop(-1)
-    #     formated_clients.append(client)
-    
-    # column_names.pop(0)
-    # column_names.pop(-1)
 
     manager = ExportManager(file_name, file_type)
 

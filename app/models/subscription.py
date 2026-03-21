@@ -3,6 +3,7 @@ import inspect
 from typing import Self
 from datetime import datetime, timedelta
 from database.db import InitDB
+from database.tables import TABLES_MAP
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
 from utils.import_file import ImportManager
@@ -28,6 +29,9 @@ logger = logging.getLogger(__name__)
 
 
 class Subscription(InitDB):
+
+    # field_map = TABLES_MAP.get('subscription').get('fields')
+
     def __init__(self, **kwargs):
         super().__init__()
         self.subscription_id: str = None
@@ -56,6 +60,8 @@ class Subscription(InitDB):
             self.stderr.flush()
             Notification.send_notification(err)
             exit(1)
+
+        self._get_assigned_users
 
     @property
     def usage(self):
@@ -136,11 +142,11 @@ class Subscription(InitDB):
         if subscription_id:
             self.subscription_id = subscription_id
 
-        plan = Plan.fetch_one(kwargs.get('plan_id'))
+        plan = Plan.fetch_one(plan_id=kwargs.get('plan_id'))
         if plan:
             self.plan = plan
 
-        client = Client.fetch_one(kwargs.get('client_id'))
+        client = Client.fetch_one(client_id=kwargs.get('client_id'))
         if client:
             self.client = client
 
@@ -153,16 +159,16 @@ class Subscription(InitDB):
             self.expiration_date = expiration_date
 
         discount = kwargs.get('discount')
-        if discount and isinstance(discount, (int, float)):
-            self.discount = discount
+        if discount:
+            self.discount = float(discount) / 100
 
         discount_type = kwargs.get('discount_type')
         if discount_type and discount_type in {'percent', 'fixed'}:
             self.discount_type = discount_type
 
         vat = kwargs.get('vat')
-        if vat and isinstance(vat, (int, float)):
-            self.vat = vat
+        if vat:
+            self.vat = float(vat) / 100
 
         status = kwargs.get('status')
         if status:
@@ -236,57 +242,26 @@ class Subscription(InitDB):
             if not isinstance(self.assigned_users, list):
                 raise ValidationError('Assigned users need to be a list of valid client')
             
-            self._check_subscription_id()
-                    
-    def get_id(self) -> None:
-        self._connect_to_db()
-        if self.conn:
-            cursor = self.conn.cursor()
-            id_string = generate_id('subscription', cursor)
-            
-            if not id_string:
-                logger.warn('ID not generated')
-                self.stderr.write('\033[31m' + 'ID not generated'+ '\033[0m\n')
-                self.stderr.flush()
-            
-            self.subscription_id = id_string
-            
-            cursor.close()
-            self.conn.close()
-    
-    def _check_subscription_id(self):
-        '''
-        check if id changed
-        '''
-        subscription = Subscription.fetch_one(self.subscription_id)
+            if not self._verify_pk():
+                raise ValidationError('Subscription ID is not valid')
 
-        if not subscription:
-            raise ValidationError('Invalid ID for subscription')
+    def _get_assigned_users(self):
+        assigned_clients_id = AssignedClient.filter_sub(sub_id=self.subscription_id)
+
+        assigned_users = []
+
+        if len(assigned_clients_id) > 0:
+            for assigned_client_id_tuple in assigned_clients_id:                
+                client = Client.fetch_one(client_id=assigned_client_id_tuple[0])
+                if client:
+                    assigned_users.append(client)
+    
+        self.assigned_users = assigned_users
 
     def save_to_db(self, update=False) -> None:
-        self._connect_to_db()
-        if self.conn:
-            cursor = self.conn.cursor()
-            created_at = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-            updated_at = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-            try:
-                if update:
-                    values = (self.plan.plan_id, self.client.client_id, self.plan_unit, self.expiration_date, int(self.discount * 100), self.discount_type, int(self.vat * 100), self.status, self.payment_status, updated_at, self.subscription_id)
-                    update_in_db('subscription', cursor, values)
-                    self.conn.commit()
-                    self.conn.close()
-                    return
-
-                self._set_expiration()
-                values = (self.subscription_id, self.plan.plan_id, self.client.client_id, self.plan_unit, self.expiration_date, int(self.discount * 100), self.discount_type, int(self.vat * 100), self.status, self.payment_status, created_at, updated_at)
-                insert_to_db('subscription', cursor, values)
-                self.conn.commit()
-                self.conn.close()
-            except Exception as err:
-                logger.warn(str(err))
-                self.stderr.write(str(err))
-                self.stderr.flush()
-                Notification.send_notification(err)
+        if not update:
+            self._set_expiration()
+        super().save_to_db(update=update)
 
     def _set_expiration(self) -> None:
         match(self.plan.plan_type):
@@ -316,37 +291,10 @@ class Subscription(InitDB):
             Notification.send_notification(err)
             exit(1)
 
-    def delete(self):
-        try:
-            self._validate(check_id=True)
-
-            self._connect_to_db()
-            if self.conn:
-                cursor = self.conn.cursor()
-                self.query = '''
-                    DELETE FROM subscription WHERE subscription_id = ?;
-                '''
-
-            cursor.execute(self.query, (self.subscription_id,))
-            self.conn.commit()
-            self.conn.close()
-        except ValidationError as err:
-            logger.error(str(err.message))
-            self.stderr.write('\033[31m' + str(err.message + '\033[0m\n'))
-            self.stderr.flush()
-            Notification.send_notification(err)
-            exit(1)
-        
-        except Exception as err:
-            logging.error('Error deleting client')
-            self.stderr.write(str(err.with_traceback()))
-            self.stderr.flush()
-            Notification.send_notification(err)
-            exit(1)
-
     def set_assigned_client(self, client: Client) -> None:
         if client not in self.assigned_users:
-            AssignedClient.save_to_db(sub_id=self.subscription_id, client_id=client.client_id)
+            assigned_client = AssignedClient(subscription_id=self.subscription_id, client_id=client.client_id)
+            assigned_client.save_to_db()
             self.assigned_users.append(client)
 
     def remove_assigned_client(self, client: Client) -> None:
@@ -374,7 +322,7 @@ class Subscription(InitDB):
             Notification.send_notification(f'User: {user} is not a listed assigned user for this subscription')
             return
         
-        client = Client.fetch_one(user.client_id)
+        client = Client.fetch_one(client_id=user.client_id)
         
         if client is None:
             logger.warn('Users does not exist')
@@ -384,8 +332,8 @@ class Subscription(InitDB):
          # check if user is an assigned user
         if not self.is_user(client):
             logger.warn('User is does not have access to this subcription')
-            return 
-
+            return
+        
         # check if subscription is exhausted or expired
         if self.status not in {'booked', 'running'}:
             logger.warn(f'Can not log user in to {self.status} plan')
@@ -408,11 +356,9 @@ class Subscription(InitDB):
             return
         
         # TODO: validate if plan is hourly
-        
-        visit = Visit(**{'subscription_id': self.subscription_id, 'client_id': user.client_id})
-        visit.get_id()
+        visit = Visit(**{'subscription_id': self.subscription_id, 'client_id': client.client_id})
         visit.save_to_db()
-
+        
         self.status = 'running'
         self.save_to_db(update=True)
 
@@ -440,267 +386,6 @@ class Subscription(InitDB):
         now = datetime.now()
 
         return exp > now
-
-    @classmethod
-    def fetch_one(cls, sub_id) -> Self | None:
-        conn = cls._connect_to_db(cls)
-        cursor = conn.cursor()
-    
-        try:
-            sub_data = fetch_one_entry('subscription', cursor, sub_id)
-            
-            if sub_data is None:
-                return None
-            
-            if sub_data:
-                assigned_clients_id = AssignedClient.filter_sub(sub_id=sub_data[0])
-
-                assigned_users_id = []
-                if len(assigned_clients_id) > 0:
-                    for assigned_client_id_tuple in assigned_clients_id:
-                        assigned_users_id.append(assigned_client_id_tuple[0])
-
-                # screat subscription data obj
-                sub_data_obj = {
-                    'subscription_id': sub_data[0],
-                    'plan_id': sub_data[1],
-                    'client_id': sub_data[2],
-                    'plan_unit': sub_data[3],
-                    'expiration_date': sub_data[4],
-                    'discount': float(sub_data[5] / 100), # convert from integer
-                    'discount_type': sub_data[6],
-                    'vat': float(sub_data[7]) / 100, # convert from integer
-                    'status': sub_data[8],
-                    'payment_status': sub_data[9],
-                    'created_at': sub_data[10],
-                    'updated_at': sub_data[11],
-                    'assigned_users_id': assigned_users_id if len(assigned_users_id) > 0 else []
-                }
-
-                subscription = Subscription(**sub_data_obj)
-                return subscription
-            else:
-                return None
-        except Exception as err:
-            logger.warn(str(err))
-            cls.stderr.write(str(err))
-            cls.stderr.flush()
-            Notification.send_notification(err)
-            return None
-
-    @classmethod
-    def fetch_all(cls, col_names=False, using: str=None) -> list:
-        if using:
-            # give class the datebase property to enable db connection
-            cls._db = using
-        conn = cls._connect_to_db(cls)
-        cursor = conn.cursor()
-        subscriptions = []
-
-        try:
-            # will return tuple(subscriptions, column name) if col_names is True
-            subscriptions_data = fetch_all_entry('subscription', cursor, col_names=col_names)
-
-            if not len(subscriptions_data) > 0:
-                return []
-            
-            # unpack data if column_names is True
-            if col_names:
-                subscriptions_data, column_names = subscriptions_data
-
-            for subscription_data in subscriptions_data:
-                # get other datas
-                assigned_clients_id = AssignedClient.filter_sub(sub_id=subscription_data[0])
-
-                assigned_users_id = []
-                if len(assigned_clients_id) > 0:
-                    for assigned_client_id_tuple in assigned_clients_id:
-                        assigned_users_id.append(assigned_client_id_tuple[0])
-
-                # screat subscription data obj
-                subscription_data_obj = {
-                    'subscription_id': subscription_data[0],
-                    'plan_id': subscription_data[1],
-                    'client_id': subscription_data[2],
-                    'plan_unit': subscription_data[3],
-                    'expiration_date': subscription_data[4],
-                    'discount': float(subscription_data[5] / 100), # convert from integer
-                    'discount_type': subscription_data[6],
-                    'vat': float(subscription_data[7]) / 100, # convert from integer
-                    'status': subscription_data[8],
-                    'payment_status': subscription_data[9],
-                    'created_at': subscription_data[10],
-                    'updated_at': subscription_data[11],
-                    'assigned_users_id': assigned_users_id if len(assigned_users_id) > 0 else []
-                }
-
-                subscription = Subscription(**subscription_data_obj)
-                subscriptions.append(subscription)
-
-            # return (subscriptions, column_names) for export
-            if col_names:                
-                return (subscriptions, column_names) if subscriptions else []
-            
-            return subscriptions
-        except Exception as err:
-            logger.warn(str(err))
-            cls.stderr.write(str(err))
-            cls.stderr.flush()
-            Notification.send_notification(err)
-            return []
-
-    @classmethod  
-    def filter_sub(cls, value, by_user=False, by_plan=False, by_payment=False, created_at=False, col_names=False) -> list:
-        conn = cls._connect_to_db(cls)
-        subscriptions = []
-        try:
-            if conn:
-                cursor = conn.cursor()
-                if by_user:
-                    query = '''
-                        SELECT * FROM subscription WHERE client_id = ?;
-                    '''
-                    cursor.execute(query, (value,))
-
-                if by_plan:
-                    query = '''
-                        SELECT * FROM subscription WHERE plan_id = ?;
-                    '''
-                    cursor.execute(query, (value,))
-
-                if by_payment:
-                    query = '''
-                        SELECT * FROM subscription WHERE payment_id = ?;
-                    '''
-                    cursor.execute(query, (value,))
-
-                if created_at:
-                    query = '''
-                        SELECT * FROM subscription WHERE created_at LIKE ?;
-                    '''
-                    cursor.execute(query, ('%' + value + '%',))
-
-                subscriptions_data = cursor.fetchall()
-
-                if not len(subscriptions_data) > 0:
-                    return []
-                
-                
-                for subscription_data in subscriptions_data:
-                    assigned_clients_id = AssignedClient.filter_sub(sub_id=subscription_data[0])
-
-                    assigned_users_id = []
-                    if len(assigned_clients_id) > 0:
-                        for assigned_client_id_tuple in assigned_clients_id:
-                            assigned_users_id.append(assigned_client_id_tuple[0])
-
-                    # screat subscription data obj
-                    subscription_data_obj = {
-                   'subscription_id': subscription_data[0],
-                    'plan_id': subscription_data[1],
-                    'client_id': subscription_data[2],
-                    'plan_unit': subscription_data[3],
-                    'expiration_date': subscription_data[4],
-                    'discount': float(subscription_data[5] / 100), # convert from integer
-                    'discount_type': subscription_data[6],
-                    'vat': float(subscription_data[7]) / 100, # convert from integer
-                    'status': subscription_data[8],
-                    'payment_status': subscription_data[9],
-                    'created_at': subscription_data[10],
-                    'updated_at': subscription_data[11],
-                    'assigned_users_id': assigned_users_id if len(assigned_users_id) > 0 else []
-                }
-
-                    subscription = Subscription(kwargs=subscription_data_obj)
-                    subscriptions.append(subscription)
-                
-                if col_names:
-                    # Get column names
-                    column_names = [description[0] for description in cursor.description]
-                    
-                    return (subscriptions, column_names) if subscriptions else []
-                
-                return subscriptions
-        except Exception as err:
-            logger.warn(str(err))
-            cls.stderr.write(str(err))
-            cls.stderr.flush()
-            Notification.send_notification(err)
-            return []
-
-    @classmethod
-    def export_subscription(cls, file_type, path, value=None, by_user=False, by_month=False, by_year=False) -> None:
-        if not value:
-            subscriptions, column_names = Subscription.fetch_all(col_names=True)
-    
-        if by_user:
-            subscriptions, column_names = Subscription.filter_sub(value, by_user=True, col_names=True)
-
-        if by_month or by_year:
-            subscriptions, column_names = Subscription.filter_sub(value, created_at=True, col_names=True)
-
-        column_names = column_names if column_names else None
-
-        # remove unnecessary data like subcription_id
-        formated_subscriptions = []
-        total_count = 0
-        total_price = 0
-        total_amount_paid = 0
-        total_discount = 0
-        total_vat = 0
-
-        for subscription in subscriptions:
-            total_count += 1
-            total_price += subscription.total_amount
-            total_amount_paid += subscription.total_paid
-            total_discount += subscription.discount_amount
-            total_vat += subscription.vat_amount
-            formated_subscriptions.append([
-                subscription.created_at,
-                subscription.client.get_display_name(),
-                subscription.plan.plan_name,
-                subscription.total_amount,
-                subscription.total_paid,
-                subscription.discount_amount,
-                subscription.vat_amount,
-                subscription.expiration_date,
-                subscription.status
-            ])
-
-            # processed_payment.add(subscription.payments.payment_id)
-
-        # add totals to data
-        formated_subscriptions.append([
-            'TOTAL',
-            total_count,
-            total_count,
-            total_price,
-            total_amount_paid,
-            total_discount,
-            total_vat,
-            '-',
-            '-'
-        ])
-        
-        formated_column_name = [
-            'DATE',
-            'CLIENT',
-            'PLAN',
-            'PRICE',
-            'AMOUNT PAID',
-            'DISCOUNT',
-            'vat',
-            'VALIDITY',
-            'STATUS'
-        ]
-
-        data = {
-            'entries': formated_subscriptions,
-            'headers': formated_column_name
-        }
-
-        export_helper(cls, file_type, path, data=data, name='subscription_export')
-        print('Export complete')
 
 
 

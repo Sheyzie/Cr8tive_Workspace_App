@@ -67,7 +67,7 @@ class TestClient(BaseTestClass):
 
         for client in get_client():
             new_client = Client(**client)
-            new_client.get_id()
+            # new_client.get_id()
             new_client.save_to_db()
             # time.sleep(5)
 
@@ -81,14 +81,14 @@ class TestClient(BaseTestClass):
         fetched_clients = Client.fetch_all()
         assert len(fetched_clients) > 0
 
-        one_client = Client.fetch_one(fetched_clients[1].client_id)
+        one_client = Client.fetch_one(client_id=fetched_clients[1].client_id)
         assert one_client.first_name == fetched_clients[1].first_name
 
-        filter_by_name = Client.filter_client('Client', name=True)
+        filter_by_name = Client.filter(first_name='Client')
         assert len(filter_by_name) > 0
 
         
-        filter_by_date = Client.filter_client(self.current_year, by_date=True)
+        filter_by_date = Client.filter(created_at=self.current_year)
         assert len(filter_by_date) > 0
 
         self.stdout.write('\nTest 2: Passed ✅\n')
@@ -108,7 +108,7 @@ class TestClient(BaseTestClass):
 
         one_client.update()
     
-        one_client_refetched = Client.fetch_one(one_client.client_id)
+        one_client_refetched = Client.fetch_one(client_id=one_client.client_id)
 
         assert one_client_refetched.first_name == one_client.first_name
 
@@ -127,7 +127,7 @@ class TestClient(BaseTestClass):
 
         one_client.delete()
     
-        one_client_refetched = Client.fetch_one(one_client.client_id)
+        one_client_refetched = Client.fetch_one(client_id=one_client.client_id)
 
         assert one_client_refetched is None
 
@@ -138,7 +138,7 @@ class TestClient(BaseTestClass):
         self.stdout.write('\nTest 5: Export clients to csv\n')
         self.stdout.flush()
         path = app_config.BASE_DIR / 'tests'
-        Client.export_clients('.csv', path)
+        Client.export_model('.csv', path)
         assert os.path.isfile(path / 'clients_export.csv')
         self.stdout.write('\nTest 5: Passed ✅\n')
         self.stdout.flush()
@@ -147,7 +147,7 @@ class TestClient(BaseTestClass):
         self.stdout.write('\nTest 6: Export clients to xlsx\n')
         self.stdout.flush()
         path = app_config.BASE_DIR / 'tests'
-        Client.export_clients('.xlsx', path)
+        Client.export_model('.xlsx', path)
         assert os.path.isfile(path / 'clients_export.xlsx')
         self.stdout.write('\nTest 6: Passed ✅\n')
         self.stdout.flush()
@@ -156,7 +156,7 @@ class TestClient(BaseTestClass):
         self.stdout.write('\nTest 7: Export clients to pdf\n')
         self.stdout.flush()
         path = app_config.BASE_DIR / 'tests'
-        Client.export_clients('.pdf', path)
+        Client.export_model('.pdf', path)
         assert os.path.isfile(app_config.BASE_DIR / 'tests/clients_export.pdf')
         self.stdout.write('\nTest 7: Passed ✅\n')
         self.stdout.flush()
@@ -183,7 +183,7 @@ class TestClient(BaseTestClass):
         self.stdout.write('\nTest 9: Importing clients from csv\n')
         self.stdout.flush()
         path = app_config.BASE_DIR / 'tests/clients_export.csv'
-        Client.import_clients(path, '.csv', has_header=True)
+        Client.import_model(path, '.csv', has_header=True)
 
         fetched_clients = Client.fetch_all()
         assert len(fetched_clients) > 0
@@ -203,7 +203,7 @@ class TestClient(BaseTestClass):
         self.stdout.write('\nTest 10: Importing clients from xlsx\n')
         self.stdout.flush()
         path = app_config.BASE_DIR / 'tests/clients_export.xlsx'
-        Client.import_clients(path, '.xlsx', has_header=True)
+        Client.import_model(path, '.xlsx', has_header=True)
 
         fetched_clients = Client.fetch_all()
         assert len(fetched_clients) > 0
@@ -223,7 +223,7 @@ class TestClient(BaseTestClass):
         self.stdout.write('\nTest 11: Importing clients from pdf\n')
         self.stdout.flush()
         path = app_config.BASE_DIR / 'tests/clients_export.pdf'
-        Client.import_clients(path, '.pdf', has_header=True)
+        Client.import_model(path, '.pdf', has_header=True)
 
         fetched_clients = Client.fetch_all()
         assert len(fetched_clients) > 0
@@ -265,7 +265,6 @@ class TestPlan(BaseTestClass):
 
         for plan in get_plan():
             new_plan = Plan(**plan)
-            new_plan.get_id()
             new_plan.save_to_db()
             # time.sleep(5)
 
@@ -279,15 +278,15 @@ class TestPlan(BaseTestClass):
         fetched_plans = Plan.fetch_all()
         assert len(fetched_plans) > 0
 
-        one_plan = Plan.fetch_one(fetched_plans[1].plan_id)
+        one_plan = Plan.fetch_one(plan_id=fetched_plans[1].plan_id)
         assert one_plan.plan_name == fetched_plans[1].plan_name
         assert one_plan.duration == fetched_plans[1].duration
         assert one_plan.price == fetched_plans[1].price
 
-        filter_by_name = Plan.filter_plan('daily', plan_type=True)
+        filter_by_name = Plan.filter(plan_type='daily')
         assert len(filter_by_name) > 0
 
-        filter_by_date = Plan.filter_plan(self.current_year, by_date=True)
+        filter_by_date = Plan.filter(created_at=self.current_year)
         assert len(filter_by_date) > 0
 
         self.stdout.write('Test 2: Passed ✅\n')
@@ -307,7 +306,7 @@ class TestPlan(BaseTestClass):
 
         one_plan.update()
     
-        one_plan_refetched = Plan.fetch_one(one_plan.plan_id)
+        one_plan_refetched = Plan.fetch_one(plan_id=one_plan.plan_id)
 
         assert one_plan_refetched.plan_name == one_plan.plan_name
 
@@ -326,7 +325,7 @@ class TestPlan(BaseTestClass):
 
         one_plan.delete()
     
-        one_plan_refetched = Plan.fetch_one(one_plan.plan_id)
+        one_plan_refetched = Plan.fetch_one(plan_id=one_plan.plan_id)
 
         assert one_plan_refetched is None
 
@@ -337,7 +336,7 @@ class TestPlan(BaseTestClass):
         self.stdout.write('\nTest 5: Export plans to csv\n')
         self.stdout.flush()
         path = app_config.BASE_DIR / 'tests'
-        Plan.export_plans('.csv', path)
+        Plan.export_model('.csv', path)
         assert os.path.isfile(path / 'plans_export.csv')
         self.stdout.write('Test 5: Passed ✅\n')
         self.stdout.flush()
@@ -346,7 +345,7 @@ class TestPlan(BaseTestClass):
         self.stdout.write('\nTest 6: Export plans to xlsx\n')
         self.stdout.flush()
         path = app_config.BASE_DIR / 'tests'
-        Plan.export_plans('.xlsx', path)
+        Plan.export_model('.xlsx', path)
         assert os.path.isfile(path / 'plans_export.xlsx')
         self.stdout.write('Test 6: Passed ✅\n')
         self.stdout.flush()
@@ -355,7 +354,7 @@ class TestPlan(BaseTestClass):
         self.stdout.write('\nTest 7: Export plans to pdf\n')
         self.stdout.flush()
         path = app_config.BASE_DIR / 'tests'
-        Plan.export_plans('.pdf', path)
+        Plan.export_model('.pdf', path)
         assert os.path.isfile(app_config.BASE_DIR / 'tests/plans_export.pdf')
         self.stdout.write('Test 7: Passed ✅\n')
         self.stdout.flush()
@@ -368,8 +367,8 @@ class TestPlan(BaseTestClass):
 
         assert len(fetched_plans) > 0
 
-        for client in fetched_plans:
-            client.delete()
+        for plan in fetched_plans:
+            plan.delete()
 
         refetched_plans = Plan.fetch_all()
 
@@ -382,7 +381,7 @@ class TestPlan(BaseTestClass):
         self.stdout.write('\nTest 9: Importing plans from csv\n')
         self.stdout.flush()
         path = app_config.BASE_DIR / 'tests/plans_export.csv'
-        Plan.import_plans(path, '.csv', has_header=True)
+        Plan.import_model(path, '.csv', has_header=True)
 
         fetched_plans = Plan.fetch_all()
         assert len(fetched_plans) > 0
@@ -402,7 +401,7 @@ class TestPlan(BaseTestClass):
         self.stdout.write('\nTest 10: Importing plans from xlsx\n')
         self.stdout.flush()
         path = app_config.BASE_DIR / 'tests/plans_export.xlsx'
-        Plan.import_plans(path, '.xlsx', has_header=True)
+        Plan.import_model(path, '.xlsx', has_header=True)
 
         fetched_plans = Plan.fetch_all()
         assert len(fetched_plans) > 0
@@ -422,7 +421,7 @@ class TestPlan(BaseTestClass):
         self.stdout.write('\nTest 11: Importing plans from pdf\n')
         self.stdout.flush()
         path = app_config.BASE_DIR / 'tests/plans_export.pdf'
-        Plan.import_plans(path, '.pdf', has_header=True)
+        Plan.import_model(path, '.pdf', has_header=True)
 
         fetched_plans = Plan.fetch_all()
         assert len(fetched_plans) > 0
@@ -461,7 +460,6 @@ class TestSubscription(BaseTestClass):
 
         for client in get_client():
             new_client = Client(**client)
-            new_client.get_id()
             new_client.save_to_db()
 
         fetched_clients = Client.fetch_all()
@@ -469,7 +467,6 @@ class TestSubscription(BaseTestClass):
 
         for plan in get_plan():
             new_plan = Plan(**plan)
-            new_plan.get_id()
             new_plan.save_to_db()
 
         fetched_plans = Plan.fetch_all()
@@ -513,15 +510,13 @@ class TestSubscription(BaseTestClass):
         }
 
         new_subscription = Subscription(**sub_obj)
-        new_subscription.get_id()
         new_subscription.save_to_db()
 
         second_subscription = Subscription(**sub_obj2)
-        second_subscription.get_id()
         second_subscription.save_to_db()
-
         
-        refetch_subscription = Subscription.fetch_one(new_subscription.subscription_id)
+        refetch_subscription = Subscription.fetch_one(subscription_id=new_subscription.subscription_id)
+
         assert new_subscription.subscription_id == refetch_subscription.subscription_id
 
         self.stdout.write('\nTest 1: Passed ✅')
@@ -541,7 +536,7 @@ class TestSubscription(BaseTestClass):
 
         one_subscription.update()
     
-        one_subscription_refetched = Subscription.fetch_one(one_subscription.subscription_id)
+        one_subscription_refetched = Subscription.fetch_one(subscription_id=one_subscription.subscription_id)
 
         assert one_subscription_refetched.status == one_subscription.status
 
@@ -560,7 +555,7 @@ class TestSubscription(BaseTestClass):
 
         one_subscription.delete()
     
-        one_subscription_refetched = Subscription.fetch_one(one_subscription.subscription_id)
+        one_subscription_refetched = Subscription.fetch_one(subscription_id=one_subscription.subscription_id)
 
         assert one_subscription_refetched is None
 
@@ -571,7 +566,7 @@ class TestSubscription(BaseTestClass):
         self.stdout.write('\nTest 4: Export Subscription to csv\n')
         self.stdout.flush()
         path = app_config.BASE_DIR / 'tests'
-        Subscription.export_subscription('.csv', path)
+        Subscription.export_model('.csv', path)
         assert os.path.isfile(path / 'subscription_export.csv')
         self.stdout.write('\nTest 4: Passed ✅')
         self.stdout.flush()
@@ -580,7 +575,7 @@ class TestSubscription(BaseTestClass):
         self.stdout.write('\nTest 5: Export Subscription to xlsx\n')
         self.stdout.flush()
         path = app_config.BASE_DIR / 'tests'
-        Subscription.export_subscription('.xlsx', path)
+        Subscription.export_model('.xlsx', path)
         assert os.path.isfile(path / 'subscription_export.xlsx')
         self.stdout.write('\nTest 5: Passed ✅')
         self.stdout.flush()
@@ -589,7 +584,7 @@ class TestSubscription(BaseTestClass):
         self.stdout.write('\nTest 6: Export Subscription to pdf\n')
         self.stdout.flush()
         path = app_config.BASE_DIR / 'tests'
-        Subscription.export_subscription('.pdf', path)
+        Subscription.export_model('.pdf', path)
         assert os.path.isfile(app_config.BASE_DIR / 'tests/subscription_export.pdf')
         self.stdout.write('\nTest 6: Passed ✅')
         self.stdout.flush()
@@ -657,19 +652,17 @@ class TestPayment(BaseTestClass):
         }
 
         client = Client(**client_data)
-        client.get_id()
         client.save_to_db()
 
         # check if client exist in db
-        client = Client.fetch_one(client_data['phone'], by_phone=True)
+        client = Client.fetch_one(phone=client_data['phone'])
         assert client is not None
 
         plan = Plan(**plan_data)
-        plan.get_id()
         plan.save_to_db()
 
         # check if plan exist in db
-        plan = Plan.fetch_one(plan_data['plan_name'], by_name=True)
+        plan = Plan.fetch_one(plan_name=plan_data['plan_name'])
         assert plan is not None
 
         sub_obj = {
@@ -684,7 +677,6 @@ class TestPayment(BaseTestClass):
         }
 
         sub = Subscription(**sub_obj)
-        sub.get_id()
         sub.save_to_db()
 
         for i in range(1,4):
@@ -696,7 +688,6 @@ class TestPayment(BaseTestClass):
             
             # get subscription from test
             new_payment = Payment(**payment_data)
-            new_payment.get_id()
             new_payment.save_to_db()
             # break
 
@@ -712,13 +703,14 @@ class TestPayment(BaseTestClass):
         fetched_payments = Payment.fetch_all()
         assert len(fetched_payments) > 0
 
-        one_payment = Payment.fetch_one(fetched_payments[1].payment_id)
+        one_payment = Payment.fetch_one(payment_id=fetched_payments[1].payment_id)
         assert one_payment.amount == fetched_payments[1].amount
 
-        filter_by_amount = Payment.filter_payments((1000, 7000), by_amount=True)
+
+        filter_by_amount = Payment.filter(amount=(one_payment.amount * 100))
         assert len(filter_by_amount) > 0
 
-        filter_by_date = Payment.filter_payments(self.current_year, by_date=True)
+        filter_by_date = Payment.filter(created_at=self.current_year)
         assert len(filter_by_date) > 0
 
         self.stdout.write('\nTest 2: Passed ✅\n')
@@ -736,11 +728,11 @@ class TestPayment(BaseTestClass):
         
         one_payment.amount = 10
 
-        one_payment.update()
+        one_payment.save_to_db(update=True)
     
-        one_payment_refetched = Payment.fetch_one(one_payment.payment_id)
+        one_payment_refetched = Payment.fetch_one(payment_id=one_payment.payment_id)
 
-        assert one_payment_refetched.amount == one_payment.amount
+        assert one_payment_refetched.amount == one_payment.amount / 100
 
         self.stdout.write('\nTest 3: Passed ✅\n')
         self.stdout.flush()
@@ -783,7 +775,6 @@ class TestVisit(BaseTestClass):
 
         for client in get_client():
             new_client = Client(**client)
-            new_client.get_id()
             new_client.save_to_db()
 
         fetched_clients = Client.fetch_all()
@@ -791,7 +782,6 @@ class TestVisit(BaseTestClass):
 
         for plan in get_plan():
             new_plan = Plan(**plan)
-            new_plan.get_id()
             new_plan.save_to_db()
 
         fetched_plans = Plan.fetch_all()
@@ -812,17 +802,14 @@ class TestVisit(BaseTestClass):
         }
 
         new_subscription = Subscription(**sub_obj)
-        new_subscription.get_id()
         new_subscription.save_to_db()
 
-        fetched_subscriptions = Subscription.fetch_all()
+        self.sub_id = new_subscription.subscription_id
 
-        one_subscription = fetched_subscriptions[0]
-        one_subscription.set_assigned_client(client)
+        fetched_subscription = Subscription.fetch_one(subscription_id=self.sub_id)
+        fetched_subscription.set_assigned_client(client)
 
-        self.sub_id = one_subscription.subscription_id
-
-        assert len(one_subscription.assigned_users) > 0
+        assert len(fetched_subscription.assigned_users) > 0
 
         self.stdout.write('Setup complete ✅\n')
         self.stdout.flush()
@@ -831,17 +818,17 @@ class TestVisit(BaseTestClass):
         self.stdout.write('\nTest 1: Creating Visit from subscription data\n')
         self.stdout.flush()
 
-        fetched_subscription = Subscription.fetch_one(self.sub_id)
-
+        fetched_subscription = Subscription.fetch_one(subscription_id=self.sub_id)
+        
         assert fetched_subscription is not None
 
         fetched_subscription.log_client_to_visit(fetched_subscription.client)
-
-        visits = Visit.get_client_visits_per_sub(fetched_subscription.subscription_id)
-
-        assert visits[0][0] == fetched_subscription.client.first_name
-        assert visits[0][1] == fetched_subscription.client.last_name
-        assert visits[0][2] == fetched_subscription.client.company_name
+        
+        visits = Visit.get_client_visits_per_sub(fetched_subscription.subscription_id, result_only=True)
+        
+        assert visits[0] == fetched_subscription.client.first_name
+        assert visits[1] == fetched_subscription.client.last_name
+        assert visits[2] == fetched_subscription.client.company_name
 
         self.stdout.write('\nTest 1: Passed ✅\n')
         self.stdout.flush()
@@ -858,7 +845,7 @@ class TestVisit(BaseTestClass):
 
         one_subscription.delete()
     
-        one_subscription_refetched = Subscription.fetch_one(one_subscription.subscription_id)
+        one_subscription_refetched = Subscription.fetch_one(subscription_id=one_subscription.subscription_id)
 
         assert one_subscription_refetched is None
 

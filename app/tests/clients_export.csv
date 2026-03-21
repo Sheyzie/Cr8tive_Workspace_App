@@ -1,4 +1,2 @@
-first_name,last_name,company_name,email,phone,display_name,created_at,updated_at
-Client,Two,Two Company,clienttwo@mail.com,081000000002,client,2026-03-19 16:23:55,2026-03-19 16:23:55
-Client,Three,Three Company,clientthree@mail.com,081000000003,client,2026-03-19 16:23:55,2026-03-19 16:23:55
-Client,Four,Four Company,clientfour@mail.com,081000000004,client,2026-03-19 16:23:55,2026-03-19 16:23:55
+plan_id,client_id,plan_unit,expiration_date,discount,discount_type,vat,status,payment_status,created_at,updated_at
+e170a7b4-04ab-405b-9101-9963fa30ac03,12b47c8d-cd87-44bf-b4dc-72962d061c6f,2,2026-03-23 10:06:57,0.1,percent,0.1,booked,pending,2026-03-21 10:06:57,2026-03-21 10:06:57

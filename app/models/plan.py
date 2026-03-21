@@ -2,6 +2,7 @@ import time
 import inspect
 from typing import Self
 from database.db import InitDB
+from database.tables import TABLES_MAP
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
 from utils.import_file import ImportManager
@@ -21,6 +22,9 @@ logger = logging.getLogger(__name__)
 
 
 class Plan(InitDB):
+
+    # field_map = TABLES_MAP.get('plan').get('fields')
+
     def __init__(self, **kwargs):
         super().__init__()
         self.plan_id: str = None
@@ -101,7 +105,11 @@ class Plan(InitDB):
         if len(self.plan_name) < 3:
             raise ValidationError('Plan name cannot be less than three letters')
         if not isinstance(self.duration, (int, float)):
-            raise ValidationError('Plan duration cannot be letters')
+            try:
+                # incase value is passed in as '1'
+                self.duration = int(self.duration)
+            except Exception as err:
+                raise ValidationError(f'Plan duration cannot be letters got {self.duration}')
         if self.duration < 1:
             raise ValidationError('Plan cannot be less than 1')
         if self.plan_type not in VALID_PLAN_TYPES:
@@ -118,76 +126,22 @@ class Plan(InitDB):
         if check_id:
             if not self.plan_id:
                 raise ValidationError('Plan ID is required')
-            self._check_plan_id()
-        
-    def get_id(self) -> None:
-        self._connect_to_db()
-        if self.conn:
-            try:
-                cursor = self.conn.cursor()
-                id_string = generate_id('plan', cursor)
-                
-                if not id_string:
-                    logger.warn('ID not generated')
-                    self.stderr.write('\033[31m' + 'ID not generated'+ '\033[0m\n')
-                    self.stderr.flush()
-                
-                self.plan_id = id_string
-                
-                cursor.close()
-                self.conn.close()
-            except Exception as err:
-                logger.warn(str(err))
-                self.stderr.write(str(err))
-                self.stderr.flush()
-   
-    def _check_plan_id(self):
-        '''
-        check if id changed
-        '''
-        plan = Plan.fetch_one(self.plan_id)
-
-        if not plan:
-            raise ValidationError('Invalid ID for plan')
-        
-        # if self.phone != client.phone:
-        #     raise ValidationError('Client data do not match')
+            if not self._verify_pk():
+                raise ValidationError('Plan ID is not valid')
 
     def save_to_db(self, update=False) -> None:
-        self._connect_to_db()
-        if self.conn:
-            cursor = self.conn.cursor()
-            created_at = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-            try:
-                if update:
-                    # convert price to kobo
-                    values = (self.plan_name, self.duration, self.plan_type, self.slot, self.guest_pass, (self.price * 100), self.plan_id)
-                    update_in_db('plan', cursor, values)
-                    self.conn.commit()
-                    self.conn.close()
-                    return
+        plan = Plan.fetch_one(plan_name=self.plan_name)
 
-                # check if plam already exist with the plane_name 
-                plan_exists = Plan.fetch_one(self.plan_name, True)
-                if plan_exists:
-                    self._reset_fields()
-                    logger.warn('Plan already exist')
-                    self.stderr.write(f"\nPlan already exist with {self.plan_name} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-                    self.stderr.flush()
-                    Notification.send_notification(f'Plan already exist with {self.plan_name}')
-                    return
-
-                # convert price to kobo
-                values = (self.plan_id, self.plan_name, self.duration, self.plan_type, self.slot, self.guest_pass, (self.price * 100), created_at)
-                insert_to_db('plan', cursor, values)
-                self.conn.commit()
-                self.conn.close()
-            except ValueError as err:
-                logger.warn(str(err))
-                self.stderr.write(str(err))
+        if not update:
+            if plan:
+                self._reset_fields()
+                logger.warn(f'Plan already exist with the name {plan.plan_name}')
+                self.stderr.write(f"\nPlan already exist with {plan.plan_name} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
                 self.stderr.flush()
-                Notification.send_notification(err)
-            
+                Notification.send_notification(f'Plan already exist with {self.plan_name}')
+                return
+        super().save_to_db(update=update)
+  
     def update(self) -> None:
         try:
             self._validate(check_id=True)
@@ -198,261 +152,6 @@ class Plan(InitDB):
             self.stderr.flush()
             Notification.send_notification(err)
             exit(1)
-
-    def delete(self) -> None:
-        try:
-            self._validate(check_id=True)
-
-            self._connect_to_db()
-            if self.conn:
-                cursor = self.conn.cursor()
-                self.query = '''
-                    DELETE FROM plan WHERE plan_id = ?;
-                '''
-
-            cursor.execute(self.query, (self.plan_id,))
-            self.conn.commit()
-            self.conn.close()
-
-            # reset fields
-            self._reset_fields()
-        except ValidationError as err:
-            logger.error(str(err.message))
-            self.stderr.write('\033[31m' + str(err.message + '\033[0m\n'))
-            self.stderr.flush()
-            Notification.send_notification(err)
-            exit(1)
-        
-        except Exception as err:
-            logging.error('Error deleting client')
-            self.stderr.write(str(err.with_traceback()))
-            self.stderr.flush()
-            Notification.send_notification(err)
-            exit(1)
-
-    @classmethod
-    def fetch_one(cls, value, by_name=False) -> Self | None:
-        conn = cls._connect_to_db(cls)
-        cursor = conn.cursor()
-        
-        try:
-            plan_data = fetch_one_entry('plan', cursor, value, by_name)
-            
-            if plan_data is None:
-                return None
-            
-            plan_data_obj = {
-                'plan_id': plan_data[0],
-                'plan_name': plan_data[1],
-                'duration': plan_data[2],
-                'plan_type': plan_data[3],
-                'slot': plan_data[4],
-                'guest_pass': plan_data[5],
-                'price': float(plan_data[6]) / 100, # convert back from kobo
-                'created_at': plan_data[7],
-            }
-
-            if plan_data:
-                plan = Plan(**plan_data_obj)
-                return plan
-            else:
-                return None
-        except Exception as err:
-            logger.warn(str(err))
-            cls.stderr.write(str(err))
-            cls.stderr.flush()
-            Notification.send_notification(err)
-            return None
-
-    @classmethod
-    def fetch_all(cls, col_names=False) -> list:
-        conn = cls._connect_to_db(cls)
-        cursor = conn.cursor()
-        plans = []
-        try:
-            plans_data = fetch_all_entry('plan', cursor, col_names=col_names)
-
-            if not len(plans_data) > 0:
-                return []
-            
-            # only exports will set col_name to true so no need to create client obj
-            if col_names:
-                return plans_data
-            
-            for plan_data in plans_data:
-                plan_data_obj = {
-                    'plan_id': plan_data[0],
-                    'plan_name': plan_data[1],
-                    'duration': plan_data[2],
-                    'plan_type': plan_data[3],
-                    'slot': plan_data[4],
-                    'guest_pass': plan_data[5],
-                    'price': float(plan_data[6]) / 100, # convert back from kobo
-                    'created_at': plan_data[7],
-                }
-
-                plan = Plan(**plan_data_obj)
-                plans.append(plan)
-            
-            return plans
-        except Exception as err:
-            logger.warn(str(err))
-            cls.stderr.write(str(err))
-            cls.stderr.flush()
-            Notification.send_notification(err)
-            return []
-
-    @classmethod  
-    def filter_plan(cls, value, plan_type=False, by_date=False) -> list:
-        conn = cls._connect_to_db(cls)
-        plans = []
-        try:
-            if conn:
-                cursor = conn.cursor()
-                if plan_type:
-                    query = '''
-                        SELECT * FROM plan WHERE plan_type = ?;
-                    '''
-                    cursor.execute(query, (value,))
-
-                if by_date:
-                    query = '''
-                        SELECT * FROM plan WHERE created_at LIKE ?;
-                    '''
-                    cursor.execute(query, ('%' + value + '%',))
-
-                plans_data = cursor.fetchall()
-
-                if not len(plans_data) > 0:
-                    return []
-                
-                for plan_data in plans_data:
-                    plan_data_obj = {
-                        'plan_id': plan_data[0],
-                        'plan_name': plan_data[1],
-                        'duration': plan_data[2],
-                        'plan_type': plan_data[3],
-                        'slot': plan_data[4],
-                        'guest_pass': plan_data[5],
-                        'price': float(plan_data[6]) / 100, # convert back from kobo
-                        'created_at': plan_data[7],
-                    }
-
-                    plan = Plan(**plan_data_obj)
-                    plans.append(plan)
-
-                return plans
-        except Exception as err:
-            logger.warn(str(err))
-            cls.stderr.write(str(err))
-            cls.stderr.flush()
-            Notification.send_notification(err)
-            return []
-     
-    @classmethod
-    def import_plans(cls, filepath, file_type, has_header, using=None) -> None:
-        manager = ImportManager(file_path=filepath, file_type=file_type, has_header=has_header)
-        plans = []
-        failed_imports = []
-        data = {}
-
-        if file_type.lower() == '.csv':
-            for plan_data in manager.import_from_csv():
-                if not has_header:
-                    data = {
-                        'plan_name': plan_data[0],
-                        'duration': int(plan_data[1]),
-                        'plan_type': plan_data[2],
-                        'price': int(plan_data[3]),
-                    }
-
-                else:
-                    data = plan_data
-                    data['duration'] = int(data['duration'])
-                    data['price'] = int(data['price'])
-
-                try:
-                    plan = Plan(**data)
-                    plan.get_id()
-                    plan.save_to_db()
-                    plans.append(plan)
-                except Exception as err:
-                    failed_imports.append((data, {'reason': err}))
-                    continue
-
-        elif file_type.lower() in {'.xls', '.xlsx'}:
-            for plan_data in manager.import_from_excel():
-                data = {
-                    'plan_name': plan_data[0],
-                    'duration': int(plan_data[1]),
-                    'plan_type': plan_data[2],
-                    'price': int(plan_data[3]),
-                }
-                try:
-                    plan = Plan(**data)
-                    plan.get_id()
-                    plan.save_to_db()
-                    plans.append(plan)
-                except Exception as err:
-                    failed_imports.append((plan_data, {'reason': err}))
-                    continue
-
-        else:
-            for plan_data in manager.import_from_pdf():
-                data = {
-                    'plan_name': plan_data[0],
-                    'duration': int(plan_data[1]),
-                    'plan_type': plan_data[2],
-                    'price': int(plan_data[3]),
-                }
-
-                try:
-                    plan = Plan(**data)
-                    plan.get_id()
-                    plan.save_to_db()
-                    plans.append(plan)
-                except Exception as err:
-                    failed_imports.append((plan_data, {'reason': err}))
-                    continue
-
-        for i, failed_import in enumerate(failed_imports):
-            cls.stdout.write(f'{i + 1} failed: {failed_import['reason']}')
-            cls.stdout.flush()
-        logger.info(f'({len(plans)}/ {len(plans) + len(failed_imports)} imported successfully)')
-        cls.stdout.write(f'({len(plans)}/ {len(plans) + len(failed_imports)} imported successfully)')
-        cls.stdout.flush()
-
-    @classmethod
-    def export_plans(cls, file_type, path) -> None:
-        plans, column_names = Plan.fetch_all(col_names=True)
-
-        column_names = column_names if column_names else None
-
-        # remove unnecessary data like subcription_id
-        formated_plans = []
-
-        for plan in plans:
-            plan = list(plan)
-            plan.pop(0)
-            formated_plans.append(plan)
-        
-        column_names.pop(0)
-
-        formatted_header = []
-        
-        for header in column_names:
-            if file_type == '.pdf':
-                header = header.replace('_', ' ').upper()
-            formatted_header.append(header)
-
-        data = {
-            'entries': formated_plans,
-            'headers': formatted_header
-        }
-
-        export_helper(cls, file_type, path, data=data, name='plans_export')
-        print('Export complete')
-
 
 # https://www.cargopal.tonisoft.co.ke/
 

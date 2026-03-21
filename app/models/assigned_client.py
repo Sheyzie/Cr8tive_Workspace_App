@@ -2,6 +2,7 @@ import time
 import inspect
 from typing import Self
 from database.db import InitDB
+from database.tables import TABLES_MAP
 from exceptions.exception import ValidationError
 from logs.utils import log_error_to_file, log_to_file
 from notification.notification import Notification
@@ -13,8 +14,11 @@ logger = logging.getLogger(__name__)
 
 
 class AssignedClient(InitDB):
-    def __init__(self, using: str=None, **kwargs):
-        super().__init__(using=using)
+    model_name = 'assigned_client'
+
+    def __init__(self,  **kwargs):
+        super().__init__()
+        self.assigned_client_id = None
         self.subscription_id: str = None
         self.client_id: str = None
         self. created_at: str = None
@@ -25,7 +29,17 @@ class AssignedClient(InitDB):
         except ValidationError as err:
             Notification.send_notification(err)
 
+    def _reset_fields(self):
+        self.assigned_client_id = None
+        self.subscription_id = None
+        self.client_id = None
+        self. created_at = None
+
     def _get_from_kwargs(self, **kwargs) -> None:
+        assigned_client_id = kwargs.get('assigned_client_id', 10)
+        if assigned_client_id:
+            self.assigned_client_id = assigned_client_id
+
         subscription_id = kwargs.get('subscription_id')
         if subscription_id:
             self.subscription_id = subscription_id
@@ -38,70 +52,62 @@ class AssignedClient(InitDB):
         if created_at:
             self.created_at = created_at
 
-    def _validate(self) -> None:
+    def _validate(self, check_id=False) -> None:
+        self._verify_pk()
+        if check_id:
+            if not self.assigned_client_id:
+                raise ValidationError('Assigned client ID not set')
+            if not self._verify_pk():
+                raise ValidationError('Assigned User ID is not valid')
+
         if not self.subscription_id:
             raise ValidationError('Subscription ID is required')
         if not self.client_id:
             raise ValidationError('Client ID is required')
-        if not self.created_at:
-            raise ValidationError('Created at field  is required')
+        
+    # @classmethod    
+    # def save_to_db(cls, sub_id: str, client_id: str) -> None:
+    #     conn = cls._connect_to_db(cls)
+    #     cursor = conn.cursor()
 
-    @classmethod    
-    def save_to_db(cls, sub_id: str, client_id: str) -> None:
-        conn = cls._connect_to_db(cls)
-        cursor = conn.cursor()
-
-        created_at = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-        try:
-            values = (sub_id, client_id, created_at)
-            insert_to_db('assigned_client', cursor, values)
-            conn.commit()
-            conn.close()
-        except Exception as err:
-            logger.warn(str(err))
-            cls.stderr.write(str(err))
-            cls.stderr.flush()
-            Notification.send_notification(err)
+    #     created_at = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+    #     try:
+    #         values = (sub_id, client_id, created_at)
+    #         insert_to_db('assigned_client', cursor, values)
+    #         conn.commit()
+    #         conn.close()
+    #     except Exception as err:
+    #         logger.warn(str(err))
+    #         cls.stderr.write(str(err))
+    #         cls.stderr.flush()
+    #         Notification.send_notification(err)
 
     @classmethod
     def delete_user(cls, sub_id: str, client_id: str) -> None:
-        conn = cls._connect_to_db(cls)
-        cursor = conn.cursor()
         
         query = '''
             DELETE FROM assigned_client WHERE subscription_id = ? AND client_id =?;
         '''
 
-        try:
-            cursor.execute(query, (sub_id, client_id))
-            conn.commit()
-            conn.close()
-        except Exception as err:
-            logger.warn(str(err))
-            cls.stderr.write(str(err))
-            cls.stderr.flush()
-            Notification.send_notification(err)
+        cls.custom(query=query, values=(sub_id, client_id))
+
+        user = cls.get_user(sub_id=sub_id, client_id=client_id)
+
+        if user is not None:
+            cls.stderr.write('User not delete from subscription')
+            logger.exception('User not delete from subscription')
+
 
     @classmethod
-    def get_user(cls, sub_id, client_id, using=None) -> Self | None:
-        conn = cls._connect_to_db(cls)
-        cursor = conn.cursor()
-    
-        try:
-            query = '''
-                SELECT client_id FROM assigned_client WHERE subscription_id = ? AND client_id = ?;
-            '''
+    def get_user(cls, sub_id, client_id) -> Self | None:
+        
+        query = '''
+            SELECT client_id FROM assigned_client WHERE subscription_id = ? AND client_id = ?;
+        '''
 
-            cursor.execute(query, (sub_id,client_id))
-            assigned_client = cursor.fetchall()
-
-            return assigned_client
-        except Exception as err:
-            logger.warn(str(err))
-            cls.stderr.write(str(err))
-            cls.stderr.flush()
-            Notification.send_notification(err)
-            return None
+        result = cls.custom(query=query, values=(sub_id, client_id))
+        return result
+        
 
     @classmethod  
     def filter_sub(cls, sub_id: str, using: str=None) -> list:

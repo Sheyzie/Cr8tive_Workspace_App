@@ -16,7 +16,7 @@ BASE_COMMANDS = {
             'model': {
                 'name': 'Model',
                 # TODO: get this values from table.keys
-                'validate': lambda values:  set(values) <= {'client', 'plan', 'payment', 'subcription', 'visit'}
+                'validate': lambda values:  set(values) <= {'client', 'plan', 'payment', 'subscription', 'visit'}
             },
         }
     },
@@ -29,7 +29,7 @@ BASE_COMMANDS = {
             'model': {
                 'name': 'Model',
                 # TODO: get this values from table.keys
-                'validate': lambda values:  set(values) <= {'client', 'plan', 'payment', 'subcription', 'visit'}
+                'validate': lambda values:  set(values) <= {'client', 'plan', 'payment', 'subscription', 'visit'}
             },
             'field_id': {
                 'name': 'Field ID',

@@ -1,10 +1,17 @@
 import inspect
 import sqlite3
+from typing import Self
 from logs.utils import log_to_file, log_error_to_file
 from notification.notification import Notification
 from exceptions.exception import ValidationError
+from helpers.export_helper import export_helper
+from helpers.db_helpers import generate_id
+from database.tables import TABLES_MAP
+from utils.import_file import ImportManager
 from configs import db_config
 from pathlib import Path
+import uuid
+import time
 import sys
 import os
 import logging
@@ -47,15 +54,13 @@ class DB:
 
             self._init_database_tables()
         except Exception as err:
+            conn.close()
             logger.exception(f"Error connecting to {self._db} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
             self.stderr.write(f"Error connecting to {self._db} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
             self.stderr.write(str(err))
             self.stderr.flush()
-    
-            if conn:
-                conn.close()
             Notification.send_notification(err)
-            return
+            raise err
                 
     def _connect_to_db(self):
         if self._db is None:
@@ -78,8 +83,8 @@ class DB:
             self.stderr.write(str(err) + '\n')
             self.stderr.flush()
             Notification.send_notification(err)
-            self.conn = None
-            exit(1)
+            self.conn.close()
+            raise err
 
     @classmethod
     def set_db_name(cls):
@@ -159,7 +164,6 @@ class DB:
                 self.stderr.write(str(err))
                 self.stderr.flush()
 
-
     def _create_client_table(self):
         cursor = self.conn.cursor()
         try:
@@ -178,9 +182,11 @@ class DB:
             ''')
             self.conn.commit()
         except Exception as err:
+            self.conn.close()
             self.stderr.write(f"Error creating client table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
             self.stderr.write(str(err))
             self.stderr.flush()
+            raise err
 
     def _create_plan_table(self):
         cursor = self.conn.cursor()
@@ -194,7 +200,8 @@ class DB:
                         slot INTEGER NOT NULL,
                         guest_pass INTEGER NOT NULL,
                         price INTEGER NOT NULL,
-                        created_at TEXT NOT NULL
+                        created_at TEXT NOT NULL,
+                        updated_at TEXT NOT NULL
                     );
             ''')
             self.conn.commit()
@@ -202,6 +209,8 @@ class DB:
             self.stderr.write(f"Error creating plan table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
             self.stderr.write(str(err))
             self.stderr.flush()
+            self.conn.close()
+            raise err
 
     def _create_subscription_table(self):
         cursor = self.conn.cursor()
@@ -229,6 +238,8 @@ class DB:
             self.stderr.write(f"Error creating subscription table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
             self.stderr.write(str(err))
             self.stderr.flush()
+            self.conn.close()
+            raise err
 
     def _create_payment_table(self):
         cursor = self.conn.cursor()
@@ -250,6 +261,8 @@ class DB:
             self.stderr.write(f"Error creating payment table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
             self.stderr.write(str(err))
             self.stderr.flush()
+            self.conn.close()
+            raise err
 
     def _create_visit_table(self):
         cursor = self.conn.cursor()
@@ -269,6 +282,8 @@ class DB:
             self.stderr.write(f"Error creating visit table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
             self.stderr.write(str(err))
             self.stderr.flush()
+            self.conn.close()
+            raise err
 
     def _create_assigned_client_table(self):
         cursor = self.conn.cursor()
@@ -287,6 +302,8 @@ class DB:
             self.stderr.write(f"Error creating visit table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
             self.stderr.write(str(err))
             self.stderr.flush()
+            self.conn.close()
+            raise err
 
     def save_to_db(self):
         self.conn.commit()
@@ -308,6 +325,8 @@ class DB:
 
 
 class InitDB(DB):
+    table_map = TABLES_MAP
+
     def __init__(self):
         is_test_environ = os.getenv('CURRENT_WORKING_DB_ENVIRON', '').lower() == 'test' 
         using = db_config.TEST_DB_NAME
@@ -315,3 +334,756 @@ class InitDB(DB):
             using = db_config.DB_NAME
 
         super().__init__(using)
+
+    @property
+    def data(self):
+        return self._get_data()
+    
+    def _set_table_name(self):
+        '''
+        Set the model to be used as table name
+        '''
+        # get table name from model
+        model_name = getattr(self, 'model_name', None)
+        if not model_name:
+            try:
+                model_name = self.__name__ # use model name as table name
+            except AttributeError:
+                model_name = self.__class__.__name__
+        
+        setattr(self, 'model_name', model_name.lower())
+    
+    def _get_field_map(self):
+        try:
+            self._set_table_name()
+        except TypeError:
+            self._set_table_name(self)
+
+        field_map = TABLES_MAP.get(self.model_name, None)
+        if field_map is None:
+            logger.exception(f'No table match the name {self.model_name} ensure table is on TABLE_MAP')
+            raise Exception(f'No table match the name {self.model_name} ensure table is on TABLE_MAP')
+        return field_map.get('fields')
+
+    def _get_pk_field(self):
+        try:
+            field_map = self._get_field_map()
+        except TypeError:
+            field_map = self._get_field_map(self)
+
+        model = self.model_name
+        model_fields = field_map.keys()
+        model_fields = list(field_map.keys())
+
+        data = {}
+
+        for key in model_fields:
+            field_obj = field_map.get(key, {})
+            is_pk = field_obj.get('is_pk', False)
+            
+            if is_pk:
+                data = {
+                    key: field_obj
+                }
+                break
+        return data   
+    
+    def _verify_pk(self):
+        '''
+        check if id changed
+        '''
+        pk_key = list(self._get_pk_field().keys())[0]
+        kwargs = {
+            pk_key: getattr(self, pk_key)
+        }
+
+        instance = self.fetch_one(**kwargs)
+        return instance is not None
+
+    def _get_data(self, is_new=False):
+        try:
+            field_map = self._get_field_map()
+        except TypeError:
+            field_map = self._get_field_map(self)
+
+        model = self.model_name
+        model_fields = field_map.keys()
+        model_fields = list(field_map.keys())
+
+        data = {}
+        
+        for key in model_fields:
+            # format key to change fk(subscription_id becomes subscription)
+            formatted_key = key if key[-3:] != '_id' or key == f'{model.lower()}_id' else key[:-3]
+
+            if hasattr(self, formatted_key):
+                value = getattr(self, formatted_key)
+                
+                if value is not None and not isinstance(value, InitDB):
+                    data[key] = value
+
+                if isinstance(value, InitDB):
+                    fk_value = getattr(value, key, None)
+                    if fk_value is not None:
+                        data[key] = fk_value
+
+            # check if key is private key
+            if hasattr(self, f'_{formatted_key}'):
+                value = getattr(self, f'_{formatted_key}')
+                if value is not None and not isinstance(value, InitDB):
+                    data[key] = value
+
+                if isinstance(value, InitDB):
+                    fk_value = getattr(value, key, None)
+                    if fk_value is not None:
+                        data[key] = fk_value
+
+            if key[-3:] == '_id':
+                value = getattr(self, key, None)
+                if value is not None:
+                    data[key] = value
+
+        # validate fields
+        is_valid = self._is_valid_data(data, is_new=is_new) 
+        if is_valid:
+            return data
+        return None
+
+    def _is_valid_data(self, data, is_new=False):
+        try:
+            field_map = self._get_field_map()
+        except TypeError:
+            field_map = self._get_field_map(self)
+
+        model = self.model_name
+        model_fields = field_map.keys()
+        model_fields = list(field_map.keys())
+
+        pk_value = None
+        unique_values = []
+
+        for key in model_fields:
+            field_obj = field_map.get(key, {})
+            is_pk = field_obj.get('is_pk', False)
+            is_unique = field_obj.get('is_unique', False)
+            is_nullable = field_obj.get('is_nullable', True)
+            is_fk = field_obj.get('is_fk', False)
+
+            value = data.get(key, None)
+
+            # check pk for existing record
+            if not is_new:
+                if is_pk:
+                    # if primary key value was earlier set
+                    if pk_value:
+                        raise ValidationError(f'Primary key value already set to {pk_value}')
+                    
+                    # get pk value
+                    pk_value = value
+                    if not pk_value:
+                        raise ValidationError(f'Primary key value is not nullable for field {key}')
+                    
+                    # check if pk value is unique
+                    if pk_value in unique_values:
+                        raise ValidationError(f'Primary key: {pk_value}  has to be unique')
+                    
+                    unique_values.append(pk_value)
+            
+            if is_unique:
+                # get unique value
+                unique_value = value
+                if not unique_value:
+                    if not is_pk and not is_new:
+                        raise ValidationError(f'Value is required for field with unique contraint {key}')
+                
+                # check if pk value is unique
+                if unique_value in unique_values:
+                    # pk field field will vallidate it's own uniqueness above
+                    if not is_pk:
+                        raise ValidationError(f'UNIQUE CONSTRAINT: {unique_value} already exist in table')
+                
+                unique_values.append(unique_value)
+
+            if not is_nullable:
+                if not value:
+                    if not is_pk and not is_new:
+                        raise ValidationError(f'Value is required for non nullable field {key}')
+
+            if is_fk:
+                reference_model = field_obj.get('to', None)
+                if reference_model not in self.table_map.keys():
+                    raise ValidationError(f'Invalid model {reference_model} for {key}')
+
+            return True 
+                
+    def _get_id(self) -> str | None:
+        try:
+            self._set_table_name()
+        except TypeError:
+            self._set_table_name(self)
+
+        self._connect_to_db()
+        if self.conn:
+            model = self.model_name
+            id_exist = True
+            id_string = ""
+
+            cursor = self.conn.cursor()
+
+            while id_exist:
+                try:
+                    id_string = str(uuid.uuid4())
+                    query = f'''
+                        SELECT * FROM {model.lower()} WHERE {model.lower()}_id = ?;
+                    '''
+
+                    cursor.execute(query, (id_string,))
+                    entry = cursor.fetchone()
+
+                    if not entry:
+                        id_exist = False
+                except Exception as err:
+                    logging.exception(str(err))
+                    sys.stderr.write(f'\n{err}\n')
+                    sys.stderr.flush()
+                    return None
+            return id_string
+
+    def save_to_db(self, **kwargs) -> None:
+        try:
+            field_map = self._get_field_map()
+        except TypeError:
+            field_map = self._get_field_map(self)
+
+        model = self.model_name
+
+        model_fields = list(field_map.keys())
+        update = kwargs.get('update', False)
+
+        if update and not isinstance(update, bool):
+            raise Exception(f'Invalid type for update got {type(update)} but expected bool')
+                
+        validated_data = self._get_data(is_new=True)
+
+        pk_key = ''
+        pk_value = ''
+        query = ''
+        values = tuple()
+        # handle date
+        for key in model_fields:
+            field_obj = field_map.get(key, {})
+            is_pk = field_obj.get('is_pk', False)
+            is_date = field_obj.get('is_date', False)
+            auto_update = field_obj.get('auto_update', 'never')
+
+            value = validated_data.get(key, None)
+            
+            # get pk field key and value
+            if is_pk:
+                pk_key = key
+                pk_value = value
+
+            # check if date field require auto update
+            if is_date:
+                match auto_update:
+                    case 'never':
+                        validated_data[key] = value
+                    case 'save':
+                        validated_data.pop(key, None)
+                        if not update:
+                            validated_data[key] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+                    case 'update':
+                        validated_data[key] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+
+        if not update:
+            # get primary key string
+            uuid_string = self._get_id()
+
+            # add key to object
+            data = {
+                pk_key: uuid_string,
+                **validated_data
+            }
+
+            # if model has no primary key
+            if not pk_key:
+                data = {
+                    f'{model.lower()}_id': uuid_string,
+                    **validated_data
+                }
+            
+            # set id to object
+            setattr(self, pk_key, uuid_string)
+
+            # please ignore the tab sapce \t: it is used to make the query readable on terminal
+            query = f'''
+                    INSERT INTO {model.lower()}({',\n\t\t\t'.join([key for key in data.keys()])})
+                    VALUES ({', '.join(['?' for key in data.keys()])});
+            '''
+            values = tuple(data.values())
+
+        if update:
+            pk_value = validated_data.pop(pk_key, None)
+            data = {
+                **validated_data,
+                pk_key: pk_value
+            }
+
+            # please ignore the tab sapce \t: it is used to make the query readable on terminal
+            query = f'''
+                    UPDATE {model.lower()} 
+                    SET {', '.join([f'{key} = ?' for key in data.keys() if key != pk_key])}
+                    WHERE {f'{pk_key} = ?'};
+            '''
+            values = tuple(data.values())
+
+        self._connect_to_db()
+        if self.conn:
+            cursor = self.conn.cursor()
+
+            try:
+                cursor.execute(query,values)
+                self.conn.commit()
+                self.conn.close()
+
+            except Exception as err:
+                logger.exception('Error saving client')
+                self.stderr.write(str(err))
+                self.stderr.flush()
+                Notification.send_notification('Unexpected error happened')
+                self.conn.close()
+                raise err
+ 
+    def delete(self) -> None:
+        try:
+            field_map = self._get_field_map()
+        except TypeError:
+            field_map = self._get_field_map(self)
+
+        model = self.model_name
+        model_fields = field_map.keys()
+        model_fields = list(field_map.keys())
+
+        pk_key = ''
+        for key in model_fields:
+            field_obj = field_map.get(key, {})
+            is_pk = field_obj.get('is_pk', False)
+
+
+            if is_pk:
+                pk_key = key
+
+        try:
+            self._connect_to_db()
+            if self.conn:
+                cursor = self.conn.cursor()
+                self.query = f'''
+                    DELETE FROM {model.lower()} WHERE {pk_key} = ?;
+            '''
+            cursor.execute(self.query, (getattr(self, pk_key),))
+            self.conn.commit()
+            self.conn.close()
+
+            # reset fields back
+            self._reset_fields()
+        except ValidationError as err:
+            logger.exception(str(err.message))
+            self.stderr.write('\033[31m' + str(err.message + '\033[0m\n'))
+            self.stderr.flush()
+            Notification.send_notification(err)
+            self.conn.close()
+            raise err
+        except Exception as err:
+            logging.exception(f'Error deleting {model}')
+            self.stderr.write(str(err))
+            self.stderr.flush()
+            Notification.send_notification('Unexpected error happened')
+            self.conn.close()
+            raise err
+
+    @classmethod
+    def fetch_one(cls, **kwargs) -> Self | None:
+        try:
+            field_map = cls._get_field_map()
+        except TypeError:
+            field_map = cls._get_field_map(cls)
+
+        model = cls.model_name
+        model_fields = field_map.keys()
+
+        if not field_map:
+            raise Exception(f'Field map not found for {model} model')
+        
+        if not set(kwargs.keys()) <= set(model_fields):
+            raise Exception(f'Invalid field provided for {model} model')
+        
+        # get model name
+
+        conn = cls._connect_to_db(cls)
+        cursor = conn.cursor()
+
+        query = f'''
+            SELECT * FROM {model.lower()}
+            WHERE {' AND '.join([f'{key} = ?' for key in kwargs.keys()])};
+        '''
+        values = tuple(kwargs.values())
+
+        try:
+            cursor.execute(query, values)
+            result = cursor.fetchone()
+
+            cursor.close()
+            conn.close()
+            if result is None:
+                return None
+            
+            data = {}   
+            for i in range(len(model_fields)):
+                data[list(model_fields)[i]] = result[i]
+
+            instance = cls(**data)
+            return instance
+        except Exception as err:
+            cursor.close()
+            conn.close()
+            logger.exception(f'Error fetching {model}')
+            cls.stderr.write(str(err))
+            cls.stderr.flush()
+            Notification.send_notification('Unexpected error happened')
+            raise err
+
+    @classmethod
+    def fetch_all(cls, **kwargs) -> Self | None:
+        try:
+            field_map = cls._get_field_map()
+        except TypeError:
+            field_map = cls._get_field_map(cls)
+
+        model = cls.model_name
+        model_fields = field_map.keys()
+        col_names = kwargs.get('col_names', False)
+
+        if not field_map:
+            raise Exception(f'Field map not found on {model} model')
+        
+        if col_names and not isinstance(col_names, bool):
+            raise Exception(f'Invalid type for col_names got {type(col_names)} but expected bool')
+ 
+        conn = cls._connect_to_db(cls)
+        cursor = conn.cursor()
+
+        query = f'''
+            SELECT * FROM {model.lower()};
+        '''
+
+        try:
+            cursor.execute(query)
+            result = cursor.fetchall()
+            cursor.close()
+            conn.close()
+            
+            if not len(result) > 0:
+                return []
+            
+            # only exports will set col_name to true so no need to create client obj
+            if col_names:
+                # Get column names
+                column_names = [description[0] for description in cursor.description]
+
+                return (result, column_names)
+
+            instance_list = []
+            for data_tuple in result:
+                data = {}
+                for i in range(len(model_fields)):
+                    data[list(model_fields)[i]] = data_tuple[i]
+
+                instance = cls(**data)
+                instance_list.append(instance)
+            
+            return instance_list
+        except Exception as err:
+            cursor.close()
+            conn.close()
+            logger.exception(f'Error fetching {model}')
+            cls.stderr.write(str(err))
+            cls.stderr.flush()
+            Notification.send_notification('Unexpected error happened')
+            raise err
+
+    @classmethod  
+    def filter(cls, **kwargs) -> list:
+        try:
+            field_map = cls._get_field_map()
+        except TypeError:
+            field_map = cls._get_field_map(cls)
+
+        model = cls.model_name
+        model_fields = field_map.keys()
+        date_like_keys = []
+
+        # get date like keys for wild cards
+        for key in model_fields:
+            field_obj = field_map.get(key, {})
+            is_date = field_obj.get('is_date', False)
+            
+            if is_date:
+                date_like_keys.append(key)
+
+        if not field_map:
+            raise Exception(f'Field map not found on {model} model')
+        
+        if not set(kwargs.keys()) <= set(model_fields):
+            raise Exception(f'Invalid field provided {model} model')
+        
+        # get model name
+
+        conn = cls._connect_to_db(cls)
+        cursor = conn.cursor()
+
+        # add wild card to date like values
+        for key, value in kwargs.items():
+            if key in date_like_keys:
+                kwargs[key] = f'%{value}%'
+
+        query = f'''
+            SELECT * FROM {model.lower()}
+            WHERE {' AND '.join([f'{key} = ?' if key not in date_like_keys else f'{key} LIKE ?' for key in kwargs.keys()])};
+        '''
+
+        values = tuple(kwargs.values())
+
+        try:
+            cursor.execute(query, values)
+            result = cursor.fetchall()
+            cursor.close()
+            conn.close()
+
+            if not len(result) > 0:
+                return []
+            
+            instance_list = []
+            for data_tuple in result:
+                data = {}
+                for i in range(len(model_fields)):
+                    data[list(model_fields)[i]] = data_tuple[i]
+
+                instance = cls(**data)
+                instance_list.append(instance)
+            
+            return instance_list
+        except Exception as err:
+            conn.close()
+            logger.exception(f'Error fetching {model}')
+            cls.stderr.write(str(err))
+            cls.stderr.flush()
+            Notification.send_notification('Unexpected error happened')
+            raise err
+    
+    @classmethod
+    def custom(cls, **kwargs) -> Self | None:
+        try:
+            field_map = cls._get_field_map()
+        except TypeError:
+            field_map = cls._get_field_map(cls)
+
+        model = cls.model_name
+        model_fields = field_map.keys()
+        query = kwargs.get('query', None)
+        values = kwargs.get('values', [])
+        many = kwargs.get('many', False)
+        col_names = kwargs.get('col_names', False)
+        values_only = kwargs.get('values_only', False)
+        result_only = kwargs.get('result_only', False)
+        
+        if not field_map:
+            raise Exception(f'Field map not found on {model} model')
+        
+        if query and not isinstance(query, str):
+            raise Exception(f'Invalid type for query got {type(query)} but expected string')
+        
+        if len(values) > 0 and not isinstance(values, tuple):
+            raise Exception(f'Invalid type for values got {type(values)} but expected tuple')
+        
+        if many and not isinstance(many, bool):
+            raise Exception(f'Invalid type for many got {type(many)} but expected bool')
+        
+        if col_names and not isinstance(col_names, bool):
+            raise Exception(f'Invalid type for col_names got {type(col_names)} but expected bool')
+        
+        if values_only and not isinstance(values_only, bool):
+            raise Exception(f'Invalid type for values_only got {type(values_only)} but expected bool')
+        
+        if result_only and not isinstance(result_only, bool):
+            raise Exception(f'Invalid type for result_only got {type(result_only)} but expected bool')
+ 
+        conn = cls._connect_to_db(cls)
+        cursor = conn.cursor()
+
+        try:
+            if len(values) == 0:
+                cursor.execute(query)
+            else:
+                cursor.execute(query, values)
+
+            if not many:
+                result = cursor.fetchone()
+                cursor.close()
+                conn.close()
+                if result is None:
+                    conn.close()
+                    return None
+                
+                if result_only:
+                    return result
+                
+                data = {}   
+                for i in range(len(model_fields)):
+                    data[list(model_fields)[i]] = result[i]
+
+                if values_only:
+                    return data
+
+                instance = cls(**data)
+
+                return instance
+            else:
+
+                result = cursor.fetchall()
+                cursor.close()
+                conn.close()
+
+                if not len(result) > 0:
+                    return []
+                
+                if result_only:
+                    return result
+                
+                # only exports will set col_name to true so no need to create client obj
+                if col_names:
+                    # Get column names
+                    column_names = [description[0] for description in cursor.description]
+
+                    return (result, column_names)
+
+                instance_list = []
+                for data_tuple in result:
+                    data = {}
+                    for i in range(len(model_fields)):
+                        data[list(model_fields)[i]] = data_tuple[i]
+
+                    instance = cls(**data)
+                    instance_list.append(instance)
+
+                return instance_list
+        except Exception as err:
+            conn.close()
+            logger.exception(f'Error fetching {model}')
+            cls.stderr.write(str(err))
+            cls.stderr.flush()
+            Notification.send_notification('Unexpected error happened')
+            raise err
+
+    @classmethod
+    def import_model(cls, filepath, file_type, has_header):
+        logger.info('Importing clients from csv...')
+        try:
+            field_map = cls._get_field_map()
+        except TypeError:
+            field_map = cls._get_field_map(cls)
+
+        model = cls.model_name
+        model_fields = list(field_map.keys())
+
+        # remove and id, created_at and updated_at from list
+        model_fields.remove(f'{model.lower()}_id')
+        model_fields.remove('created_at')
+        model_fields.remove('updated_at')
+
+        if not field_map:
+            raise Exception(f'Field map not found on {model} model')
+ 
+        manager = ImportManager(file_path=filepath, file_type=file_type, has_header=has_header)
+        
+        instance_data = []
+        instances = []
+        failed_imports = []
+
+        if file_type.lower() == '.csv':
+            for data_tuple in manager.import_from_csv():
+                data = {}
+                if not has_header:
+                    for i in range(len(model_fields)):
+                        data[model_fields[i]] = data_tuple[i]
+
+                else:
+                    data = data_tuple
+
+                instance_data.append(data)
+
+        elif file_type.lower() in {'.xls', '.xlsx'}:
+            for data_tuple in manager.import_from_excel():
+                data = {}
+                for i in range(len(model_fields)):
+                    data[list(model_fields)[i]] = data_tuple[i]
+
+                instance_data.append(data)
+
+        else:
+            for data_tuple in manager.import_from_pdf():
+                data = {}
+                for i in range(len(model_fields)):
+                    data[list(model_fields)[i]] = data_tuple[i]
+
+                instance_data.append(data)
+
+        for data in instance_data:
+            try:
+                instance = cls(**data)
+                instance.save_to_db()
+                instances.append(instance)
+            except Exception as err:
+                failed_imports.append((data, {'reason': str(err)}))
+                continue
+            
+        for i, failed_import in enumerate(failed_imports):
+            cls.stdout.write(f'{i + 1} failed: {failed_import[1]['reason']}')
+            cls.stdout.flush()
+        logger.info(f'({len(instances)}/ {len(instances) + len(failed_imports)} imported successfully)')
+        cls.stdout.write(f'({len(instances)}/ {len(instances) + len(failed_imports)} imported successfully)')
+        cls.stdout.flush()
+
+    @classmethod
+    def export_model(cls, file_type, path):
+
+        instance_data, column_names = cls.fetch_all(col_names=True)
+
+        column_names = column_names if column_names else None
+
+        # remove unnecessary data like ID 
+        formated_data = []
+
+        for data in instance_data:
+            data = list(data)
+            data.pop(0)
+            formated_data.append(data)
+        
+        column_names.pop(0)
+
+        formatted_header = []
+        
+        for header in column_names:
+            if file_type == '.pdf':
+                header = header.replace('_', ' ').upper()
+            formatted_header.append(header)
+            
+
+        data = {
+            'entries': formated_data,
+            'headers': formatted_header
+        }
+
+        export_helper(cls, file_type, path, data=data, name='clients_export')
+        print('Export complete')
+  
+
