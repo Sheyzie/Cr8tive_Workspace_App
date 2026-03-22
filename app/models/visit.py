@@ -16,7 +16,13 @@ logger = logging.getLogger(__name__)
 
 
 class Visit(InitDB):
-    # field_map = TABLES_MAP.get('visit').get('fields')
+    '''
+    Visit model for the visit table
+    - model_name must map to table name in TABLE_MAP
+    - kwargs: {
+            field_name: value
+        }
+    '''
 
     def __init__(self, **kwargs):
         super().__init__()
@@ -31,10 +37,8 @@ class Visit(InitDB):
         except ValidationError as err:
             self._reset_fields()
             logger.exception(str(err.message))
-            self.stderr.write('\033[31m' + str(err.message + '\033[0m\n'))
-            self.stderr.flush()
-            Notification.send_notification(err)
-            exit(1)
+            self.write_error(str(err.message))
+            raise err
 
     def __str__(self):
         return f'{self.client.get_display_name()} visited on {self.timestamp}'

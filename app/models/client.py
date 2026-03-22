@@ -25,9 +25,11 @@ logger = logging.getLogger(__name__)
 class Client(InitDB):
     '''
     Client model for the client table
+    - model_name must map to table name in TABLE_MAP
+    - kwargs: {
+            field_name: value
+        }
     '''
-    # field_map = TABLES_MAP.get('client').get('fields')
-
     model_name = 'client'
 
     def __init__(self, using=None, **kwargs):
@@ -50,10 +52,8 @@ class Client(InitDB):
         except ValidationError as err:
             self._reset_fields()
             logger.exception(str(err.message))
-            self.stderr.write('\033[31m' + str(err.message + '\033[0m\n'))
-            self.stderr.flush()
-            Notification.send_notification(err)
-            exit(1)
+            self.write_error(str(err.message))
+            raise err
 
     def __str__(self):
         return f'{self.first_name} {self.last_name}' if self.first_name else self.company_name
@@ -153,9 +153,8 @@ class Client(InitDB):
             if client:
                 self._reset_fields()
                 logger.warn('User already exist')
-                self.stderr.write(f"\nUser already exist with {client.phone} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-                self.stderr.flush()
-                Notification.send_notification(f'User already exist with {self.phone}')
+                self.write_error(f"\nUser already exist with {client.phone} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
+                # TODO: return ClientExist exception
                 return
         super().save_to_db(update=update)
                        

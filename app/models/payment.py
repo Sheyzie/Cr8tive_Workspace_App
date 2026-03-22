@@ -22,7 +22,13 @@ logger = logging.getLogger(__name__)
 
 
 class Payment(InitDB):
-    # field_map = TABLES_MAP.get('payment').get('fields')
+    '''
+    Payment model for the payment table
+    - model_name must map to table name in TABLE_MAP
+    - kwargs: {
+            field_name: value
+        }
+    '''
 
     def __init__(self, **kwargs):
         super().__init__()
@@ -41,10 +47,9 @@ class Payment(InitDB):
         except ValidationError as err:
             self._reset_fields()
             logger.exception(str(err.message))
-            self.stderr.write('\033[31m' + str(err.message + '\033[0m\n'))
-            self.stderr.flush()
-            Notification.send_notification(err)
+            self.write_error(str(err.message))
             raise err
+        
     def __str__(self) -> str:
         return f'₦{self.amount} paid for {self.subscription.plan.plan_name}'
 
@@ -110,10 +115,8 @@ class Payment(InitDB):
             self.save_to_db(update=True)
         except ValidationError as err:
             logger.error(str(err.message))
-            self.stderr.write('\033[31m' + str(err.message + '\033[0m\n'))
-            self.stderr.flush()
-            Notification.send_notification(err)
-            exit(1)
+            self.write_error(str(err.message))
+            raise err
 
     def _get_balance_from_db(self):
         '''
@@ -122,8 +125,7 @@ class Payment(InitDB):
 
         using this avoids circular class calling when using Subscription.amount_paid
         '''
-        conn = self._connect_to_db()
-        cursor = conn.cursor()
+
 
         query = '''
         SELECT 
@@ -137,14 +139,6 @@ class Payment(InitDB):
         result = self.custom(query=query, values=value, result_only=True)
         amount = result[0]
         return self.subscription.total_amount - (amount / 100) if amount else self.subscription.total_amount
-        # try:
-        #     cursor.execute(query, (self.subscription.subscription_id,))
-        #     result = cursor.fetchone()[0]
-        #     return self.subscription.total_amount - (result / 100) if result else self.subscription.total_amount
-        # except Exception as err:
-        #     logger.warn(str(err))
-        #     self.stderr.write(str(err))
-        #     self.stderr.flush()
-        #     Notification.send_notification(err)
-        #     return self.subscription.total_amount
+   
+       
 

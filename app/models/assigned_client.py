@@ -14,6 +14,14 @@ logger = logging.getLogger(__name__)
 
 
 class AssignedClient(InitDB):
+    '''
+    AssignedClient model for the assigned_client table
+    - model_name must map to table name in TABLE_MAP
+    - kwargs: {
+            field_name: value
+        }
+
+    '''
     model_name = 'assigned_client'
 
     def __init__(self,  **kwargs):
@@ -27,7 +35,9 @@ class AssignedClient(InitDB):
         try:
             self._validate()
         except ValidationError as err:
-            Notification.send_notification(err)
+            logger.exception(str(err.message))
+            self.write_error(str(err.message))
+            raise err
 
     def _reset_fields(self):
         self.assigned_client_id = None
@@ -65,23 +75,6 @@ class AssignedClient(InitDB):
         if not self.client_id:
             raise ValidationError('Client ID is required')
         
-    # @classmethod    
-    # def save_to_db(cls, sub_id: str, client_id: str) -> None:
-    #     conn = cls._connect_to_db(cls)
-    #     cursor = conn.cursor()
-
-    #     created_at = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-    #     try:
-    #         values = (sub_id, client_id, created_at)
-    #         insert_to_db('assigned_client', cursor, values)
-    #         conn.commit()
-    #         conn.close()
-    #     except Exception as err:
-    #         logger.warn(str(err))
-    #         cls.stderr.write(str(err))
-    #         cls.stderr.flush()
-    #         Notification.send_notification(err)
-
     @classmethod
     def delete_user(cls, sub_id: str, client_id: str) -> None:
         
@@ -94,9 +87,8 @@ class AssignedClient(InitDB):
         user = cls.get_user(sub_id=sub_id, client_id=client_id)
 
         if user is not None:
-            cls.stderr.write('User not delete from subscription')
+            cls.write_error('User not delete from subscription')
             logger.exception('User not delete from subscription')
-
 
     @classmethod
     def get_user(cls, sub_id, client_id) -> Self | None:
@@ -133,9 +125,7 @@ class AssignedClient(InitDB):
             return assigned_clients
         except Exception as err:
             logger.warn(str(err))
-            cls.stderr.write(str(err))
-            cls.stderr.flush()
-            Notification.send_notification(err)
-            return None
+            cls.write_error(str(err))
+            raise err
 
 

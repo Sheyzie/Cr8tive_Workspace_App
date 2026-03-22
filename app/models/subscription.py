@@ -29,8 +29,13 @@ logger = logging.getLogger(__name__)
 
 
 class Subscription(InitDB):
-
-    # field_map = TABLES_MAP.get('subscription').get('fields')
+    '''
+    Subscription model for the subscription table
+    - model_name must map to table name in TABLE_MAP
+    - kwargs: {
+            field_name: value
+        }
+    '''
 
     def __init__(self, **kwargs):
         super().__init__()
@@ -56,10 +61,8 @@ class Subscription(InitDB):
         except ValidationError as err:
             self._reset_fields()
             logger.error(str(err.message))
-            self.stderr.write('\033[31m' + str(err.message + '\033[0m\n'))
-            self.stderr.flush()
-            Notification.send_notification(err)
-            exit(1)
+            self.write_error(str(err.message))
+            raise err
 
         self._get_assigned_users
 
@@ -369,10 +372,6 @@ class Subscription(InitDB):
         if not is_user:
             Notification.send_notification(f'User: {user} is not a listed assigned user for this subscription')
             return
-        # client = Client.fetch_one(user.client_id, using=self._db)
-        # if client is None:
-        #     Notification.send_notification(f'User: {user} does not exist please remove user from assigned user')
-        #     return
         
         Visit.delete(self.subscription_id, user.client_id, date_value)
 

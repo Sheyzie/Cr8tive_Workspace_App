@@ -25,8 +25,55 @@ logger = logging.getLogger(__name__)
 
 
 class DB:
+    '''
+    The base class responsible for database connection and table 
+    creation.
+    - Tables are created from TABLE_MAP imported from database.tables.
+    - TABLE_MAP is a dictionary mapping all the required details needed
+        to create a table in the database.
+        - TABLE_MAP follow the heirarchy: 
+            table_name -> fields -> column_name -> field_contraint
+
+        TABLES_MAP = {
+            'user': {
+                'fields': {
+                    'user_id': {
+                        'is_pk': True,
+                        'is_unique': True,
+                        'is_nullable': False,
+                        'datatype': UUID
+                    },
+                    'full_name': {
+                        'is_pk': False,
+                        'is_unique': False,
+                        'is_nullable': True,
+                        'datatype': str,
+                    },
+                    'role_id': {
+                        'is_pk': False,
+                        'is_unique': False,
+                        'is_nullable': True,
+                        'datatype': UUID,
+                        'fk': {
+                            'to': 'role',
+                            'on_delete': 'cascade',
+                            'on_update': 'no action'
+                        },
+                    },
+                    'created_at': {
+                        'is_pk': False,
+                        'is_unique': False,
+                        'is_nullable': False,
+                        'datatype': datetime,
+                        'is_date': True,
+                        'auto_update': 'save'
+                    },
+                }
+            },
+        }
+    '''
     default_field_keys = {'is_pk', 'is_unique', 'fk', 'is_nullable', 'to', 'is_date', 'auto_update', 'datatype'}
-    table_map = TABLES_MAP
+    table_map = TABLES_MAP 
     allow_print = False
     show_sql = False
     stdout = sys.stdout
@@ -34,11 +81,6 @@ class DB:
     _db = None
 
     def __init__(self, using):
-        logger.info('Initializing database connection...')
-        # self.stdout.write('\r\nInitializing database connection...\n')
-        # self.stdout.flush()
-        
-        Notification.send_notification('\nInitializing database connection...')
 
         self.allow_print = False
         self.show_sql = False
@@ -49,11 +91,12 @@ class DB:
             self.field_map = self._get_field_map(self)
         
         conn = None
+        logger.info('Initializing database connection for {self.model_name}...')
         self.write(f'Initializing database connection for {self.model_name}...')
+        
         if not using:
             logger.warn(f"No Database provided. Ensure DB config is set @ {__name__} 'line {inspect.currentframe().f_lineno}'")
-            self.stderr.write('No Database provided. Ensure DB config is set')
-            self.stderr.flush()
+            self.write_error('No Database provided. Ensure DB config is set')
             exit(1)
         try:
             self._db = using
@@ -76,6 +119,10 @@ class DB:
             raise err
                 
     def _connect_to_db(self):
+        '''
+        handles reconnection to database
+        '''
+
         if self._db is None:
             DB.set_db_name()
         try:
@@ -87,7 +134,7 @@ class DB:
             # self.conn.row_factory = sqlite3.Row
 
             self.conn.execute("PRAGMA foreign_keys = ON")
-            logger.info('Database connection established')
+            # logger.info('Database connection established')
 
             if self.allow_print:
                 self.write('Database connection established\n')
@@ -113,6 +160,9 @@ class DB:
 
     @classmethod
     def set_db_name(cls):
+        '''
+        Change database name depending on if environment is test environment
+        '''
         is_test_environ = os.getenv('CURRENT_WORKING_DB_ENVIRON', '').lower() == 'test' 
         using = db_config.TEST_DB_NAME
         if not is_test_environ:
@@ -129,7 +179,9 @@ class DB:
 
     def _set_table_name(self):
         '''
-        Set the model to be used as table name
+        Set the model to be used as table name.
+            - model_name is not declared in the Model class, the model 
+            name will be used as the table name
         '''
         # get table name from model
         model_name = getattr(self, 'model_name', None)
@@ -142,6 +194,10 @@ class DB:
         setattr(self, 'model_name', model_name.lower())
     
     def _get_field_map(self):
+        '''
+        Returns the field of the current intance of the model 
+        configured in TABLE_NAME
+        '''
         try:
             self._set_table_name()
         except TypeError:
@@ -154,12 +210,20 @@ class DB:
         return field_map.get('fields')
 
     def _init_database_tables(self):
+        '''
+        Gets all tables in the TABLE_MAP and create the tables in the
+        database if tables do not exist
+        '''
+
         tables = self.table_map.keys()
 
         for table_name in tables:
             self.create_tables(table_name=table_name)
 
     def create_tables(self, table_name):
+        '''
+        Handles table creation if table does not exist
+        '''
         exists = self._check_if_table_exist(table_name)
             
         if exists:
@@ -228,34 +292,19 @@ class DB:
                 self.conn.commit()
             except Exception as err:
                 self.conn.close()
-                logger.exception(f"Error creating client table @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+                logger.exception(f"Error creating {table_name} table @ {__name__} 'line {inspect.currentframe().f_lineno}'")
                 self.write_error(f"Error creating {table_name} table")
                 self.write(str(err))
                 raise err
 
-
-            # match table_name:
-            #     case 'client':   
-            #         self._create_client_table()
-            #     case 'plan':
-            #         self._create_plan_table()
-            #     case 'subscription':
-            #         self._create_subscription_table()
-            #     case 'payment':
-            #         self._create_payment_table()
-            #     case 'visit':
-            #         self._create_visit_table()
-            #     case 'assigned_client':
-            #         self._create_assigned_client_table()
-            #     case _:
-            #         self.write_error(f'Unknown table name: {table_name}')
-            #         self.conn.close()
-
             self.conn.close()
-            # self.write(f'\nTable initialization complete\n')
 
-    
     def _get_datatype(self, obj):
+        '''
+        Gets the datatype value of a field and return the 
+        required datatype needed for sql querry
+        '''
+
         if obj is str:
             return 'TEXT'
         elif obj is int:
@@ -269,6 +318,8 @@ class DB:
 
     def _get_table_detail(self, table_name):
         '''
+        Summarize the TABLE_MAP into a dictionary to be used for generating
+        the necessary query for table creation
         {
             'pk_field': 'payment_id', 
             'datatype': {
@@ -384,12 +435,15 @@ class DB:
         if self.conn:
             cursor = self.conn.cursor()
             try:
-                cursor.execute("""
+                query = '''
                     SELECT name 
                     FROM sqlite_master 
                     WHERE type='table' AND name=?
-                """, (table_name,))
+                '''
+                cursor.execute(query, (table_name,))
 
+                if self.show_sql:
+                    self.write(query)
                 result = cursor.fetchone()
                 return result
 
@@ -398,167 +452,171 @@ class DB:
                 self.stderr.write(str(err))
                 self.stderr.flush()
 
-    def _create_client_table(self):
-        cursor = self.conn.cursor()
-        try:
-            cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS client (
-                        client_id TEXT PRIMARY KEY,
-                        first_name TEXT,
-                        last_name TEXT,
-                        company_name TEXT,
-                        email TEXT,
-                        phone TEXT NOT NULL UNIQUE,
-                        display_name TEXT NOT NULL,
-                        created_at TEXT NOT NULL,
-                        updated_at TEXT NOT NULL
-                    );
-            ''')
-            self.conn.commit()
-        except Exception as err:
-            self.conn.close()
-            self.stderr.write(f"Error creating client table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-            self.stderr.write(str(err))
-            self.stderr.flush()
-            raise err
+    # def _create_client_table(self):
+    #     cursor = self.conn.cursor()
+    #     try:
+    #         cursor.execute('''
+    #                 CREATE TABLE IF NOT EXISTS client (
+    #                     client_id TEXT PRIMARY KEY,
+    #                     first_name TEXT,
+    #                     last_name TEXT,
+    #                     company_name TEXT,
+    #                     email TEXT,
+    #                     phone TEXT NOT NULL UNIQUE,
+    #                     display_name TEXT NOT NULL,
+    #                     created_at TEXT NOT NULL,
+    #                     updated_at TEXT NOT NULL
+    #                 );
+    #         ''')
+    #         self.conn.commit()
+    #     except Exception as err:
+    #         self.conn.close()
+    #         self.stderr.write(f"Error creating client table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
+    #         self.stderr.write(str(err))
+    #         self.stderr.flush()
+    #         raise err
 
-    def _create_plan_table(self):
-        cursor = self.conn.cursor()
-        try:
-            cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS plan (
-                        plan_id TEXT PRIMARY KEY,
-                        plan_name TEXT NOT NULL UNIQUE,
-                        duration INTEGER NOT NULL,
-                        plan_type TEXT NOT NULL,
-                        slot INTEGER NOT NULL,
-                        guest_pass INTEGER NOT NULL,
-                        price INTEGER NOT NULL,
-                        created_at TEXT NOT NULL,
-                        updated_at TEXT NOT NULL
-                    );
-            ''')
-            self.conn.commit()
-        except Exception as err:
-            self.stderr.write(f"Error creating plan table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-            self.stderr.write(str(err))
-            self.stderr.flush()
-            self.conn.close()
-            raise err
+    # def _create_plan_table(self):
+    #     cursor = self.conn.cursor()
+    #     try:
+    #         cursor.execute('''
+    #                 CREATE TABLE IF NOT EXISTS plan (
+    #                     plan_id TEXT PRIMARY KEY,
+    #                     plan_name TEXT NOT NULL UNIQUE,
+    #                     duration INTEGER NOT NULL,
+    #                     plan_type TEXT NOT NULL,
+    #                     slot INTEGER NOT NULL,
+    #                     guest_pass INTEGER NOT NULL,
+    #                     price INTEGER NOT NULL,
+    #                     created_at TEXT NOT NULL,
+    #                     updated_at TEXT NOT NULL
+    #                 );
+    #         ''')
+    #         self.conn.commit()
+    #     except Exception as err:
+    #         self.stderr.write(f"Error creating plan table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
+    #         self.stderr.write(str(err))
+    #         self.stderr.flush()
+    #         self.conn.close()
+    #         raise err
 
-    def _create_subscription_table(self):
-        cursor = self.conn.cursor()
-        try:
-            cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS subscription (
-                        subscription_id TEXT PRIMARY KEY,
-                        plan_id TEXT NOT NULL,
-                        client_id TEXT NOT NULL,
-                        plan_unit INTEGER NOT NULL,
-                        expiration_date TEXT NOT NULL,
-                        discount INTEGER NOT NULL,
-                        discount_type TEXT NOT NULL,
-                        vat INTEGER NOT NULL,
-                        status TEXT NOT NULL,
-                        payment_status TEXT NOT NULL,
-                        created_at TEXT NOT NULL,
-                        updated_at TEXT NOT NULL,
-                        FOREIGN KEY (plan_id) REFERENCES plan(plan_id) ON DELETE CASCADE ON UPDATE NO ACTION,
-                        FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE CASCADE ON UPDATE NO ACTION
-                    );
-            ''')
-            self.conn.commit()
-        except Exception as err:
-            self.stderr.write(f"Error creating subscription table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-            self.stderr.write(str(err))
-            self.stderr.flush()
-            self.conn.close()
-            raise err
+    # def _create_subscription_table(self):
+    #     cursor = self.conn.cursor()
+    #     try:
+    #         cursor.execute('''
+    #                 CREATE TABLE IF NOT EXISTS subscription (
+    #                     subscription_id TEXT PRIMARY KEY,
+    #                     plan_id TEXT NOT NULL,
+    #                     client_id TEXT NOT NULL,
+    #                     plan_unit INTEGER NOT NULL,
+    #                     expiration_date TEXT NOT NULL,
+    #                     discount INTEGER NOT NULL,
+    #                     discount_type TEXT NOT NULL,
+    #                     vat INTEGER NOT NULL,
+    #                     status TEXT NOT NULL,
+    #                     payment_status TEXT NOT NULL,
+    #                     created_at TEXT NOT NULL,
+    #                     updated_at TEXT NOT NULL,
+    #                     FOREIGN KEY (plan_id) REFERENCES plan(plan_id) ON DELETE CASCADE ON UPDATE NO ACTION,
+    #                     FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE CASCADE ON UPDATE NO ACTION
+    #                 );
+    #         ''')
+    #         self.conn.commit()
+    #     except Exception as err:
+    #         self.stderr.write(f"Error creating subscription table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
+    #         self.stderr.write(str(err))
+    #         self.stderr.flush()
+    #         self.conn.close()
+    #         raise err
 
-    def _create_payment_table(self):
-        cursor = self.conn.cursor()
-        try:
-            cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS payment (
-                        payment_id TEXT PRIMARY KEY,
-                        client_id TEXT NOT NULL,
-                        subscription_id TEXT NOT NULL,
-                        amount INTEGER NOT NULL,
-                        created_at TEXT NOT NULL,
-                        updated_at TEXT NOT NULL,
-                        FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE CASCADE ON UPDATE NO ACTION,
-                        FOREIGN KEY (subscription_id) REFERENCES subscription(subscription_id) ON DELETE CASCADE ON UPDATE NO ACTION
-                    );
-            ''')
-            self.conn.commit()
-        except Exception as err:
-            self.stderr.write(f"Error creating payment table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-            self.stderr.write(str(err))
-            self.stderr.flush()
-            self.conn.close()
-            raise err
+    # def _create_payment_table(self):
+    #     cursor = self.conn.cursor()
+    #     try:
+    #         cursor.execute('''
+    #                 CREATE TABLE IF NOT EXISTS payment (
+    #                     payment_id TEXT PRIMARY KEY,
+    #                     client_id TEXT NOT NULL,
+    #                     subscription_id TEXT NOT NULL,
+    #                     amount INTEGER NOT NULL,
+    #                     created_at TEXT NOT NULL,
+    #                     updated_at TEXT NOT NULL,
+    #                     FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE CASCADE ON UPDATE NO ACTION,
+    #                     FOREIGN KEY (subscription_id) REFERENCES subscription(subscription_id) ON DELETE CASCADE ON UPDATE NO ACTION
+    #                 );
+    #         ''')
+    #         self.conn.commit()
+    #     except Exception as err:
+    #         self.stderr.write(f"Error creating payment table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
+    #         self.stderr.write(str(err))
+    #         self.stderr.flush()
+    #         self.conn.close()
+    #         raise err
 
-    def _create_visit_table(self):
-        cursor = self.conn.cursor()
-        try:
-            cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS visit (
-                        visit_id TEXT PRIMARY KEY,
-                        subscription_id TEXT NOT NULL,
-                        client_id TEXT NOT NULL,
-                        timestamp TEXT NOT NULL,
-                        FOREIGN KEY (subscription_id) REFERENCES subscription(subscription_id) ON DELETE CASCADE ON UPDATE NO ACTION,
-                        FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE CASCADE ON UPDATE NO ACTION
-                    );
-            ''')
-            self.conn.commit()
-        except Exception as err:
-            self.stderr.write(f"Error creating visit table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-            self.stderr.write(str(err))
-            self.stderr.flush()
-            self.conn.close()
-            raise err
+    # def _create_visit_table(self):
+    #     cursor = self.conn.cursor()
+    #     try:
+    #         cursor.execute('''
+    #                 CREATE TABLE IF NOT EXISTS visit (
+    #                     visit_id TEXT PRIMARY KEY,
+    #                     subscription_id TEXT NOT NULL,
+    #                     client_id TEXT NOT NULL,
+    #                     timestamp TEXT NOT NULL,
+    #                     FOREIGN KEY (subscription_id) REFERENCES subscription(subscription_id) ON DELETE CASCADE ON UPDATE NO ACTION,
+    #                     FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE CASCADE ON UPDATE NO ACTION
+    #                 );
+    #         ''')
+    #         self.conn.commit()
+    #     except Exception as err:
+    #         self.stderr.write(f"Error creating visit table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
+    #         self.stderr.write(str(err))
+    #         self.stderr.flush()
+    #         self.conn.close()
+    #         raise err
 
-    def _create_assigned_client_table(self):
-        cursor = self.conn.cursor()
-        try:
-            cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS assigned_client (
-                        subscription_id TEXT NOT NULL,
-                        client_id TEXT NOT NULL,
-                        created_at TEXT NOT NULL,
-                        FOREIGN KEY (subscription_id) REFERENCES subscription(subscription_id) ON DELETE CASCADE ON UPDATE NO ACTION,
-                        FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE CASCADE ON UPDATE NO ACTION
-                    );
-            ''')
-            self.conn.commit()
-        except Exception as err:
-            self.stderr.write(f"Error creating visit table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-            self.stderr.write(str(err))
-            self.stderr.flush()
-            self.conn.close()
-            raise err
+    # def _create_assigned_client_table(self):
+    #     cursor = self.conn.cursor()
+    #     try:
+    #         cursor.execute('''
+    #                 CREATE TABLE IF NOT EXISTS assigned_client (
+    #                     subscription_id TEXT NOT NULL,
+    #                     client_id TEXT NOT NULL,
+    #                     created_at TEXT NOT NULL,
+    #                     FOREIGN KEY (subscription_id) REFERENCES subscription(subscription_id) ON DELETE CASCADE ON UPDATE NO ACTION,
+    #                     FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE CASCADE ON UPDATE NO ACTION
+    #                 );
+    #         ''')
+    #         self.conn.commit()
+    #     except Exception as err:
+    #         self.stderr.write(f"Error creating visit table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
+    #         self.stderr.write(str(err))
+    #         self.stderr.flush()
+    #         self.conn.close()
+    #         raise err
 
     def save_to_db(self):
         self.conn.commit()
 
     def drop_db(self):
-        self.stdout.write(f'Dropping database {self._db}\n')
-        self.stdout.flush()
+        self.write(f'Dropping database {self._db}\n')
+        logger.info(f'Dropping database {self._db}\n')
         db_file = Path(self._db)
         
         if db_file.exists():
             db_file.unlink()
-            self.stdout.write(f'Dropped {self._db} database successfully\n')
-            self.stdout.flush()
+            self.write(f'Dropped {self._db} database successfully\n')
+            logger.info(f'Dropped {self._db} database successfully\n')
 
         else:
-            self.stdout.write(f'Database {self._db} not found\n')
-            self.stdout.flush()
+            self.write(f'Database {self._db} not found\n')
+            logger.error(f'Database {self._db} not found\n')
             exit(1)
 
 
 class InitDB(DB):
+    '''
+    DB subclass responsible for CRUD operations and ORM for the 
+    current instance of a model
+    '''
     
     def __init__(self):
         is_test_environ = os.getenv('CURRENT_WORKING_DB_ENVIRON', '').lower() == 'test' 
@@ -574,13 +632,15 @@ class InitDB(DB):
     
 
     def _get_pk_field(self):
+        '''
+        returns the fields contraint for the primary key 
+        '''
         try:
             field_map = self._get_field_map()
         except TypeError:
             field_map = self._get_field_map(self)
 
         model = self.model_name
-        model_fields = field_map.keys()
         model_fields = list(field_map.keys())
 
         data = {}
@@ -609,47 +669,49 @@ class InitDB(DB):
         return instance is not None
 
     def _get_data(self, is_new=False):
+        '''
+        A serializer for the current models instance
+        '''
         try:
             field_map = self._get_field_map()
         except TypeError:
             field_map = self._get_field_map(self)
 
         model = self.model_name
-        model_fields = field_map.keys()
         model_fields = list(field_map.keys())
 
         data = {}
         
-        for key in model_fields:
-            # format key to change fk(subscription_id becomes subscription)
-            formatted_key = key if key[-3:] != '_id' or key == f'{model.lower()}_id' else key[:-3]
+        for field in model_fields: # map thru each field(column name) from TABLE_MAP
+            # format field to change fk(subscription_id becomes subscription)
+            formatted_field = field if field[-3:] != '_id' or field == f'{model.lower()}_id' else field[:-3]
 
-            if hasattr(self, formatted_key):
-                value = getattr(self, formatted_key)
+            if hasattr(self, formatted_field):
+                value = getattr(self, formatted_field)
                 
                 if value is not None and not isinstance(value, InitDB):
-                    data[key] = value
+                    data[field] = value
 
                 if isinstance(value, InitDB):
-                    fk_value = getattr(value, key, None)
+                    fk_value = getattr(value, field, None)
                     if fk_value is not None:
-                        data[key] = fk_value
+                        data[field] = fk_value
 
-            # check if key is private key
-            if hasattr(self, f'_{formatted_key}'):
-                value = getattr(self, f'_{formatted_key}')
+            # check if field is private field
+            if hasattr(self, f'_{formatted_field}'):
+                value = getattr(self, f'_{formatted_field}')
                 if value is not None and not isinstance(value, InitDB):
-                    data[key] = value
+                    data[field] = value
 
                 if isinstance(value, InitDB):
-                    fk_value = getattr(value, key, None)
+                    fk_value = getattr(value, field, None)
                     if fk_value is not None:
-                        data[key] = fk_value
+                        data[field] = fk_value
 
-            if key[-3:] == '_id':
-                value = getattr(self, key, None)
+            if field[-3:] == '_id':
+                value = getattr(self, field, None)
                 if value is not None:
-                    data[key] = value
+                    data[field] = value
 
         # validate fields
         is_valid = self._is_valid_data(data, is_new=is_new) 
@@ -658,26 +720,28 @@ class InitDB(DB):
         return None
 
     def _is_valid_data(self, data, is_new=False):
+        '''
+        Check if model data meet the criteria of the field contraint
+        '''
         try:
             field_map = self._get_field_map()
         except TypeError:
             field_map = self._get_field_map(self)
 
         model = self.model_name
-        model_fields = field_map.keys()
         model_fields = list(field_map.keys())
 
         pk_value = None
         unique_values = []
 
-        for key in model_fields:
-            field_obj = field_map.get(key, {})
+        for field in model_fields:
+            field_obj = field_map.get(field, {})
             is_pk = field_obj.get('is_pk', False)
             is_unique = field_obj.get('is_unique', False)
             is_nullable = field_obj.get('is_nullable', True)
             fk = field_obj.get('fk', None)
 
-            value = data.get(key, None)
+            value = data.get(field, None)
 
             # check pk for existing record
             if not is_new:
@@ -689,7 +753,7 @@ class InitDB(DB):
                     # get pk value
                     pk_value = value
                     if not pk_value:
-                        raise ValidationError(f'Primary key value is not nullable for field {key}')
+                        raise ValidationError(f'Primary key value is not nullable for field {field}')
                     
                     # check if pk value is unique
                     if pk_value in unique_values:
@@ -702,7 +766,7 @@ class InitDB(DB):
                 unique_value = value
                 if not unique_value:
                     if not is_pk and not is_new:
-                        raise ValidationError(f'Value is required for field with unique contraint {key}')
+                        raise ValidationError(f'Value is required for field with unique contraint {field}')
                 
                 # check if pk value is unique
                 if unique_value in unique_values:
@@ -715,16 +779,19 @@ class InitDB(DB):
             if not is_nullable:
                 if not value:
                     if not is_pk and not is_new:
-                        raise ValidationError(f'Value is required for non nullable field {key}')
+                        raise ValidationError(f'Value is required for non nullable field {field}')
 
             if fk is not None:
                 reference_model = fk.get('to', None)
                 if reference_model not in self.table_map.keys():
-                    raise ValidationError(f'Invalid model {reference_model} for {key}')
+                    raise ValidationError(f'Invalid model {reference_model} for {field}')
 
             return True 
                 
     def _get_id(self) -> str | None:
+        '''
+        Create UUID for pk field
+        '''
         try:
             self._set_table_name()
         except TypeError:
@@ -758,6 +825,10 @@ class InitDB(DB):
             return id_string
 
     def save_to_db(self, **kwargs) -> None:
+        '''
+        Save the data on the current instace of the model in 
+        the database
+        '''
         try:
             field_map = self._get_field_map()
         except TypeError:
@@ -845,6 +916,9 @@ class InitDB(DB):
             '''
             values = tuple(data.values())
 
+        if self.show_sql:
+            self.write(query)
+
         self._connect_to_db()
         if self.conn:
             cursor = self.conn.cursor()
@@ -869,7 +943,6 @@ class InitDB(DB):
             field_map = self._get_field_map(self)
 
         model = self.model_name
-        model_fields = field_map.keys()
         model_fields = list(field_map.keys())
 
         pk_key = ''
@@ -885,10 +958,13 @@ class InitDB(DB):
             self._connect_to_db()
             if self.conn:
                 cursor = self.conn.cursor()
-                self.query = f'''
+                query = f'''
                     DELETE FROM {model.lower()} WHERE {pk_key} = ?;
             '''
-            cursor.execute(self.query, (getattr(self, pk_key),))
+            if self.show_sql:
+                self.write(query)
+
+            cursor.execute(query, (getattr(self, pk_key),))
             self.conn.commit()
             self.conn.close()
 
@@ -911,6 +987,9 @@ class InitDB(DB):
 
     @classmethod
     def fetch_one(cls, **kwargs) -> Self | None:
+        '''
+        Get one item from model table. Return None if no tiem is found
+        '''
         try:
             field_map = cls._get_field_map()
         except TypeError:
@@ -934,6 +1013,10 @@ class InitDB(DB):
             SELECT * FROM {model.lower()}
             WHERE {' AND '.join([f'{key} = ?' for key in kwargs.keys()])};
         '''
+
+        if cls.show_sql:
+            cls.write(query)
+
         values = tuple(kwargs.values())
 
         try:
@@ -962,6 +1045,9 @@ class InitDB(DB):
 
     @classmethod
     def fetch_all(cls, **kwargs) -> Self | None:
+        '''
+        Get all items from the model.
+        '''
         try:
             field_map = cls._get_field_map()
         except TypeError:
@@ -983,6 +1069,9 @@ class InitDB(DB):
         query = f'''
             SELECT * FROM {model.lower()};
         '''
+
+        if cls.show_sql:
+            cls.write(query)
 
         try:
             cursor.execute(query)
@@ -1021,6 +1110,9 @@ class InitDB(DB):
 
     @classmethod  
     def filter(cls, **kwargs) -> list:
+        '''
+        Filter model table based on the values of the model fields
+        '''
         try:
             field_map = cls._get_field_map()
         except TypeError:
@@ -1061,6 +1153,9 @@ class InitDB(DB):
 
         values = tuple(kwargs.values())
 
+        if cls.show_sql:
+            cls.write(query)
+
         try:
             cursor.execute(query, values)
             result = cursor.fetchall()
@@ -1090,6 +1185,9 @@ class InitDB(DB):
     
     @classmethod
     def custom(cls, **kwargs) -> Self | None:
+        '''
+        Send send custom sql query to the database
+        '''
         try:
             field_map = cls._get_field_map()
         except TypeError:
@@ -1127,6 +1225,9 @@ class InitDB(DB):
  
         conn = cls._connect_to_db(cls)
         cursor = conn.cursor()
+
+        if cls.show_sql:
+            cls.write(query)
 
         try:
             if len(values) == 0:
@@ -1194,6 +1295,9 @@ class InitDB(DB):
 
     @classmethod
     def import_model(cls, filepath, file_type, has_header):
+        '''
+        Import in to the model from csv, xls, pdf
+        '''
         try:
             field_map = cls._get_field_map()
         except TypeError:
@@ -1264,6 +1368,9 @@ class InitDB(DB):
 
     @classmethod
     def export_model(cls, file_type, path):
+        '''
+        Export into csv, xls, pdf
+        '''
 
         instance_data, column_names = cls.fetch_all(col_names=True)
 

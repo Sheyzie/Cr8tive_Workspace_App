@@ -22,8 +22,13 @@ logger = logging.getLogger(__name__)
 
 
 class Plan(InitDB):
-
-    # field_map = TABLES_MAP.get('plan').get('fields')
+    '''
+    Plan model for the plan table
+    - model_name must map to table name in TABLE_MAP
+    - kwargs: {
+            field_name: value
+        }
+    '''
 
     def __init__(self, **kwargs):
         super().__init__()
@@ -43,10 +48,8 @@ class Plan(InitDB):
         except ValidationError as err:
             self._reset_fields()
             logger.error(str(err.message))
-            self.stderr.write('\033[31m' + str(err.message + '\033[0m\n'))
-            self.stderr.flush()
-            Notification.send_notification(err)
-            exit(1)
+            self.write_error(str(err.message))
+            raise err
 
     def __str__(self) -> str:
         return self.plan_name
@@ -136,9 +139,8 @@ class Plan(InitDB):
             if plan:
                 self._reset_fields()
                 logger.warn(f'Plan already exist with the name {plan.plan_name}')
-                self.stderr.write(f"\nPlan already exist with {plan.plan_name} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-                self.stderr.flush()
-                Notification.send_notification(f'Plan already exist with {self.plan_name}')
+                self.write_error(f"\nPlan already exist with {plan.plan_name} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
+
                 return
         super().save_to_db(update=update)
   
@@ -148,10 +150,8 @@ class Plan(InitDB):
             self.save_to_db(update=True)
         except ValidationError as err:
             logger.error(str(err.message))
-            self.stderr.write('\033[31m' + str(err.message + '\033[0m\n'))
-            self.stderr.flush()
-            Notification.send_notification(err)
-            exit(1)
+            self.write_error(str(err.message))
+            raise err
 
 # https://www.cargopal.tonisoft.co.ke/
 
