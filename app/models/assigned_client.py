@@ -100,13 +100,17 @@ class AssignedClient(InitDB):
 
     @classmethod
     def get_user(cls, sub_id, client_id) -> Self | None:
+        '''
+        returns the client id if user is assigned to the subscription
+        '''
         
         query = '''
             SELECT client_id FROM assigned_client WHERE subscription_id = ? AND client_id = ?;
         '''
 
-        result = cls.custom(query=query, values=(sub_id, client_id))
-        return result
+        result = cls.custom(query=query, values=(sub_id, client_id), result_only=True)
+        
+        return result[0]
         
 
     @classmethod  

@@ -1,3 +1,6 @@
+from datetime import datetime
+from uuid import UUID
+
 TABLES_MAP = {
     'client': {
         'fields': {
@@ -5,49 +8,49 @@ TABLES_MAP = {
                 'is_pk': True,
                 'is_unique': True,
                 'is_nullable': False,
-                'data_type': str,
+                'datatype': UUID
             },
             'first_name': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': True,
-                'data_type': str,
+                'datatype': str,
             },
             'last_name': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': True,
-                'data_type': str,
+                'datatype': str,
             },
             'company_name': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': True,
-                'data_type': str,
+                'datatype': str,
             },
             'email': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': True,
-                'data_type': str,
+                'datatype': str,
             },
             'phone': {
                 'is_pk': False,
                 'is_unique': True,
                 'is_nullable': False,
-                'data_type': str,
+                'datatype': str,
             },
             'display_name': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': str,
+                'datatype': str,
             },
             'created_at': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': str,
+                'datatype': datetime,
                 'is_date': True,
                 'auto_update': 'save'
             },
@@ -55,7 +58,7 @@ TABLES_MAP = {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': str,
+                'datatype': datetime,
                 'is_date': True,
                 'auto_update': 'update'
             }
@@ -67,57 +70,57 @@ TABLES_MAP = {
                 'is_pk': True,
                 'is_unique': True,
                 'is_nullable': False,
-                'data_type': str,
+                'datatype': UUID,
             },
             'plan_name': {
                 'is_pk': False,
                 'is_unique': True,
                 'is_nullable': False,
-                'data_type': str,
+                'datatype': str,
             },
             'duration': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': int,
+                'datatype': int,
             },
             'plan_type': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': str,
+                'datatype': str,
             },
             'slot': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': int,
+                'datatype': int,
             },
             'guest_pass': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': int,
+                'datatype': int,
             },
             'price': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': int,
+                'datatype': int,
             },
             'created_at': {
                 'is_pk': False,
                 'is_unique': False,
-                'is_nullable': True,
-                'data_type': str,
+                'is_nullable': False,
+                'datatype': datetime,
                 'is_date': True,
                 'auto_update': 'save'
             },
             'updated_at': {
                 'is_pk': False,
                 'is_unique': False,
-                'is_nullable': True,
-                'data_type': str,
+                'is_nullable': False,
+                'datatype': datetime,
                 'is_date': True,
                 'auto_update': 'update'
             }
@@ -129,79 +132,85 @@ TABLES_MAP = {
                 'is_pk': True,
                 'is_unique': True,
                 'is_nullable': False,
-                'data_type': str,
+                'datatype': str,
             },
             'plan_id': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': str,
-                'is_fk': True,
-                'to': 'plan'
+                'datatype': str,
+                'fk': {
+                    'to': 'plan',
+                    'on_delete': 'cascade',
+                    'on_update': 'no action'
+                },
             },
             'client_id': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': str,
-                'is_fk': True,
-                'to': 'client'
+                'datatype': str,
+                'fk': {
+                    'to': 'client',
+                    'on_delete': 'cascade',
+                    'on_update': 'no action'
+                },
             },
             'plan_unit': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': int,
+                'datatype': int,
             },
             'expiration_date': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': str,
+                'datatype': str,
             },
             'discount': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': int,
+                'datatype': int,
             },
             'discount_type': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': str,
+                'datatype': str,
             },
             'vat': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': int,
+                'datatype': int,
             },
             'status': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': str,
+                'datatype': str,
             },
             'payment_status': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': str,
+                'datatype': str,
             },
             'created_at': {
                 'is_pk': False,
                 'is_unique': False,
-                'is_nullable': True,
-                'data_type': str,
+                'is_nullable': False,
+                'datatype': datetime,
                 'is_date': True,
                 'auto_update': 'save'
             },
             'updated_at': {
                 'is_pk': False,
                 'is_unique': False,
-                'is_nullable': True,
-                'data_type': str,
+                'is_nullable': False,
+                'datatype': str,
                 'is_date': True,
                 'auto_update': 'update'
             }
@@ -213,43 +222,49 @@ TABLES_MAP = {
                 'is_pk': True,
                 'is_unique': True,
                 'is_nullable': False,
-                'data_type': str,
+                'datatype': UUID,
             },
             'client_id': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': str,
-                'is_fk': True,
-                'to': 'client'
+                'datatype': UUID,
+                'fk': {
+                    'to': 'client',
+                    'on_delete': 'cascade',
+                    'on_update': 'no action'
+                },
             },
             'subscription_id': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': str,
-                'is_fk': True,
-                'to': 'subscription'
+                'datatype': UUID,
+                'fk': {
+                    'to': 'subscription',
+                    'on_delete': 'cascade',
+                    'on_update': 'no action'
+                },
             },
             'amount': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': int,
+                'datatype': int,
             },
             'created_at': {
                 'is_pk': False,
                 'is_unique': False,
-                'is_nullable': True,
-                'data_type': str,
+                'is_nullable': False,
+                'datatype': datetime,
                 'is_date': True,
                 'auto_update': 'save'
             },
             'updated_at': {
                 'is_pk': False,
                 'is_unique': False,
-                'is_nullable': True,
-                'data_type': str,
+                'is_nullable': False,
+                'datatype': datetime,
                 'is_date': True,
                 'auto_update': 'update'
             }
@@ -261,29 +276,35 @@ TABLES_MAP = {
                 'is_pk': True,
                 'is_unique': True,
                 'is_nullable': False,
-                'data_type': str,
+                'datatype': UUID,
             },
             'subscription_id': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': str,
-                'is_fk': True,
-                'to': 'subscription'
+                'datatype': UUID,
+                'fk': {
+                    'to': 'subscription',
+                    'on_delete': 'cascade',
+                    'on_update': 'no action'
+                },
             },
             'client_id': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': str,
-                'is_fk': True,
-                'to': 'client'
+                'datatype': UUID,
+                'fk': {
+                    'to': 'client',
+                    'on_delete': 'cascade',
+                    'on_update': 'no action'
+                },
             },
             'timestamp': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': str,
+                'datatype': datetime,
                 'is_date': True,
                 'auto_update': 'save'
             },
@@ -295,29 +316,35 @@ TABLES_MAP = {
                 'is_pk': True,
                 'is_unique': True,
                 'is_nullable': False,
-                'data_type': str
+                'datatype': UUID,
             },
             'subscription_id': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': str,
-                'is_fk': True,
-                'to': 'subscription'
+                'datatype': UUID,
+                'fk': {
+                    'to': 'subscription',
+                    'on_delete': 'cascade',
+                    'on_update': 'no action'
+                },
             },
             'client_id': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': str,
-                'is_fk': True,
-                'to': 'client'
+                'datatype': UUID,
+                'fk': {
+                    'to': 'client',
+                    'on_delete': 'cascade',
+                    'on_update': 'no action'
+                },
             },
             'created_at': {
                 'is_pk': False,
                 'is_unique': False,
                 'is_nullable': False,
-                'data_type': str,
+                'datatype': datetime,
                 'is_date': True,
                 'auto_update': 'save'
             },

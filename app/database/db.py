@@ -10,6 +10,8 @@ from database.tables import TABLES_MAP
 from utils.import_file import ImportManager
 from configs import db_config
 from pathlib import Path
+from datetime import datetime
+import json
 import uuid
 import time
 import sys
@@ -23,21 +25,31 @@ logger = logging.getLogger(__name__)
 
 
 class DB:
-
+    default_field_keys = {'is_pk', 'is_unique', 'fk', 'is_nullable', 'to', 'is_date', 'auto_update', 'datatype'}
+    table_map = TABLES_MAP
+    allow_print = False
+    show_sql = False
     stdout = sys.stdout
     stderr = sys.stderr
     _db = None
 
     def __init__(self, using):
         logger.info('Initializing database connection...')
-        self.stdout.write('\r\nInitializing database connection...\n')
-        self.stdout.flush()
+        # self.stdout.write('\r\nInitializing database connection...\n')
+        # self.stdout.flush()
+        
         Notification.send_notification('\nInitializing database connection...')
 
-        # self.stdout = sys.stdout
-        # self.stderr = sys.stderr
+        self.allow_print = False
+        self.show_sql = False
 
+        try:
+            self.field_map = self._get_field_map()
+        except TypeError:
+            self.field_map = self._get_field_map(self)
+        
         conn = None
+        self.write(f'Initializing database connection for {self.model_name}...')
         if not using:
             logger.warn(f"No Database provided. Ensure DB config is set @ {__name__} 'line {inspect.currentframe().f_lineno}'")
             self.stderr.write('No Database provided. Ensure DB config is set')
@@ -49,6 +61,7 @@ class DB:
             conn.execute("PRAGMA foreign_keys = ON")
             
             logger.info(f'Database connection established to {self._db}')
+            self.write(f'Database connection established to {self._db}\n')
             Notification.send_notification('Database connection established')
             conn.close()
 
@@ -56,8 +69,8 @@ class DB:
         except Exception as err:
             conn.close()
             logger.exception(f"Error connecting to {self._db} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-            self.stderr.write(f"Error connecting to {self._db} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-            self.stderr.write(str(err))
+            self.write_error(f"Error connecting to {self._db} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
+            self.write_error(str(err))
             self.stderr.flush()
             Notification.send_notification(err)
             raise err
@@ -66,7 +79,8 @@ class DB:
         if self._db is None:
             DB.set_db_name()
         try:
-            self.stdout.write('\r\nInitializing database connection...\n')
+            if self.allow_print:
+                self.write('\nInitializing database connection...\n')
             self.conn = sqlite3.connect(Path(self._db))
 
             # access column by name (like a dictionary)
@@ -74,17 +88,28 @@ class DB:
 
             self.conn.execute("PRAGMA foreign_keys = ON")
             logger.info('Database connection established')
-            self.stdout.write('Database connection established\n')
-            self.stdout.flush()
+
+            if self.allow_print:
+                self.write('Database connection established\n')
+
             return self.conn
         except Exception as err:
             logger.exception(f"Error connecting to {self._db} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-            self.stderr.write(f"Error connecting to {self._db} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-            self.stderr.write(str(err) + '\n')
-            self.stderr.flush()
+            self.write_error(f"Error connecting to {self._db} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
+            self.write_error(str(err))
             Notification.send_notification(err)
             self.conn.close()
             raise err
+
+    @classmethod    
+    def write_error(self, error: str):
+        self.stdout.write(f'\033[31m{error}\033[0m\n')
+        self.stdout.flush()
+
+    @classmethod
+    def write(self, text):
+        self.stdout.write(f'{text}\n')
+        self.stdout.flush()
 
     @classmethod
     def set_db_name(cls):
@@ -102,48 +127,257 @@ class DB:
         cls._db = using
         return using
 
+    def _set_table_name(self):
+        '''
+        Set the model to be used as table name
+        '''
+        # get table name from model
+        model_name = getattr(self, 'model_name', None)
+        if not model_name:
+            try:
+                model_name = self.__name__ # use model name as table name
+            except AttributeError:
+                model_name = self.__class__.__name__
+        
+        setattr(self, 'model_name', model_name.lower())
+    
+    def _get_field_map(self):
+        try:
+            self._set_table_name()
+        except TypeError:
+            self._set_table_name(self)
+
+        field_map = TABLES_MAP.get(self.model_name, None)
+        if field_map is None:
+            logger.exception(f'No table match the name {self.model_name} ensure table is on TABLE_MAP')
+            raise Exception(f'No table match the name {self.model_name} ensure table is on TABLE_MAP')
+        return field_map.get('fields')
+
     def _init_database_tables(self):
-        tables = [
-            'client', 'plan', 'payment', 
-            'subscription', 'visit', 'assigned_client'
-        ]
+        tables = self.table_map.keys()
 
         for table_name in tables:
-            exists = self._check_if_table_exist(table_name)
-            
-            if exists:
-                self.stdout.write(f'\r\n{table_name} table exist\n')
-                self.stdout.flush()
-            else:
-                self.create_tables(table_name)
+            self.create_tables(table_name=table_name)
 
     def create_tables(self, table_name):
+        exists = self._check_if_table_exist(table_name)
+            
+        if exists:
+            if self.allow_print:
+                self.write(f'\n{table_name} table exist\n')
+            return
+        # time.sleep(3)
+        table_detail = self._get_table_detail(table_name=table_name)
+        
+        table_field_map = self.table_map.get(table_name).get('fields')
+        
+        # generate sql
+        # CREATE TABLE IF NOT EXISTS payment (
+        #         payment_id TEXT PRIMARY KEY  , 
+        #         client_id TEXT  NOT NULL , 
+        #         subscription_id TEXT  NOT NULL , 
+        #         amount INTEGER  NOT NULL , 
+        #         created_at TEXT  NOT NULL , 
+        #         updated_at TEXT  NOT NULL
+        #         FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE CASCADE ON UPDATE NO ACTION,
+        #         FOREIGN KEY (subscription_id) REFERENCES subscription(subscription_id) ON DELETE CASCADE ON UPDATE NO ACTION);
+    
+        query = f'''
+            CREATE TABLE IF NOT EXISTS {table_name} (
+                {',\n\t\t'.join([
+                f'{field} {( 
+                    # set datatype,  
+                    self._get_datatype(table_detail.get('datatype').get(field))
+                    )}{(
+                        # set pk
+                        ' PRIMARY KEY' if table_detail.get('pk_field') == field else ''
+
+                    )}{(
+                        # set not null,
+                        ' NOT NULL' if field in table_detail.get('not_null_fields', []) else ''
+                        )}{(
+                        # set unique
+                        ' UNIQUE' if field in table_detail.get('unique_fields', []) else ''
+                        # loop thru keys,
+                    )}' for field in table_field_map.keys()
+            ])}{(
+                ''.join((
+                    # add foreign keys
+                    f',\n\t\tFOREIGN KEY ({field}) REFERENCES {(
+                        table_detail.get('fk_field_map', {}).get(field).get('to')
+                        )}({field}) ON DELETE {(
+                            table_detail.get('fk_field_map', {}).get(field, None).get('on_delete', '').upper()
+                                                )} ON UPDATE {(
+                                                    table_detail.get('fk_field_map', {}).get(field).get('on_update', '').upper()
+                                                    )}' for field in table_field_map.keys() if table_detail.get('fk_field_map', {}).get(field, None) is not None
+                ))
+            )});
+        '''
+            
+        if self.show_sql:
+            self.write(query)
+
         self._connect_to_db()
         if self.conn:
-            self.stdout.write(f'\r\nCreating database table {table_name}...')
-            self.stdout.flush()
-            match table_name:
-                case 'client':   
-                    self._create_client_table()
-                case 'plan':
-                    self._create_plan_table()
-                case 'subscription':
-                    self._create_subscription_table()
-                case 'payment':
-                    self._create_payment_table()
-                case 'visit':
-                    self._create_visit_table()
-                case 'assigned_client':
-                    self._create_assigned_client_table()
-                case _:
-                    self.stdout.write(f'Unknown table name: {table_name}')
-                    self.stdout.flush()
-                    self.conn.close()
+            if self.allow_print:
+                self.write(f'Creating database table {table_name}...')
+
+            cursor = self.conn.cursor()
+            try:
+                cursor.execute(query)
+                self.conn.commit()
+            except Exception as err:
+                self.conn.close()
+                logger.exception(f"Error creating client table @ {__name__} 'line {inspect.currentframe().f_lineno}'")
+                self.write_error(f"Error creating {table_name} table")
+                self.write(str(err))
+                raise err
+
+
+            # match table_name:
+            #     case 'client':   
+            #         self._create_client_table()
+            #     case 'plan':
+            #         self._create_plan_table()
+            #     case 'subscription':
+            #         self._create_subscription_table()
+            #     case 'payment':
+            #         self._create_payment_table()
+            #     case 'visit':
+            #         self._create_visit_table()
+            #     case 'assigned_client':
+            #         self._create_assigned_client_table()
+            #     case _:
+            #         self.write_error(f'Unknown table name: {table_name}')
+            #         self.conn.close()
 
             self.conn.close()
+            # self.write(f'\nTable initialization complete\n')
 
-        # self.stdout.write('\nTable initialization complete\n')
-        # self.stdout.flush()
+    
+    def _get_datatype(self, obj):
+        if obj is str:
+            return 'TEXT'
+        elif obj is int:
+            return 'INTEGER'
+        elif obj is dict:
+            return 'TEXT'
+        elif obj is uuid.UUID:
+            return 'TEXT'
+        elif obj is datetime:
+            return 'TEXT'
+
+    def _get_table_detail(self, table_name):
+        '''
+        {
+            'pk_field': 'payment_id', 
+            'datatype': {
+                'payment_id': <class 'uuid.UUID'>, 
+                'client_id': <class 'uuid.UUID'>, 
+                'subscription_id': <class 'uuid.UUID'>, 
+                'amount': <class 'int'>, 
+                'created_at': <class 'datetime.datetime'>, 
+                'updated_at': <class 'datetime.datetime'>
+                }, 
+            'fk_field_map': {
+                'client_id': {
+                    'on_delete': 'cascade', 
+                    'on_update': 'no action',  
+                    'to': 'client'
+                }, 
+                'subscription_id': {
+                    'on_delete': 'cascade', 
+                    'on_update': 'no action', 
+                    'to': 'subscription'
+                }
+            }, 
+            'not_null_fields': ['client_id', 'subscription_id', 'amount', 'created_at', 'updated_at'], 
+            'unique_fields': []
+        }
+
+        '''
+
+        PK_FEILD = None
+        FK_FEILDS_MAP = {}
+        UNIQUE_FIELDS = []
+        NOT_NULL_FIELDS = []
+        DATATYPE_MAP = {}
+
+        table_field = self.table_map.get(table_name, None)
+   
+        if table_field is None:
+            raise ValidationError(f"Invalid table name '{table_name}'. ensure table is in TABLE_MAP")
+
+        table_field_map = table_field.get('fields', None)
+        if table_field_map is None:
+            raise ValidationError(f"Field not present in TABLE_MAP for {table_name}")
+        
+        for key in table_field_map.keys():
+            field = table_field_map.get(key, None)
+            if field is None:
+                raise ValidationError(f"Invalid field '{key}' provided for {table_name}")
+            
+            if not set(field.keys()) <= set(self.default_field_keys):
+                raise ValidationError(f'Unknown keys {set(field.keys()) - set(self.default_field_keys)} provided')
+            
+            is_pk = field.get('is_pk', False)
+            if is_pk:
+                # if primary key value was earlier set
+                if PK_FEILD:
+                    raise ValidationError(f'Primary key field already set to {PK_FEILD}')
+                
+                # set pk field
+                PK_FEILD = key
+
+            datatype = field.get('datatype', None)
+            if not datatype:
+                raise ValidationError(f'Datatype is required for creating a field in a table')
+            
+            # if not isinstance(datatype, (str, int, datetime, uuid.UUID, dict)):
+            if not datatype in (str, int, datetime, uuid.UUID, dict):
+                raise ValidationError(f'Datatype of type {datatype} is not valid')
+            
+            DATATYPE_MAP[key] = datatype
+            
+            is_unique = field.get('is_unique', False)
+            if is_unique:
+                if key != PK_FEILD:
+                    UNIQUE_FIELDS.append(key)
+
+            is_nullable = field.get('is_nullable', False)
+            if is_nullable:
+                if key == PK_FEILD:
+                    raise ValidationError(f'Primary key field is a non nullable field {key}')
+            else:
+                if key != PK_FEILD:
+                    NOT_NULL_FIELDS.append(key)
+                
+            fk = field.get('fk', None)
+            if fk is not None:
+                reference_model = fk.get('to', None)
+                if reference_model not in self.table_map.keys():
+                    raise ValidationError(f'Invalid model {reference_model} for {key}')
+                
+                contraint = {}
+                on_delete = fk.get('on_delete', None)
+                on_update = fk.get('on_update', None)
+
+                contraint['on_delete'] = on_delete if on_delete is not None else 'no action'
+                contraint['on_update'] = on_update if on_update is not None else 'no action'
+                contraint['to'] = reference_model
+                
+                # map constraint to key
+                FK_FEILDS_MAP[key] = contraint
+        
+        table_detail = {
+            'pk_field': PK_FEILD,
+            'datatype': DATATYPE_MAP,
+            'fk_field_map': FK_FEILDS_MAP,
+            'not_null_fields': NOT_NULL_FIELDS,
+            'unique_fields': UNIQUE_FIELDS
+        }
+
+        return table_detail
         
     def _check_if_table_exist(self, table_name: str):
         self._connect_to_db()
@@ -325,8 +559,7 @@ class DB:
 
 
 class InitDB(DB):
-    table_map = TABLES_MAP
-
+    
     def __init__(self):
         is_test_environ = os.getenv('CURRENT_WORKING_DB_ENVIRON', '').lower() == 'test' 
         using = db_config.TEST_DB_NAME
@@ -339,31 +572,6 @@ class InitDB(DB):
     def data(self):
         return self._get_data()
     
-    def _set_table_name(self):
-        '''
-        Set the model to be used as table name
-        '''
-        # get table name from model
-        model_name = getattr(self, 'model_name', None)
-        if not model_name:
-            try:
-                model_name = self.__name__ # use model name as table name
-            except AttributeError:
-                model_name = self.__class__.__name__
-        
-        setattr(self, 'model_name', model_name.lower())
-    
-    def _get_field_map(self):
-        try:
-            self._set_table_name()
-        except TypeError:
-            self._set_table_name(self)
-
-        field_map = TABLES_MAP.get(self.model_name, None)
-        if field_map is None:
-            logger.exception(f'No table match the name {self.model_name} ensure table is on TABLE_MAP')
-            raise Exception(f'No table match the name {self.model_name} ensure table is on TABLE_MAP')
-        return field_map.get('fields')
 
     def _get_pk_field(self):
         try:
@@ -467,7 +675,7 @@ class InitDB(DB):
             is_pk = field_obj.get('is_pk', False)
             is_unique = field_obj.get('is_unique', False)
             is_nullable = field_obj.get('is_nullable', True)
-            is_fk = field_obj.get('is_fk', False)
+            fk = field_obj.get('fk', None)
 
             value = data.get(key, None)
 
@@ -509,8 +717,8 @@ class InitDB(DB):
                     if not is_pk and not is_new:
                         raise ValidationError(f'Value is required for non nullable field {key}')
 
-            if is_fk:
-                reference_model = field_obj.get('to', None)
+            if fk is not None:
+                reference_model = fk.get('to', None)
                 if reference_model not in self.table_map.keys():
                     raise ValidationError(f'Invalid model {reference_model} for {key}')
 
@@ -986,11 +1194,13 @@ class InitDB(DB):
 
     @classmethod
     def import_model(cls, filepath, file_type, has_header):
-        logger.info('Importing clients from csv...')
         try:
             field_map = cls._get_field_map()
         except TypeError:
             field_map = cls._get_field_map(cls)
+
+        logger.info(f'Importing {cls.model_name} from {file_type}...')
+        cls.write(f'Importing {cls.model_name} from {file_type}...')
 
         model = cls.model_name
         model_fields = list(field_map.keys())
@@ -1049,9 +1259,8 @@ class InitDB(DB):
         for i, failed_import in enumerate(failed_imports):
             cls.stdout.write(f'{i + 1} failed: {failed_import[1]['reason']}')
             cls.stdout.flush()
-        logger.info(f'({len(instances)}/ {len(instances) + len(failed_imports)} imported successfully)')
-        cls.stdout.write(f'({len(instances)}/ {len(instances) + len(failed_imports)} imported successfully)')
-        cls.stdout.flush()
+        logger.info(f'({len(instances)}/{len(instances) + len(failed_imports)}) {cls.model_name} imported successfully')
+        cls.write(f'({len(instances)}/{len(instances) + len(failed_imports)}) {cls.model_name} imported successfully\n')
 
     @classmethod
     def export_model(cls, file_type, path):
