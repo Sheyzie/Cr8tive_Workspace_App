@@ -132,26 +132,9 @@ class Plan(InitDB):
             if not self._verify_pk():
                 raise ValidationError('Plan ID is not valid')
 
-    def save_to_db(self, update=False) -> None:
-        plan = Plan.fetch_one(plan_name=self.plan_name)
-
-        if not update:
-            if plan:
-                self._reset_fields()
-                logger.warn(f'Plan already exist with the name {plan.plan_name}')
-                self.write_error(f"\nPlan already exist with {plan.plan_name} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-
-                return
-        super().save_to_db(update=update)
-  
     def update(self) -> None:
-        try:
-            self._validate(check_id=True)
-            self.save_to_db(update=True)
-        except ValidationError as err:
-            logger.error(str(err.message))
-            self.write_error(str(err.message))
-            raise err
+        self._validate(check_id=True)
+        super().update()
 
 # https://www.cargopal.tonisoft.co.ke/
 

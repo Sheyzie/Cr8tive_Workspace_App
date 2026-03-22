@@ -110,13 +110,8 @@ class Payment(InitDB):
             raise ValidationError('Payment amount cannot be greater than subscription amount')
    
     def update(self) -> None:
-        try:
-            self._validate(check_id=True)
-            self.save_to_db(update=True)
-        except ValidationError as err:
-            logger.error(str(err.message))
-            self.write_error(str(err.message))
-            raise err
+        self._validate(check_id=True)
+        super().update()
 
     def _get_balance_from_db(self):
         '''

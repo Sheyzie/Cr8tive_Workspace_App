@@ -593,8 +593,8 @@ class DB:
     #         self.conn.close()
     #         raise err
 
-    def save_to_db(self):
-        self.conn.commit()
+    # def save_to_db(self):
+    #     self.conn.commit()
 
     def drop_db(self):
         self.write(f'Dropping database {self._db}\n')
@@ -760,7 +760,7 @@ class InitDB(DB):
                         raise ValidationError(f'Primary key: {pk_value}  has to be unique')
                     
                     unique_values.append(pk_value)
-            
+        
             if is_unique:
                 # get unique value
                 unique_value = value
@@ -774,7 +774,11 @@ class InitDB(DB):
                     if not is_pk:
                         raise ValidationError(f'UNIQUE CONSTRAINT: {unique_value} already exist in table')
                 
+                if is_new and not is_pk: # inform if data is new entry and field is not pk field
+                    self._check_unique_value_in_db(field, value)
+                
                 unique_values.append(unique_value)
+                
 
             if not is_nullable:
                 if not value:
@@ -824,7 +828,37 @@ class InitDB(DB):
                     return None
             return id_string
 
-    def save_to_db(self, **kwargs) -> None:
+    def _check_unique_value_in_db(self, field, value):
+        '''
+        Check if a unique value is present in db before save
+        '''
+        model = self.model_name
+
+        query = f'SELECT * FROM {model} WHERE {field} = ?;'
+
+        self._connect_to_db()
+        
+        if self.conn:
+            cursor = self.conn.cursor()
+
+            result = None
+            
+            try:
+                cursor.execute(query, (value,))
+                result = cursor.fetchone()
+                self.conn.close()
+            except Exception as err:
+                logger.exception('Error saving client')
+                self.stderr.write(str(err))
+                self.stderr.flush()
+                Notification.send_notification('Unexpected error happened')
+                self.conn.close()
+                raise err
+            
+            if result is not None:
+                raise ValidationError(f'Unique field {field} already has the value {value}')
+
+    def __save_to_db(self, **kwargs) -> None:
         '''
         Save the data on the current instace of the model in 
         the database
@@ -935,6 +969,12 @@ class InitDB(DB):
                 Notification.send_notification('Unexpected error happened')
                 self.conn.close()
                 raise err
+
+    def save(self):
+        self.__save_to_db()
+
+    def update(self):
+        self.__save_to_db(update=True)
  
     def delete(self) -> None:
         try:
@@ -1354,7 +1394,7 @@ class InitDB(DB):
         for data in instance_data:
             try:
                 instance = cls(**data)
-                instance.save_to_db()
+                instance.save()
                 instances.append(instance)
             except Exception as err:
                 failed_imports.append((data, {'reason': str(err)}))

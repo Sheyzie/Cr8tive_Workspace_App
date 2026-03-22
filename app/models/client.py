@@ -146,26 +146,10 @@ class Client(InitDB):
             if not self._verify_pk():
                 raise ValidationError('Client ID is not valid')
 
-    def save_to_db(self, update=False) -> None:
-        client = Client.fetch_one(phone=self.phone)
-
-        if not update:
-            if client:
-                self._reset_fields()
-                logger.warn('User already exist')
-                self.write_error(f"\nUser already exist with {client.phone} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-                # TODO: return ClientExist exception
-                return
-        super().save_to_db(update=update)
+    # def save(self, update=False) -> None:
+    #     super().save()
                        
     def update(self) -> None:
-        try:
-            self._validate(check_id=True)
-            self.save_to_db(update=True)
-        except ValidationError as err:
-            logger.error(str(err.message))
-            self.stderr.write('\033[31m' + str(err.message + '\033[0m\n'))
-            self.stderr.flush()
-            Notification.send_notification(err)
-            exit(1)
+        self._validate(check_id=True)
+        super().update()
     

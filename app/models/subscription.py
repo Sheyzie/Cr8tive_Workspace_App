@@ -173,7 +173,7 @@ class Subscription(InitDB):
         if vat:
             self.vat = float(vat) / 100
 
-        status = kwargs.get('status')
+        status = kwargs.get('status', 'booked')
         if status:
             self.status = status
 
@@ -261,11 +261,6 @@ class Subscription(InitDB):
     
         self.assigned_users = assigned_users
 
-    def save_to_db(self, update=False) -> None:
-        if not update:
-            self._set_expiration()
-        super().save_to_db(update=update)
-
     def _set_expiration(self) -> None:
         match(self.plan.plan_type):
             case 'hourly':
@@ -283,21 +278,19 @@ class Subscription(InitDB):
                 expiration_date = datetime.now() + timedelta(days=(self.plan.duration * self.plan_unit * 365))
         self.expiration_date = expiration_date.strftime('%Y-%m-%d %H:%M:%S')
 
+    def save(self):
+        self._validate()
+        self._set_expiration()
+        super().save()
+
     def update(self) -> None:
-        try:
-            self._validate(check_id=True)
-            self.save_to_db(update=True)
-        except ValidationError as err:
-            logger.error(str(err.message))
-            self.stderr.write('\033[31m' + str(err.message + '\033[0m\n'))
-            self.stderr.flush()
-            Notification.send_notification(err)
-            exit(1)
+        self._validate(check_id=True)
+        super().update()
 
     def set_assigned_client(self, client: Client) -> None:
         if client not in self.assigned_users:
             assigned_client = AssignedClient(subscription_id=self.subscription_id, client_id=client.client_id)
-            assigned_client.save_to_db()
+            assigned_client.save()
             self.assigned_users.append(client)
 
     def remove_assigned_client(self, client: Client) -> None:
@@ -322,56 +315,51 @@ class Subscription(InitDB):
         is_user: bool = self.is_user(user)
         
         if not is_user:
-            Notification.send_notification(f'User: {user} is not a listed assigned user for this subscription')
-            return
+            raise Exception(f'User: {user} is not a listed assigned user for this subscription')
         
         client = Client.fetch_one(client_id=user.client_id)
         
         if client is None:
             logger.warn('Users does not exist')
-            Notification.send_notification(f'User: {user} does not exist please remove user from assigned user')
-            return
+            raise Exception(f'User: {user} does not exist please remove user from assigned user')
         
          # check if user is an assigned user
         if not self.is_user(client):
             logger.warn('User is does not have access to this subcription')
-            return
         
         # check if subscription is exhausted or expired
         if self.status not in {'booked', 'running'}:
             logger.warn(f'Can not log user in to {self.status} plan')
-            return
+            raise Exception(f'Can not log user in to {self.status} plan')
         
         is_valid = self.check_expiration()
         if not is_valid:
             logger.warn('Subscription has expired')
             self.status = 'expired'
-            self.save_to_db(update=True)
+            self.update()
 
-            Notification.send_notification(f'User: {user} does not exist please remove user from assigned user')
+            raise Exception(f'User: {user} does not exist please remove user from assigned user')
 
-            return
         
         if self.usage == Visit.get_all_sub_visits_count(self.subscription_id):
             self.status = 'exhausted'
-            self.save_to_db(update=True)
+            self.update()
             logger.warn('Usage has been exhausted')
-            return
+            raise Exception('Usage has been exhausted for this subscription')
         
         # TODO: validate if plan is hourly
         visit = Visit(**{'subscription_id': self.subscription_id, 'client_id': client.client_id})
-        visit.save_to_db()
+        visit.save()
         
         self.status = 'running'
-        self.save_to_db(update=True)
+        self.update()
 
     def remove_user_visit(self, user: Client, date_value: str) -> None:
         # date_value is expecting date in YYYY-MM-DD format
         is_user: bool = self.is_user(user)
         
         if not is_user:
-            Notification.send_notification(f'User: {user} is not a listed assigned user for this subscription')
-            return
+            raise Exception(f'User: {user} is not a listed assigned user for this subscription')
         
         Visit.delete(self.subscription_id, user.client_id, date_value)
 

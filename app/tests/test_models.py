@@ -72,7 +72,7 @@ class TestClient(BaseTestClass):
         for client in get_client():
             new_client = Client(**client)
             # new_client.get_id()
-            new_client.save_to_db()
+            new_client.save()
             # time.sleep(5)
 
         self.write('\nTest 1: Passed ✅\n')
@@ -252,7 +252,7 @@ class TestPlan(BaseTestClass):
         
         for plan in get_plan():
             new_plan = Plan(**plan)
-            new_plan.save_to_db()
+            new_plan.save()
             # time.sleep(5)
 
         self.write('\nTest 1: Passed ✅\n')
@@ -433,14 +433,14 @@ class TestSubscription(BaseTestClass):
         
         for client in get_client():
             new_client = Client(**client)
-            new_client.save_to_db()
+            new_client.save()
 
         fetched_clients = Client.fetch_all()
         assert len(fetched_clients) > 0
 
         for plan in get_plan():
             new_plan = Plan(**plan)
-            new_plan.save_to_db()
+            new_plan.save()
 
         fetched_plans = Plan.fetch_all()
         assert len(fetched_plans) > 0
@@ -481,10 +481,10 @@ class TestSubscription(BaseTestClass):
         }
 
         new_subscription = Subscription(**sub_obj)
-        new_subscription.save_to_db()
+        new_subscription.save()
 
         second_subscription = Subscription(**sub_obj2)
-        second_subscription.save_to_db()
+        second_subscription.save()
         
         refetch_subscription = Subscription.fetch_one(subscription_id=new_subscription.subscription_id)
 
@@ -612,14 +612,14 @@ class TestPayment(BaseTestClass):
         }
 
         client = Client(**client_data)
-        client.save_to_db()
+        client.save()
 
         # check if client exist in db
         client = Client.fetch_one(phone=client_data['phone'])
         assert client is not None
 
         plan = Plan(**plan_data)
-        plan.save_to_db()
+        plan.save()
 
         # check if plan exist in db
         plan = Plan.fetch_one(plan_name=plan_data['plan_name'])
@@ -637,7 +637,7 @@ class TestPayment(BaseTestClass):
         }
 
         sub = Subscription(**sub_obj)
-        sub.save_to_db()
+        sub.save()
 
         for i in range(1,4):
             payment_data = {
@@ -648,7 +648,7 @@ class TestPayment(BaseTestClass):
             
             # get subscription from test
             new_payment = Payment(**payment_data)
-            new_payment.save_to_db()
+            new_payment.save()
             # break
 
             # time.sleep(5)
@@ -684,7 +684,7 @@ class TestPayment(BaseTestClass):
         
         one_payment.amount = 10
 
-        one_payment.save_to_db(update=True)
+        one_payment.update()
     
         one_payment_refetched = Payment.fetch_one(payment_id=one_payment.payment_id)
 
@@ -726,14 +726,14 @@ class TestVisit(BaseTestClass):
         
         for client in get_client():
             new_client = Client(**client)
-            new_client.save_to_db()
+            new_client.save()
 
         fetched_clients = Client.fetch_all()
         assert len(fetched_clients) > 0
 
         for plan in get_plan():
             new_plan = Plan(**plan)
-            new_plan.save_to_db()
+            new_plan.save()
 
         fetched_plans = Plan.fetch_all()
         assert len(fetched_plans) > 0
@@ -753,7 +753,7 @@ class TestVisit(BaseTestClass):
         }
 
         new_subscription = Subscription(**sub_obj)
-        new_subscription.save_to_db()
+        new_subscription.save()
 
         self.sub_id = new_subscription.subscription_id
 
@@ -809,7 +809,7 @@ class TestVisit(BaseTestClass):
 
         one_subscription = fetched_subscriptions[0]
 
-        Visit.export_visits(path, sub_id=one_subscription.subscription_id)
+        Visit.export_model(path, sub_id=one_subscription.subscription_id)
         
         assert os.path.isfile(app_config.BASE_DIR / 'tests/visits_by_date_export.pdf')
         assert os.path.isfile(app_config.BASE_DIR / 'tests/visits_by_count_export.pdf')
