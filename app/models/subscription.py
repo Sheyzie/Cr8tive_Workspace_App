@@ -287,19 +287,22 @@ class Subscription(InitDB):
         self._validate(check_id=True)
         super().update()
 
-    def set_assigned_client(self, client: Client) -> None:
+    def set_assigned_client(self, client_id) -> None:
+        client = Client.fetch_one(client_id=client_id)
+        
         if client not in self.assigned_users:
             assigned_client = AssignedClient(subscription_id=self.subscription_id, client_id=client.client_id)
             assigned_client.save()
             self.assigned_users.append(client)
 
-    def remove_assigned_client(self, client: Client) -> None:
+    def remove_assigned_client(self, client_id) -> None:
         if not len(self.assigned_users) > 0:
             return None
         
-        if client in self.assigned_users:
-            AssignedClient.delete_user(sub_id=self.subscription_id,client_id=client.client_id)
-            self.assigned_users.remove(client)
+        for client in self.assigned_users:
+            if client.client_id == client_id:
+                AssignedClient.delete_user(sub_id=self.subscription_id,client_id=client.client_id)
+                self.assigned_users.remove(client)
 
     def is_user(self, client: Client) -> bool:
         if self.client.client_id == client.client_id:
@@ -311,17 +314,17 @@ class Subscription(InitDB):
         
         return False
     
-    def log_client_to_visit(self, user: Client) -> None:
-        is_user: bool = self.is_user(user)
+    def log_client_to_visit(self, client_id) -> None:
+        client = Client.fetch_one(client_id=client_id)
+        
+        is_user: bool = self.is_user(client)
         
         if not is_user:
-            raise Exception(f'User: {user} is not a listed assigned user for this subscription')
-        
-        client = Client.fetch_one(client_id=user.client_id)
+            raise Exception(f'User: {client} is not a listed assigned user for this subscription')
         
         if client is None:
             logger.warn('Users does not exist')
-            raise Exception(f'User: {user} does not exist please remove user from assigned user')
+            raise Exception(f'User: {client} does not exist please remove user from assigned user')
         
          # check if user is an assigned user
         if not self.is_user(client):
@@ -338,7 +341,7 @@ class Subscription(InitDB):
             self.status = 'expired'
             self.update()
 
-            raise Exception(f'User: {user} does not exist please remove user from assigned user')
+            raise Exception(f'User: {client} does not exist please remove user from assigned user')
 
         
         if self.usage == Visit.get_all_sub_visits_count(self.subscription_id):
@@ -354,14 +357,15 @@ class Subscription(InitDB):
         self.status = 'running'
         self.update()
 
-    def remove_user_visit(self, user: Client, date_value: str) -> None:
+    def remove_user_visit(self, client_id, date_value: str) -> None:
         # date_value is expecting date in YYYY-MM-DD format
-        is_user: bool = self.is_user(user)
+        client = Client.fetch_one(client_id=client_id)
+        is_user: bool = self.is_user(client)
         
         if not is_user:
-            raise Exception(f'User: {user} is not a listed assigned user for this subscription')
+            raise Exception(f'User: {client} is not a listed assigned user for this subscription')
         
-        Visit.delete(self.subscription_id, user.client_id, date_value)
+        Visit.delete(self.subscription_id, client.client_id, date_value)
 
     def check_expiration(self):
         from datetime import datetime

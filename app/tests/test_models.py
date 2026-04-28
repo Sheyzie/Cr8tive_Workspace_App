@@ -567,7 +567,7 @@ class TestSubscription(BaseTestClass):
 
         one_subscription = fetched_subscriptions[0]
 
-        one_subscription.set_assigned_client(one_client)
+        one_subscription.set_assigned_client(one_client.client_id)
 
         assert len(one_subscription.assigned_users) > 0
         assert one_subscription.assigned_users[0].client_id == one_client.client_id
@@ -758,7 +758,7 @@ class TestVisit(BaseTestClass):
         self.sub_id = new_subscription.subscription_id
 
         fetched_subscription = Subscription.fetch_one(subscription_id=self.sub_id)
-        fetched_subscription.set_assigned_client(client)
+        fetched_subscription.set_assigned_client(client.client_id)
 
         assert len(fetched_subscription.assigned_users) > 0
 
@@ -771,7 +771,7 @@ class TestVisit(BaseTestClass):
         
         assert fetched_subscription is not None
 
-        fetched_subscription.log_client_to_visit(fetched_subscription.client)
+        fetched_subscription.log_client_to_visit(fetched_subscription.client.client_id)
         
         visits = Visit.get_client_visits_per_sub(fetched_subscription.subscription_id, result_only=True)
         
@@ -790,7 +790,7 @@ class TestVisit(BaseTestClass):
 
         one_subscription = fetched_subscriptions[0]
 
-        one_subscription.delete()
+        one_subscription.remove_user_visit()
     
         one_subscription_refetched = Subscription.fetch_one(subscription_id=one_subscription.subscription_id)
 

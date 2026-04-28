@@ -230,10 +230,21 @@ class DB:
             if self.allow_print:
                 self.write(f'\n{table_name} table exist\n')
             return
-        # time.sleep(3)
+
         table_detail = self._get_table_detail(table_name=table_name)
         
         table_field_map = self.table_map.get(table_name).get('fields')
+
+        # get fk map from detail
+        fk_field_map = table_detail.get('fk_field_map', {})
+        if fk_field_map != {}:
+            # create fk table if not exist
+            for field, contraint in fk_field_map.items():
+                fk_model = contraint['to']
+                exists = self._check_if_table_exist(fk_model)
+                if not exists:
+                    self.create_tables(fk_model)
+        
         
         # generate sql
         # CREATE TABLE IF NOT EXISTS payment (
@@ -1028,7 +1039,7 @@ class InitDB(DB):
     @classmethod
     def fetch_one(cls, **kwargs) -> Self | None:
         '''
-        Get one item from model table. Return None if no tiem is found
+        Get one item from model table. Return None if no item is found
         '''
         try:
             field_map = cls._get_field_map()
@@ -1096,18 +1107,30 @@ class InitDB(DB):
         model = cls.model_name
         model_fields = field_map.keys()
         col_names = kwargs.get('col_names', False)
+        page = kwargs.get('page', 1) # default page
+        page_size = kwargs.get('page_size', 100) # default pagination
 
         if not field_map:
             raise Exception(f'Field map not found on {model} model')
         
         if col_names and not isinstance(col_names, bool):
             raise Exception(f'Invalid type for col_names got {type(col_names)} but expected bool')
+        
+        if page and not isinstance(page, int):
+            raise Exception(f'Invalid type for page got {type(page)} but expected int')
+        
+        if page_size and not isinstance(page_size, int):
+            raise Exception(f'Invalid type for page_size got {type(page_size)} but expected int')
+        
+        OFFSET = (page - 1) * page_size
  
         conn = cls._connect_to_db(cls)
         cursor = conn.cursor()
 
         query = f'''
-            SELECT * FROM {model.lower()};
+            SELECT * FROM {model.lower()}
+            LIMIT {page_size}
+            OFFSET {OFFSET};
         '''
 
         if cls.show_sql:
@@ -1170,11 +1193,22 @@ class InitDB(DB):
             if is_date:
                 date_like_keys.append(key)
 
+        page = kwargs.pop('page', 1) # default page
+        page_size = kwargs.pop('page_size', 100) # default pagination
+
         if not field_map:
             raise Exception(f'Field map not found on {model} model')
         
         if not set(kwargs.keys()) <= set(model_fields):
             raise Exception(f'Invalid field provided {model} model')
+        
+        if page and not isinstance(page, int):
+            raise Exception(f'Invalid type for page got {type(page)} but expected int')
+        
+        if page_size and not isinstance(page_size, int):
+            raise Exception(f'Invalid type for page_size got {type(page_size)} but expected int')
+        
+        OFFSET = (page - 1) * page_size
         
         # get model name
 
@@ -1188,7 +1222,9 @@ class InitDB(DB):
 
         query = f'''
             SELECT * FROM {model.lower()}
-            WHERE {' AND '.join([f'{key} = ?' if key not in date_like_keys else f'{key} LIKE ?' for key in kwargs.keys()])};
+            WHERE {' AND '.join([f'{key} = ?' if key not in date_like_keys else f'{key} LIKE ?' for key in kwargs.keys()])}
+            LIMIT {page_size}
+            OFFSET {OFFSET};
         '''
 
         values = tuple(kwargs.values())

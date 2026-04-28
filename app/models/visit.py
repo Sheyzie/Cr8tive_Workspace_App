@@ -197,7 +197,7 @@ class Visit(InitDB):
         return len(result)
 
     @classmethod
-    def export_model(cls, path, sub_id: str, using=None):
+    def export_model(cls, path, sub_id: str):
 
         visits_by_date, column_names_by_date = Visit.get_client_visits_per_sub(sub_id, col_names=True)
         visits_by_count, column_names_by_count = Visit.get_client_visits_per_sub(sub_id, get_count=True, col_names=True)

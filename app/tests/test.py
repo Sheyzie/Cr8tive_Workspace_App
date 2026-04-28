@@ -19,9 +19,9 @@ def main(**kwargs):
     if kwargs:
         arguments = kwargs.get('validated_args', {})
     
-    model = arguments.get('model', [])
+    model = arguments.get('model', None)
     try:
-        if len(model) == 0:
+        if model is None:
             TestClient.start_test()
             delete_db(app_config.BASE_DIR, DB_NAME)
             TestPlan.start_test()
@@ -32,7 +32,7 @@ def main(**kwargs):
             delete_db(app_config.BASE_DIR, DB_NAME)
             TestVisit.start_test()
         else:
-            match model[0]:
+            match model:
                 case 'client':
                     TestClient.start_test()
                 case 'plan':

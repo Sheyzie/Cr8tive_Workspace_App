@@ -64,68 +64,6 @@ TABLES_MAP = {
             }
         }
     },
-    'plan': {
-        'fields': {
-            'plan_id': {
-                'is_pk': True,
-                'is_unique': True,
-                'is_nullable': False,
-                'datatype': UUID,
-            },
-            'plan_name': {
-                'is_pk': False,
-                'is_unique': True,
-                'is_nullable': False,
-                'datatype': str,
-            },
-            'duration': {
-                'is_pk': False,
-                'is_unique': False,
-                'is_nullable': False,
-                'datatype': int,
-            },
-            'plan_type': {
-                'is_pk': False,
-                'is_unique': False,
-                'is_nullable': False,
-                'datatype': str,
-            },
-            'slot': {
-                'is_pk': False,
-                'is_unique': False,
-                'is_nullable': False,
-                'datatype': int,
-            },
-            'guest_pass': {
-                'is_pk': False,
-                'is_unique': False,
-                'is_nullable': False,
-                'datatype': int,
-            },
-            'price': {
-                'is_pk': False,
-                'is_unique': False,
-                'is_nullable': False,
-                'datatype': int,
-            },
-            'created_at': {
-                'is_pk': False,
-                'is_unique': False,
-                'is_nullable': False,
-                'datatype': datetime,
-                'is_date': True,
-                'auto_update': 'save'
-            },
-            'updated_at': {
-                'is_pk': False,
-                'is_unique': False,
-                'is_nullable': False,
-                'datatype': datetime,
-                'is_date': True,
-                'auto_update': 'update'
-            }
-        }
-    },
     'subscription': {
         'fields': {
             'subscription_id': {
@@ -211,6 +149,68 @@ TABLES_MAP = {
                 'is_unique': False,
                 'is_nullable': False,
                 'datatype': str,
+                'is_date': True,
+                'auto_update': 'update'
+            }
+        }
+    },
+    'plan': {
+        'fields': {
+            'plan_id': {
+                'is_pk': True,
+                'is_unique': True,
+                'is_nullable': False,
+                'datatype': UUID,
+            },
+            'plan_name': {
+                'is_pk': False,
+                'is_unique': True,
+                'is_nullable': False,
+                'datatype': str,
+            },
+            'duration': {
+                'is_pk': False,
+                'is_unique': False,
+                'is_nullable': False,
+                'datatype': int,
+            },
+            'plan_type': {
+                'is_pk': False,
+                'is_unique': False,
+                'is_nullable': False,
+                'datatype': str,
+            },
+            'slot': {
+                'is_pk': False,
+                'is_unique': False,
+                'is_nullable': False,
+                'datatype': int,
+            },
+            'guest_pass': {
+                'is_pk': False,
+                'is_unique': False,
+                'is_nullable': False,
+                'datatype': int,
+            },
+            'price': {
+                'is_pk': False,
+                'is_unique': False,
+                'is_nullable': False,
+                'datatype': int,
+            },
+            'created_at': {
+                'is_pk': False,
+                'is_unique': False,
+                'is_nullable': False,
+                'datatype': datetime,
+                'is_date': True,
+                'auto_update': 'save'
+            },
+            'updated_at': {
+                'is_pk': False,
+                'is_unique': False,
+                'is_nullable': False,
+                'datatype': datetime,
                 'is_date': True,
                 'auto_update': 'update'
             }
