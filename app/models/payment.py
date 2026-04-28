@@ -2,7 +2,6 @@ import time
 import inspect
 from typing import Self
 from database.db import InitDB
-from database.tables import TABLES_MAP
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
 from helpers.db_helpers import generate_id
@@ -87,7 +86,7 @@ class Payment(InitDB):
 
     def _validate(self, check_id=False) -> None:
         super()._validate(check_id)
-        
+
         if check_id:
             if not self.payment_id:
                 raise ValidationError('Payment not set')

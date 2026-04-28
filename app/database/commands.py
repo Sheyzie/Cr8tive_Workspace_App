@@ -4,6 +4,9 @@ from database.db import get_table_map
 
 
 class DBService:
+    '''
+    Helper class to initialize table creation
+    '''
     def __init__(self, model):
         self.model = model
 
@@ -16,6 +19,9 @@ class DBService:
 
 
 class DBCommands:
+    '''
+    Class for running table related commands
+    '''
     def __init__(self, model=None, command=None, validated_args=None, required_args=None, context=None, headers=None, meta=None):
         self.model = model
         self.command = command
@@ -26,11 +32,7 @@ class DBCommands:
         self.meta = meta
         self.required_contraint = {'is_pk', 'is_unique', 'is_nullable', 'datatype', 'is_date', 'auto_update', 'fk', 'validation'}
 
-        try:
-            from database.tables import TABLES_MAP
-            self.table_map = TABLES_MAP
-        except ImportError:
-            self.table_map = {}
+        self.table_map = get_table_map()
 
     def success(self, message='Success', data=None):
         return {
@@ -60,7 +62,7 @@ class DBCommands:
                 instances = object_func(**payload)
             else:
                 instances = object_func()
-            return self.success(message=f'{self.command} completed successfully', data='Success')
+            return self.success(message=f'{self.command} completed successfully', data=instances)
         except Exception as err:
             print(err)
             return self.failure(message=str(err), error=err)
@@ -86,7 +88,7 @@ class DBCommands:
 
         os.makedirs('database', exist_ok=True)
 
-        file_path = os.path.join('database', 'tables2.json')
+        file_path = os.path.join('database', 'tables.json')
         with open(file_path, mode='w', encoding='utf-8') as file:
             file.write(formatted_data)
 
@@ -95,6 +97,9 @@ class DBCommands:
         self.__start_db_service()
 
     def __create_model_class(self):
+        '''
+        Function to create a model file in the models dir
+        '''
         model_name = self.__format_model_name(self.model)
 
         fields = self.table_map[self.model]['fields'].keys()
@@ -135,7 +140,6 @@ class {model_name}(InitDB):
     def __init__(self, using=None, **kwargs):
         super().__init__()
 {define_fields}
-        # self.client_id: str = None
         
         if kwargs:
             self._get_from_kwargs(**kwargs)
@@ -171,10 +175,18 @@ class {model_name}(InitDB):
 '''
 
         file_path = os.path.join('models', f'{self.model}.py')
+
+        if os.path.isfile(file_path):
+            # so that we wont overwrite existing model
+            return
+        
         with open(file_path, mode='w', encoding='utf-8') as file:
             file.write(content)
 
     def __format_model_name(self, model):
+        '''
+        Helper method to modify model name for class name
+        '''
         import re
 
         # Replace all delimiters with a space
@@ -198,15 +210,22 @@ class {model_name}(InitDB):
             # field attr dict must have the required contraint keys
             if not set(field_map['fields'][key].keys()) <= self.required_contraint:
                raise Exception('Invalid contraint provide in field') 
-        
-            
+                    
     def __start_db_service(self):
         db_service = DBService(self.model)
         db_service.save_table_to_db()
 
-        
-        
-        
+    def get_field_validators(self):
+        '''
+        Get Field Validators Keys Command
+        '''
+        from .validation import VALIDATOR_MAP
+
+        data = {}
+        for key in VALIDATOR_MAP:
+            data[key] = list(VALIDATOR_MAP[key]['validators'].keys())
+        return data
+
 
 
 

@@ -1,5 +1,5 @@
 from collections import deque
-from .arguments import ACTION_MAP, MODULE_MAP, BASE_COMMANDS
+from .arguments import BASE_COMMANDS
 from configs.app_config import BASE_DIR
 import sys
 import time
@@ -163,23 +163,6 @@ class Commands(BaseProcess):
         self.base_command = base_command
         self.stdout.write('\rValidation completed\n')
         self.stdout.flush()
-
-    def _run_command_from_action(self):
-        
-        try:
-            if ACTION_MAP.get(self.action) == self.command:
-                self.run_command()
-            else:
-                logger.error('Invalid command argument')
-                self.stderr.write('Invalid command arguement\n')
-                self.stderr.flush()
-                exit(1)
-        except Exception as e:
-            logger.exception('Error running command')
-            self.stdout.write('Error running command\n')
-            self.stdout.write(str(e) + '\n')
-            self.stdout.flush()
-            exit(1)
 
     def run_command(self):
         self.stdout.write(f'\nRunning {self.base_command.get('command')} command...\n')

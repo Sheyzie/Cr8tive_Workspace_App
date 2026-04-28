@@ -22,9 +22,11 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 def get_table_map(model=None):
+    ''' Helper function to get table map for all model or specific model if model is set'''
+    
     os.makedirs('database', exist_ok=True)
 
-    file_path = os.path.join('database', 'tables2.json')
+    file_path = os.path.join('database', 'tables.json')
     data = {}
     with open(file_path, mode='r') as file:
         data = json.load(file)
@@ -474,150 +476,6 @@ class DB:
                 self.stderr.write(f"Error creating client table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
                 self.stderr.write(str(err))
                 self.stderr.flush()
-
-    # def _create_client_table(self):
-    #     cursor = self.conn.cursor()
-    #     try:
-    #         cursor.execute('''
-    #                 CREATE TABLE IF NOT EXISTS client (
-    #                     client_id TEXT PRIMARY KEY,
-    #                     first_name TEXT,
-    #                     last_name TEXT,
-    #                     company_name TEXT,
-    #                     email TEXT,
-    #                     phone TEXT NOT NULL UNIQUE,
-    #                     display_name TEXT NOT NULL,
-    #                     created_at TEXT NOT NULL,
-    #                     updated_at TEXT NOT NULL
-    #                 );
-    #         ''')
-    #         self.conn.commit()
-    #     except Exception as err:
-    #         self.conn.close()
-    #         self.stderr.write(f"Error creating client table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-    #         self.stderr.write(str(err))
-    #         self.stderr.flush()
-    #         raise err
-
-    # def _create_plan_table(self):
-    #     cursor = self.conn.cursor()
-    #     try:
-    #         cursor.execute('''
-    #                 CREATE TABLE IF NOT EXISTS plan (
-    #                     plan_id TEXT PRIMARY KEY,
-    #                     plan_name TEXT NOT NULL UNIQUE,
-    #                     duration INTEGER NOT NULL,
-    #                     plan_type TEXT NOT NULL,
-    #                     slot INTEGER NOT NULL,
-    #                     guest_pass INTEGER NOT NULL,
-    #                     price INTEGER NOT NULL,
-    #                     created_at TEXT NOT NULL,
-    #                     updated_at TEXT NOT NULL
-    #                 );
-    #         ''')
-    #         self.conn.commit()
-    #     except Exception as err:
-    #         self.stderr.write(f"Error creating plan table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-    #         self.stderr.write(str(err))
-    #         self.stderr.flush()
-    #         self.conn.close()
-    #         raise err
-
-    # def _create_subscription_table(self):
-    #     cursor = self.conn.cursor()
-    #     try:
-    #         cursor.execute('''
-    #                 CREATE TABLE IF NOT EXISTS subscription (
-    #                     subscription_id TEXT PRIMARY KEY,
-    #                     plan_id TEXT NOT NULL,
-    #                     client_id TEXT NOT NULL,
-    #                     plan_unit INTEGER NOT NULL,
-    #                     expiration_date TEXT NOT NULL,
-    #                     discount INTEGER NOT NULL,
-    #                     discount_type TEXT NOT NULL,
-    #                     vat INTEGER NOT NULL,
-    #                     status TEXT NOT NULL,
-    #                     payment_status TEXT NOT NULL,
-    #                     created_at TEXT NOT NULL,
-    #                     updated_at TEXT NOT NULL,
-    #                     FOREIGN KEY (plan_id) REFERENCES plan(plan_id) ON DELETE CASCADE ON UPDATE NO ACTION,
-    #                     FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE CASCADE ON UPDATE NO ACTION
-    #                 );
-    #         ''')
-    #         self.conn.commit()
-    #     except Exception as err:
-    #         self.stderr.write(f"Error creating subscription table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-    #         self.stderr.write(str(err))
-    #         self.stderr.flush()
-    #         self.conn.close()
-    #         raise err
-
-    # def _create_payment_table(self):
-    #     cursor = self.conn.cursor()
-    #     try:
-    #         cursor.execute('''
-    #                 CREATE TABLE IF NOT EXISTS payment (
-    #                     payment_id TEXT PRIMARY KEY,
-    #                     client_id TEXT NOT NULL,
-    #                     subscription_id TEXT NOT NULL,
-    #                     amount INTEGER NOT NULL,
-    #                     created_at TEXT NOT NULL,
-    #                     updated_at TEXT NOT NULL,
-    #                     FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE CASCADE ON UPDATE NO ACTION,
-    #                     FOREIGN KEY (subscription_id) REFERENCES subscription(subscription_id) ON DELETE CASCADE ON UPDATE NO ACTION
-    #                 );
-    #         ''')
-    #         self.conn.commit()
-    #     except Exception as err:
-    #         self.stderr.write(f"Error creating payment table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-    #         self.stderr.write(str(err))
-    #         self.stderr.flush()
-    #         self.conn.close()
-    #         raise err
-
-    # def _create_visit_table(self):
-    #     cursor = self.conn.cursor()
-    #     try:
-    #         cursor.execute('''
-    #                 CREATE TABLE IF NOT EXISTS visit (
-    #                     visit_id TEXT PRIMARY KEY,
-    #                     subscription_id TEXT NOT NULL,
-    #                     client_id TEXT NOT NULL,
-    #                     timestamp TEXT NOT NULL,
-    #                     FOREIGN KEY (subscription_id) REFERENCES subscription(subscription_id) ON DELETE CASCADE ON UPDATE NO ACTION,
-    #                     FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE CASCADE ON UPDATE NO ACTION
-    #                 );
-    #         ''')
-    #         self.conn.commit()
-    #     except Exception as err:
-    #         self.stderr.write(f"Error creating visit table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-    #         self.stderr.write(str(err))
-    #         self.stderr.flush()
-    #         self.conn.close()
-    #         raise err
-
-    # def _create_assigned_client_table(self):
-    #     cursor = self.conn.cursor()
-    #     try:
-    #         cursor.execute('''
-    #                 CREATE TABLE IF NOT EXISTS assigned_client (
-    #                     subscription_id TEXT NOT NULL,
-    #                     client_id TEXT NOT NULL,
-    #                     created_at TEXT NOT NULL,
-    #                     FOREIGN KEY (subscription_id) REFERENCES subscription(subscription_id) ON DELETE CASCADE ON UPDATE NO ACTION,
-    #                     FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE CASCADE ON UPDATE NO ACTION
-    #                 );
-    #         ''')
-    #         self.conn.commit()
-    #     except Exception as err:
-    #         self.stderr.write(f"Error creating visit table @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
-    #         self.stderr.write(str(err))
-    #         self.stderr.flush()
-    #         self.conn.close()
-    #         raise err
-
-    # def save_to_db(self):
-    #     self.conn.commit()
 
     def drop_db(self):
         self.write(f'Dropping database {self._db}\n')

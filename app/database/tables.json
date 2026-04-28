@@ -347,9 +347,9 @@
             }
         }
     },
-    "backup": {
+    "log": {
         "fields": {
-            "backup_id": {
+            "log_id": {
                 "is_pk": true,
                 "is_unique": true,
                 "is_nullable": false,

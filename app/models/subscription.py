@@ -3,7 +3,6 @@ import inspect
 from typing import Self
 from datetime import datetime, timedelta
 from database.db import InitDB
-from database.tables import TABLES_MAP
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
 from utils.import_file import ImportManager
@@ -200,7 +199,7 @@ class Subscription(InitDB):
 
     def _validate(self, check_id=False) -> None:
         super()._validate(check_id)
-        
+
         STATUS_TYPE = ['booked', 'running', 'expired', 'exhausted']
         PAYMENT_STATUS_TYPE = ['pending', 'partial', 'paid', 'free']
 

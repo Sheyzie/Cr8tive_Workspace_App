@@ -31,3 +31,12 @@ def is_valid_date(date_string, date_format):
         return True
     except ValueError:
         return False
+    
+def matches_regex(value, pattern, partial=False):
+    import re
+
+    if value is None:
+        return False
+    if partial:
+        return re.search(pattern, str(value)) is not None
+    return re.fullmatch(pattern, str(value)) is not None

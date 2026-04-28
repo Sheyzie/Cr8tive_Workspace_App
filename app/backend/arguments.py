@@ -1,12 +1,8 @@
 from database.db import get_table_map
 
-ACTION_MAP = {
-    "run": 'tests'
-}
-
-MODULE_MAP = {
-    'tests': 'tests.test'
-}
+'''
+This module holds all the commands, module, and argument validations
+'''
 
 TABLES_MAP = get_table_map()
 DB_TABLES = set(TABLES_MAP)
@@ -20,13 +16,13 @@ DEFAULT_COMMANDS = {
         'args': {
             'model': {
                 'name': 'Model',
-                # TODO: get this values from table.keys
+                
                 'validate': lambda value:  isinstance(value, str) and value not in DB_TABLES,
                 'message': 'Model needs to be a string and not already declared in table map'
             },
             'payload': {
                 'name': 'Payload',
-                # TODO: get this values from table.keys
+                
                 'validate': lambda payload_keys, model:  set(payload_keys) <= {'table_map', 'arguments'} and 'table_map' in payload_keys,
                 'message': 'payload is expected to be <= {"table_map", "arguments"} and "table_map" is required'
             },
@@ -40,7 +36,7 @@ DEFAULT_COMMANDS = {
         'args': {
             'model': {
                 'name': 'Model',
-                # TODO: get this values from table.keys
+                
                 'validate': lambda value:  value in DB_TABLES,
                 'message': 'Model needs to be a string and already declared in table map'
             },
@@ -54,7 +50,7 @@ DEFAULT_COMMANDS = {
         'args': {
             'model': {
                 'name': 'Model',
-                # TODO: get this values from table.keys
+                
                 'validate': lambda value:  value in DB_TABLES,
                 'message': 'Model needs to be a string and not already declared in table map'
             },
@@ -68,7 +64,7 @@ DEFAULT_COMMANDS = {
         'args': {
             'model': {
                 'name': 'Model',
-                # TODO: get this values from table.keys
+                
                 'validate': lambda value:  value in DB_TABLES,
                 'message': 'Model needs to be a string and already declared in table map'
             },
@@ -82,7 +78,7 @@ DEFAULT_COMMANDS = {
         'args': {
             'model': {
                 'name': 'Model',
-                # TODO: get this values from table.keys
+                
                 'validate': lambda value:  value in DB_TABLES,
                 'message': 'Model needs to be a string and already declared in table map'
             },
@@ -101,7 +97,7 @@ DEFAULT_COMMANDS = {
         'args': {
             'model': {
                 'name': 'Model',
-                # TODO: get this values from table.keys
+                
                 'validate': lambda value:  value in DB_TABLES,
                 'message': 'Model needs to be a string and already declared in table map'
             },
@@ -120,7 +116,7 @@ DEFAULT_COMMANDS = {
         'args': {
             'model': {
                 'name': 'Model',
-                # TODO: get this values from table.keys
+                
                 'validate': lambda value:  value in DB_TABLES,
                 'message': 'Model needs to be a string and already declared in table map'
             },
@@ -139,7 +135,7 @@ DEFAULT_COMMANDS = {
         'args': {
             'model': {
                 'name': 'Model',
-                # TODO: get this values from table.keys
+                
                 'validate': lambda value:  value in DB_TABLES,
                 'message': 'Model needs to be a string and already declared in table map'
             },
@@ -152,8 +148,26 @@ DEFAULT_COMMANDS = {
     },
 }
 
+UTIL_COMMANDS = {
+    'GET_FIELD_VALIDATORS' : {
+        'name': 'GET_FIELD_VALIDATORS',
+        'module': 'database.commands',
+        'require_args': [],
+        'has_args': True,
+        'args': {
+            'payload': {
+                'name': 'Payload',
+                
+                'validate': lambda payload_keys, model:  set(payload_keys) <= {'int', 'str', 'UUID', 'dict', 'datetime'},
+                'message': "Payload is expected to be <= {'int', 'str', 'UUID', 'dict', 'datetime'}"
+            },
+        }
+    },
+}
+
 BASE_COMMANDS = {
     **DEFAULT_COMMANDS,
+    **UTIL_COMMANDS,
     'SET_ASSIGNED_CLIENT': {
         'name': 'SET_ASSIGNED_CLIENT',
         'module': 'services.main',
@@ -316,5 +330,4 @@ BASE_COMMANDS = {
             }
         }
     },
-
 }

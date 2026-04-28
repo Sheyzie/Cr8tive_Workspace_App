@@ -1,7 +1,6 @@
 import time
 import inspect
 from database.db import InitDB
-from database.tables import TABLES_MAP
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
 from helpers.export_helper import export_helper
@@ -71,7 +70,7 @@ class Visit(InitDB):
 
     def _validate(self, check_id=False) -> None:
         super()._validate(check_id)
-        
+
         from .client import Client
         from .subscription import Subscription
 

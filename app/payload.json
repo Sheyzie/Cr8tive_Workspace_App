@@ -1,14 +1,14 @@
 {
-    "model": "backup",
+    "model": "log",
     "command": "CREATE_MODEL",
     "header": {},
     "verbose": false,
     "debug": false,
     "payload": {
         "table_map": {
-            "backup": {
+            "log": {
                 "fields": {
-                    "backup_id": {
+                    "log_id": {
                         "is_pk": true,
                         "is_unique": true,
                         "is_nullable": false,

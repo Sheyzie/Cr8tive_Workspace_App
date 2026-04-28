@@ -1,6 +1,5 @@
 import logging
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -28,10 +27,7 @@ class ServiceManager:
         except Exception as e:
             logger.error(f'Unable to import module {e}')
             print(e)
-            # self.stderr.write('Unable to import module\n')
-            # self.stderr.write(f'{e}\n')
-            # self.stderr.flush()
-            exit(1)
+            return self.failure(message=str(e), error=e)
 
     def success(self, message='Success', data=None):
         return {
@@ -134,7 +130,7 @@ class ServiceManager:
             else:
                 instances = object_func()
             data = self.get_data_from_instance(instances)
-            # print(data)
+
             return self.success(message=f'{self.command} completed on {self.model_class.model_name} successfully', data=data)
         except Exception as err:
             print(err)

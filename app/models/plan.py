@@ -2,7 +2,6 @@ import time
 import inspect
 from typing import Self
 from database.db import InitDB
-from database.tables import TABLES_MAP
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
 from utils.import_file import ImportManager

@@ -2,7 +2,6 @@ import time
 import inspect
 from typing import Self
 from database.db import InitDB
-from database.tables import TABLES_MAP
 from exceptions.exception import ValidationError
 from logs.utils import log_error_to_file, log_to_file
 from notification.notification import Notification
@@ -64,7 +63,7 @@ class AssignedClient(InitDB):
 
     def _validate(self, check_id=False) -> None:
         super()._validate(check_id)
-        
+
         self._verify_pk()
         if check_id:
             if not self.assigned_client_id:
