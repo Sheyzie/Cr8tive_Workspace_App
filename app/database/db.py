@@ -2,11 +2,9 @@ import inspect
 import sqlite3
 from typing import Self
 from logs.utils import log_to_file, log_error_to_file
-from notification.notification import Notification
 from exceptions.exception import ValidationError
 from helpers.export_helper import export_helper
 from helpers.db_helpers import generate_id
-from database.tables import TABLES_MAP
 from utils.import_file import ImportManager
 from configs import db_config
 from pathlib import Path
@@ -22,6 +20,21 @@ from dotenv import load_dotenv
 load_dotenv()
 
 logger = logging.getLogger(__name__)
+
+def get_table_map(model=None):
+    os.makedirs('database', exist_ok=True)
+
+    file_path = os.path.join('database', 'tables2.json')
+    data = {}
+    with open(file_path, mode='r') as file:
+        data = json.load(file)
+    if not model:
+        return data
+    
+    if data == {}:
+        return data
+    
+    return data.get(model, {})
 
 
 class DB:
@@ -72,8 +85,8 @@ class DB:
             },
         }
     '''
-    default_field_keys = {'is_pk', 'is_unique', 'fk', 'is_nullable', 'to', 'is_date', 'auto_update', 'datatype'}
-    table_map = TABLES_MAP 
+    default_field_keys = {'is_pk', 'is_unique', 'fk', 'is_nullable', 'to', 'is_date', 'auto_update', 'datatype', 'validation'}
+    table_map = get_table_map() 
     allow_print = False
     show_sql = False
     stdout = sys.stdout
@@ -105,7 +118,7 @@ class DB:
             
             logger.info(f'Database connection established to {self._db}')
             self.write(f'Database connection established to {self._db}\n')
-            Notification.send_notification('Database connection established')
+
             conn.close()
 
             self._init_database_tables()
@@ -115,7 +128,7 @@ class DB:
             self.write_error(f"Error connecting to {self._db} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
             self.write_error(str(err))
             self.stderr.flush()
-            Notification.send_notification(err)
+
             raise err
                 
     def _connect_to_db(self):
@@ -144,7 +157,6 @@ class DB:
             logger.exception(f"Error connecting to {self._db} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
             self.write_error(f"Error connecting to {self._db} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
             self.write_error(str(err))
-            Notification.send_notification(err)
             self.conn.close()
             raise err
 
@@ -203,7 +215,7 @@ class DB:
         except TypeError:
             self._set_table_name(self)
 
-        field_map = TABLES_MAP.get(self.model_name, None)
+        field_map = self.table_map.get(self.model_name, None)
         if field_map is None:
             logger.exception(f'No table match the name {self.model_name} ensure table is on TABLE_MAP')
             raise Exception(f'No table match the name {self.model_name} ensure table is on TABLE_MAP')
@@ -225,7 +237,7 @@ class DB:
         Handles table creation if table does not exist
         '''
         exists = self._check_if_table_exist(table_name)
-            
+        
         if exists:
             if self.allow_print:
                 self.write(f'\n{table_name} table exist\n')
@@ -288,7 +300,7 @@ class DB:
                 ))
             )});
         '''
-            
+        
         if self.show_sql:
             self.write(query)
 
@@ -316,15 +328,15 @@ class DB:
         required datatype needed for sql querry
         '''
 
-        if obj is str:
+        if obj == 'str':
             return 'TEXT'
-        elif obj is int:
+        elif obj == 'int':
             return 'INTEGER'
-        elif obj is dict:
+        elif obj == 'dict':
             return 'TEXT'
-        elif obj is uuid.UUID:
+        elif obj == 'UUID':
             return 'TEXT'
-        elif obj is datetime:
+        elif obj == 'datetime':
             return 'TEXT'
 
     def _get_table_detail(self, table_name):
@@ -396,7 +408,7 @@ class DB:
                 raise ValidationError(f'Datatype is required for creating a field in a table')
             
             # if not isinstance(datatype, (str, int, datetime, uuid.UUID, dict)):
-            if not datatype in (str, int, datetime, uuid.UUID, dict):
+            if not datatype in ('str', 'int', 'datetime', 'UUID', 'dict'):
                 raise ValidationError(f'Datatype of type {datatype} is not valid')
             
             DATATYPE_MAP[key] = datatype
@@ -641,7 +653,35 @@ class InitDB(DB):
     def data(self):
         return self._get_data()
     
+    
+    def _validate(self, check_id=False) -> None:
+        ''' Validate Fields Based on validation set '''
+        
+        from database.validation import VALIDATOR_MAP
 
+        
+        fields = self.table_map[self.model_name]['fields']
+
+        for field, config in fields.items():
+            validations = config.get('validation', [])
+            datatype = config.get('datatype')
+            is_pk = config.get('is_pk', False)
+
+            if is_pk and not check_id:
+                continue
+
+            for validation in validations:
+                validator = VALIDATOR_MAP.get(datatype, {}).get('validators', {}).get(validation['name'])
+
+                if not validator:
+                    raise ValidationError(f"Validator {validation['name']} not found")
+
+                value = getattr(self, field, None)
+                result = validator(value, validation.get('value'))
+
+                if result != validation.get('exp_value'):
+                    raise ValidationError(f"{field} failed {validation['name']}")
+    
     def _get_pk_field(self):
         '''
         returns the fields contraint for the primary key 
@@ -862,7 +902,7 @@ class InitDB(DB):
                 logger.exception('Error saving client')
                 self.stderr.write(str(err))
                 self.stderr.flush()
-                Notification.send_notification('Unexpected error happened')
+
                 self.conn.close()
                 raise err
             
@@ -977,7 +1017,6 @@ class InitDB(DB):
                 logger.exception('Error saving client')
                 self.stderr.write(str(err))
                 self.stderr.flush()
-                Notification.send_notification('Unexpected error happened')
                 self.conn.close()
                 raise err
 
@@ -1025,14 +1064,12 @@ class InitDB(DB):
             logger.exception(str(err.message))
             self.stderr.write('\033[31m' + str(err.message + '\033[0m\n'))
             self.stderr.flush()
-            Notification.send_notification(err)
             self.conn.close()
             raise err
         except Exception as err:
             logging.exception(f'Error deleting {model}')
             self.stderr.write(str(err))
             self.stderr.flush()
-            Notification.send_notification('Unexpected error happened')
             self.conn.close()
             raise err
 
@@ -1091,7 +1128,7 @@ class InitDB(DB):
             logger.exception(f'Error fetching {model}')
             cls.stderr.write(str(err))
             cls.stderr.flush()
-            Notification.send_notification('Unexpected error happened')
+
             raise err
 
     @classmethod
@@ -1168,7 +1205,7 @@ class InitDB(DB):
             logger.exception(f'Error fetching {model}')
             cls.stderr.write(str(err))
             cls.stderr.flush()
-            Notification.send_notification('Unexpected error happened')
+
             raise err
 
     @classmethod  
@@ -1256,7 +1293,7 @@ class InitDB(DB):
             logger.exception(f'Error fetching {model}')
             cls.stderr.write(str(err))
             cls.stderr.flush()
-            Notification.send_notification('Unexpected error happened')
+
             raise err
     
     @classmethod
@@ -1366,7 +1403,7 @@ class InitDB(DB):
             logger.exception(f'Error fetching {model}')
             cls.stderr.write(str(err))
             cls.stderr.flush()
-            Notification.send_notification('Unexpected error happened')
+
             raise err
 
     @classmethod

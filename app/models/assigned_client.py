@@ -63,6 +63,8 @@ class AssignedClient(InitDB):
             self.created_at = created_at
 
     def _validate(self, check_id=False) -> None:
+        super()._validate(check_id)
+        
         self._verify_pk()
         if check_id:
             if not self.assigned_client_id:

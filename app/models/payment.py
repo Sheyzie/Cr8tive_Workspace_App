@@ -86,6 +86,8 @@ class Payment(InitDB):
             self.updated_at = updated_at
 
     def _validate(self, check_id=False) -> None:
+        super()._validate(check_id)
+        
         if check_id:
             if not self.payment_id:
                 raise ValidationError('Payment not set')

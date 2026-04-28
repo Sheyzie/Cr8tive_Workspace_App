@@ -101,6 +101,7 @@ class Plan(InitDB):
             self.created_at = created_at
 
     def _validate(self, check_id=False) -> None:
+        super()._validate(check_id)
         VALID_PLAN_TYPES = {'hourly', 'daily', 'weekly', 'monthly', 'half-year', 'yearly'}
 
         if not self.plan_name:

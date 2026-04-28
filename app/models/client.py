@@ -2,19 +2,8 @@ import time
 import inspect
 from typing import Self
 from database.db import InitDB
-from database.tables import TABLES_MAP
-from exceptions.exception import ValidationError, GenerationError
-from logs.utils import log_error_to_file, log_to_file
-from utils.import_file import ImportManager
+from exceptions.exception import ValidationError
 from helpers.export_helper import export_helper
-from notification.notification import Notification
-from helpers.db_helpers import (
-    generate_id, 
-    insert_to_db, 
-    update_in_db, 
-    fetch_one_entry, 
-    fetch_all_entry
-)
 
 import logging
 
@@ -118,6 +107,7 @@ class Client(InitDB):
             self.updated_at = updated_at
 
     def _validate(self, check_id=False) -> None:
+        super()._validate(check_id)
         # validating first_name and company name
         if not self.first_name and not self.company_name:
             raise ValidationError('First Name and Company Name cannot both be empty')

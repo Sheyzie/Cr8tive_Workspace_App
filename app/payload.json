@@ -1,0 +1,49 @@
+{
+    "model": "backup",
+    "command": "CREATE_MODEL",
+    "header": {},
+    "verbose": false,
+    "debug": false,
+    "payload": {
+        "table_map": {
+            "backup": {
+                "fields": {
+                    "backup_id": {
+                        "is_pk": true,
+                        "is_unique": true,
+                        "is_nullable": false,
+                        "datatype": "UUID",
+                        "validation": [
+                            {
+                            "name": "is_none",
+                            "value": null,
+                            "exp_value": false
+                            }
+                        ]
+                    },
+                    "timestamp": {
+                        "is_pk": false,
+                        "is_unique": false,
+                        "is_nullable": false,
+                        "datatype": "datetime",
+                        "is_date": true,
+                        "auto_update": "save",
+                        "validation": [
+                            {
+                            "name": "is_none",
+                            "value": null,
+                            "exp_result": false
+                            },
+                            {
+                            "name": "is_valid_date",
+                            "value": "%Y-%m-%d",
+                            "exp_result": true
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    }
+
+}

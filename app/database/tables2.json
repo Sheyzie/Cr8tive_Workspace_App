@@ -1,0 +1,387 @@
+{
+    "client": {
+        "fields": {
+            "client_id": {
+                "is_pk": true,
+                "is_unique": true,
+                "is_nullable": false,
+                "datatype": "UUID"
+            },
+            "first_name": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": true,
+                "datatype": "str"
+            },
+            "last_name": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": true,
+                "datatype": "str"
+            },
+            "company_name": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": true,
+                "datatype": "str"
+            },
+            "email": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": true,
+                "datatype": "str"
+            },
+            "phone": {
+                "is_pk": false,
+                "is_unique": true,
+                "is_nullable": false,
+                "datatype": "str"
+            },
+            "display_name": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "str"
+            },
+            "created_at": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "datetime",
+                "is_date": true,
+                "auto_update": "save"
+            },
+            "updated_at": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "datetime",
+                "is_date": true,
+                "auto_update": "update"
+            }
+        }
+    },
+    "subscription": {
+        "fields": {
+            "subscription_id": {
+                "is_pk": true,
+                "is_unique": true,
+                "is_nullable": false,
+                "datatype": "str"
+            },
+            "plan_id": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "str",
+                "fk": {
+                    "to": "plan",
+                    "on_delete": "cascade",
+                    "on_update": "no action"
+                }
+            },
+            "client_id": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "str",
+                "fk": {
+                    "to": "client",
+                    "on_delete": "cascade",
+                    "on_update": "no action"
+                }
+            },
+            "plan_unit": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "int"
+            },
+            "expiration_date": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "str"
+            },
+            "discount": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "int"
+            },
+            "discount_type": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "str"
+            },
+            "vat": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "int"
+            },
+            "status": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "str"
+            },
+            "payment_status": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "str"
+            },
+            "created_at": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "datetime",
+                "is_date": true,
+                "auto_update": "save"
+            },
+            "updated_at": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "str",
+                "is_date": true,
+                "auto_update": "update"
+            }
+        }
+    },
+    "plan": {
+        "fields": {
+            "plan_id": {
+                "is_pk": true,
+                "is_unique": true,
+                "is_nullable": false,
+                "datatype": "UUID"
+            },
+            "plan_name": {
+                "is_pk": false,
+                "is_unique": true,
+                "is_nullable": false,
+                "datatype": "str"
+            },
+            "duration": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "int"
+            },
+            "plan_type": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "str"
+            },
+            "slot": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "int"
+            },
+            "guest_pass": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "int"
+            },
+            "price": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "int"
+            },
+            "created_at": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "datetime",
+                "is_date": true,
+                "auto_update": "save"
+            },
+            "updated_at": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "datetime",
+                "is_date": true,
+                "auto_update": "update"
+            }
+        }
+    },
+    "payment": {
+        "fields": {
+            "payment_id": {
+                "is_pk": true,
+                "is_unique": true,
+                "is_nullable": false,
+                "datatype": "UUID"
+            },
+            "client_id": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "UUID",
+                "fk": {
+                    "to": "client",
+                    "on_delete": "cascade",
+                    "on_update": "no action"
+                }
+            },
+            "subscription_id": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "UUID",
+                "fk": {
+                    "to": "subscription",
+                    "on_delete": "cascade",
+                    "on_update": "no action"
+                }
+            },
+            "amount": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "int"
+            },
+            "created_at": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "datetime",
+                "is_date": true,
+                "auto_update": "save"
+            },
+            "updated_at": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "datetime",
+                "is_date": true,
+                "auto_update": "update"
+            }
+        }
+    },
+    "visit": {
+        "fields": {
+            "visit_id": {
+                "is_pk": true,
+                "is_unique": true,
+                "is_nullable": false,
+                "datatype": "UUID"
+            },
+            "subscription_id": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "UUID",
+                "fk": {
+                    "to": "subscription",
+                    "on_delete": "cascade",
+                    "on_update": "no action"
+                }
+            },
+            "client_id": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "UUID",
+                "fk": {
+                    "to": "client",
+                    "on_delete": "cascade",
+                    "on_update": "no action"
+                }
+            },
+            "timestamp": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "datetime",
+                "is_date": true,
+                "auto_update": "save"
+            }
+        }
+    },
+    "assigned_client": {
+        "fields": {
+            "assigned_client_id": {
+                "is_pk": true,
+                "is_unique": true,
+                "is_nullable": false,
+                "datatype": "UUID"
+            },
+            "subscription_id": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "UUID",
+                "fk": {
+                    "to": "subscription",
+                    "on_delete": "cascade",
+                    "on_update": "no action"
+                }
+            },
+            "client_id": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "UUID",
+                "fk": {
+                    "to": "client",
+                    "on_delete": "cascade",
+                    "on_update": "no action"
+                }
+            },
+            "created_at": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "datetime",
+                "is_date": true,
+                "auto_update": "save"
+            }
+        }
+    },
+    "backup": {
+        "fields": {
+            "backup_id": {
+                "is_pk": true,
+                "is_unique": true,
+                "is_nullable": false,
+                "datatype": "UUID",
+                "validation": [
+                    {
+                        "name": "is_none",
+                        "value": null,
+                        "exp_value": false
+                    }
+                ]
+            },
+            "timestamp": {
+                "is_pk": false,
+                "is_unique": false,
+                "is_nullable": false,
+                "datatype": "datetime",
+                "is_date": true,
+                "auto_update": "save",
+                "validation": [
+                    {
+                        "name": "is_none",
+                        "value": null,
+                        "exp_result": false
+                    },
+                    {
+                        "name": "is_valid_date",
+                        "value": "%Y-%m-%d",
+                        "exp_result": true
+                    }
+                ]
+            }
+        }
+    }
+}

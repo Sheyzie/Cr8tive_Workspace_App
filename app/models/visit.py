@@ -70,6 +70,8 @@ class Visit(InitDB):
             self.timestamp = timestamp
 
     def _validate(self, check_id=False) -> None:
+        super()._validate(check_id)
+        
         from .client import Client
         from .subscription import Subscription
 

@@ -1,4 +1,4 @@
-from database.tables import TABLES_MAP
+from database.db import get_table_map
 
 ACTION_MAP = {
     "run": 'tests'
@@ -8,7 +8,30 @@ MODULE_MAP = {
     'tests': 'tests.test'
 }
 
-BASE_COMMANDS = {
+TABLES_MAP = get_table_map()
+DB_TABLES = set(TABLES_MAP)
+
+DEFAULT_COMMANDS = {
+    'CREATE_MODEL': {
+        'name': 'CREATE_MODEL',
+        'module': 'database.commands',
+        'require_args': ['model', 'payload'],
+        'has_args': True,
+        'args': {
+            'model': {
+                'name': 'Model',
+                # TODO: get this values from table.keys
+                'validate': lambda value:  isinstance(value, str) and value not in DB_TABLES,
+                'message': 'Model needs to be a string and not already declared in table map'
+            },
+            'payload': {
+                'name': 'Payload',
+                # TODO: get this values from table.keys
+                'validate': lambda payload_keys, model:  set(payload_keys) <= {'table_map', 'arguments'} and 'table_map' in payload_keys,
+                'message': 'payload is expected to be <= {"table_map", "arguments"} and "table_map" is required'
+            },
+        }
+    },
     'TESTS': {
         'name': 'test',
         'module': 'tests.test',
@@ -18,7 +41,8 @@ BASE_COMMANDS = {
             'model': {
                 'name': 'Model',
                 # TODO: get this values from table.keys
-                'validate': lambda value:  value in {'client', 'plan', 'payment', 'subscription', 'visit'}
+                'validate': lambda value:  value in DB_TABLES,
+                'message': 'Model needs to be a string and already declared in table map'
             },
         }
     },
@@ -31,7 +55,8 @@ BASE_COMMANDS = {
             'model': {
                 'name': 'Model',
                 # TODO: get this values from table.keys
-                'validate': lambda value:  value in {'client', 'plan', 'payment', 'subscription', 'visit'}
+                'validate': lambda value:  value in DB_TABLES,
+                'message': 'Model needs to be a string and not already declared in table map'
             },
         }
     },
@@ -44,7 +69,8 @@ BASE_COMMANDS = {
             'model': {
                 'name': 'Model',
                 # TODO: get this values from table.keys
-                'validate': lambda value:  value in {'client', 'plan', 'payment', 'subscription', 'visit'}
+                'validate': lambda value:  value in DB_TABLES,
+                'message': 'Model needs to be a string and already declared in table map'
             },
         }
     },
@@ -57,11 +83,13 @@ BASE_COMMANDS = {
             'model': {
                 'name': 'Model',
                 # TODO: get this values from table.keys
-                'validate': lambda value:  value in {'client', 'plan', 'payment', 'subscription', 'visit'}
+                'validate': lambda value:  value in DB_TABLES,
+                'message': 'Model needs to be a string and already declared in table map'
             },
             'payload': {
                 'name': 'payload',
                 'validate': lambda payload_keys, model:  payload_keys <= set(TABLES_MAP.get(model).get('fields').keys()),
+                'message': f'Payload data must be <= field_map fields'
             }
         }
     },
@@ -74,11 +102,13 @@ BASE_COMMANDS = {
             'model': {
                 'name': 'Model',
                 # TODO: get this values from table.keys
-                'validate': lambda value:  value in {'client', 'plan', 'payment', 'subscription', 'visit'}
+                'validate': lambda value:  value in DB_TABLES,
+                'message': 'Model needs to be a string and already declared in table map'
             },
             'payload': {
                 'name': 'payload',
                 'validate': lambda payload_keys, model:  payload_keys <= set(TABLES_MAP.get(model).get('fields').keys()),
+                'message': f'Payload data must be <= field_map fields'
             }
         }
     },
@@ -91,11 +121,13 @@ BASE_COMMANDS = {
             'model': {
                 'name': 'Model',
                 # TODO: get this values from table.keys
-                'validate': lambda value:  value in {'client', 'plan', 'payment', 'subscription', 'visit'}
+                'validate': lambda value:  value in DB_TABLES,
+                'message': 'Model needs to be a string and already declared in table map'
             },
             'payload': {
                 'name': 'payload',
                 'validate': lambda payload_keys, model:  payload_keys <= set(TABLES_MAP.get(model).get('fields').keys()) and f'{model}_id' in payload_keys,
+                'message': f'Payload data must be <= field_map fields'
             }
         }
     },
@@ -108,14 +140,20 @@ BASE_COMMANDS = {
             'model': {
                 'name': 'Model',
                 # TODO: get this values from table.keys
-                'validate': lambda value:  value in {'client', 'plan', 'payment', 'subscription', 'visit'}
+                'validate': lambda value:  value in DB_TABLES,
+                'message': 'Model needs to be a string and already declared in table map'
             },
             'payload': {
                 'name': 'payload',
                 'validate': lambda payload_keys, model: f'{model}_id' in payload_keys,
+                'message': f'Payload data must be == model_id'
             }
         }
     },
+}
+
+BASE_COMMANDS = {
+    **DEFAULT_COMMANDS,
     'SET_ASSIGNED_CLIENT': {
         'name': 'SET_ASSIGNED_CLIENT',
         'module': 'services.main',
@@ -124,11 +162,13 @@ BASE_COMMANDS = {
         'args': {
             'model': {
                 'name': 'Model',
-                'validate': lambda value:  value in set('subscription')
+                'validate': lambda value:  value in set('subscription') and value in DB_TABLES,
+                'message': 'Model needs to be = "subscription" and already declared in table map'
             },
             'payload': {
                 'name': 'payload',
                 'validate': lambda payload_keys, model: 'client_id' in payload_keys,
+                'message': 'Payload must contain "client_id" and already declared in table map'
             }
         }
     },
@@ -140,11 +180,13 @@ BASE_COMMANDS = {
         'args': {
             'model': {
                 'name': 'Model',
-                'validate': lambda value:  value in set('subscription')
+                'validate': lambda value:  value in set('subscription') and value in DB_TABLES,
+                'message': 'Model needs to be = "subscription" and already declared in table map'
             },
             'payload': {
                 'name': 'payload',
                 'validate': lambda payload_keys, model: 'client_id' in payload_keys,
+                'message': 'Payload must contain "client_id" and already declared in table map'
             }
         }
     },
@@ -156,11 +198,13 @@ BASE_COMMANDS = {
         'args': {
             'model': {
                 'name': 'Model',
-                'validate': lambda value:  value in set('subscription')
+                'validate': lambda value:  value in set('subscription') and value in DB_TABLES,
+                'message': 'Model needs to be = "subscription" and already declared in table map'
             },
             'payload': {
                 'name': 'payload',
                 'validate': lambda payload_keys, model: 'client_id' in payload_keys,
+                'message': 'Payload must contain "client_id" and already declared in table map'
             }
         }
     },
@@ -172,11 +216,13 @@ BASE_COMMANDS = {
         'args': {
             'model': {
                 'name': 'Model',
-                'validate': lambda value:  value in set('subscription')
+                'validate': lambda value:  value in set('subscription') and value in DB_TABLES,
+                'message': 'Model needs to be = "subscription" and already declared in table map'
             },
             'payload': {
                 'name': 'payload',
                 'validate': lambda payload_keys, model: {'client_id', 'date_value'} == set(payload_keys),
+                'message': 'Payload must contain ["client_id", "date_valu"] and already declared in table map'
             }
         }
     },
@@ -188,11 +234,13 @@ BASE_COMMANDS = {
         'args': {
             'model': {
                 'name': 'Model',
-                'validate': lambda value:  value in set('visit')
+                'validate': lambda value:  value in set('visit') and value in DB_TABLES,
+                'message': 'Model needs to be = "visit" and already declared in table map'
             },
             'payload': {
                 'name': 'payload',
                 'validate': lambda payload_keys, model: payload_keys <= {'sub_id', 'get_count', 'col_names', 'result_only'} and 'sub_id' in payload_keys,
+                'message': "Payload needs to contain {'sub_id', 'get_count', 'col_names', 'result_only'}  and sub_id is required"
             }
         }
     },
@@ -204,11 +252,13 @@ BASE_COMMANDS = {
         'args': {
             'model': {
                 'name': 'Model',
-                'validate': lambda value:  value in set('visit')
+                'validate': lambda value:  value in set('visit') and value in DB_TABLES,
+                'message': 'Model needs to be = "visit" and already declared in table map'
             },
             'payload': {
                 'name': 'payload',
                 'validate': lambda payload_keys, model: payload_keys <= {'client_id', 'get_count', 'col_names'} and 'client_id' in payload_keys,
+                'message': "Payload needs to contain {'client_id', 'get_count', 'col_names'} and 'client_id' is required"
             }
         }
     },
@@ -220,11 +270,13 @@ BASE_COMMANDS = {
         'args': {
             'model': {
                 'name': 'Model',
-                'validate': lambda value:  value in set('visit')
+                'validate': lambda value:  value in set('visit') and value in DB_TABLES,
+                'message': 'Model needs to be = "visit" and already declared in table map'
             },
             'payload': {
                 'name': 'payload',
                 'validate': lambda payload_keys, model: payload_keys <= {'value', 'col_names'} and 'value' in payload_keys,
+                'message': "Payload needs to contain {'value', 'col_names'} and 'value' is required"
             }
         }
     },
@@ -236,11 +288,13 @@ BASE_COMMANDS = {
         'args': {
             'model': {
                 'name': 'Model',
-                'validate': lambda value:  value in set('visit')
+                'validate': lambda value:  value in set('visit') and value in DB_TABLES,
+                'message': 'Model needs to be = "visit" and already declared in table map'
             },
             'payload': {
                 'name': 'payload',
                 'validate': lambda payload_keys, model: 'sub_id' in payload_keys,
+                'message': "Payload require 'sub_id'"
             }
         }
     },
@@ -252,11 +306,13 @@ BASE_COMMANDS = {
         'args': {
             'model': {
                 'name': 'Model',
-                'validate': lambda value:  value in {'client', 'plan', 'subscription', 'visit'}
+                'validate': lambda value:  value in DB_TABLES,
+                'message': 'Model needs to be = "visit" and already declared in table map'
             },
             'payload': {
                 'name': 'payload',
                 'validate': lambda payload_keys, model: payload_keys <= {'file_type', 'path', 'sub_id'},
+                'message': "Payload needs to contain {'file_type', 'path', 'sub_id'}"
             }
         }
     },

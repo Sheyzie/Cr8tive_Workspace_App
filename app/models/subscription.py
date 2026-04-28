@@ -199,6 +199,8 @@ class Subscription(InitDB):
             self.updated_at = updated_at
 
     def _validate(self, check_id=False) -> None:
+        super()._validate(check_id)
+        
         STATUS_TYPE = ['booked', 'running', 'expired', 'exhausted']
         PAYMENT_STATUS_TYPE = ['pending', 'partial', 'paid', 'free']
 

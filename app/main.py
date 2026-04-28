@@ -32,6 +32,12 @@ parser.add_argument("--verbose", action="store_true", help="Enable verbose mode"
 # parser.add_argument("--help", action="store_true", help="Show help")
 parser.add_argument("--debug", action="store_true", help="Enable debug mode")
 parser.add_argument("--count", type=int, default=1, help="Number of times")
+parser.add_argument(
+    "--file",
+    type=str,
+    required=False,
+    help="Path to JSON file"
+)
 
 args = parser.parse_args()
 
@@ -49,6 +55,11 @@ arg_dict = {
     'verbose': args.verbose,
     'debug': args.debug
 }
+
+if args.file:
+    with open(args.file, "r", encoding="utf-8") as f:
+        file_payload = json.load(f)
+        arg_dict = {**arg_dict, **file_payload}
 
 if __name__ == '__main__':
     # process_commands(*sys.argv)

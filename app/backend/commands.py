@@ -135,6 +135,7 @@ class Commands(BaseProcess):
                     raise Exception(f'{value} received for a required argument {arg}')
                 
                 validator = expected_args.get(arg).get('validate', None)
+                message = expected_args.get(arg).get('message', f"{arg} validation failed for {value}")
                 
                 if validator:
                     if arg == 'payload':
@@ -142,7 +143,7 @@ class Commands(BaseProcess):
                     else:
                         is_valid = validator(getattr(self, arg))
                     if not is_valid:
-                        raise Exception(f'Invalid argument for field {arg}')
+                        raise Exception(message)
                 
 
         # add validated argument to base command
