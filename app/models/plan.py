@@ -2,6 +2,7 @@ import time
 import inspect
 from typing import Self
 from database.db import InitDB
+from database import fields
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
 from utils.import_file import ImportManager
@@ -28,20 +29,30 @@ class Plan(InitDB):
             field_name: value
         }
     '''
+    model_name = 'plan'
+    plan_id = fields.UUIDField(pk=True, unique=True, null=False)
+    plan_name = fields.TextField(unique = True)
+    duration = fields.IntegerField(default = 0)
+    plan_type = fields.TextField(choice=['hourly', 'daily', 'weekly', 'monthly', 'half-year', 'yearly'])
+    slot = fields.IntegerField(default = 0)
+    guest_pass = fields.IntegerField(default = 0)
+    price = fields.IntegerField(default = 0)
+    created_at = fields.DateTimeField(on_save = True)
+    updated_at = fields.DateTimeField(on_update = True)
 
     def __init__(self, **kwargs):
         super().__init__()
-        self.plan_id: str = None
-        self.plan_name: str = None
-        self.duration: int = 0
-        self.plan_type: str  = None
-        self.slot: int = 0
-        self.guest_pass: int = 0
-        self.price: int = 0
-        self.created_at: str = None
+        # self.plan_id: str = None
+        # self.plan_name: str = None
+        # self.duration: int = 0
+        # self.plan_type: str  = None
+        # self.slot: int = 0
+        # self.guest_pass: int = 0
+        # self.price: int = 0
+        # self.created_at: str = None
     
-        if kwargs:
-            self._get_from_kwargs(**kwargs)
+        # if kwargs:
+        #     self._get_from_kwargs(**kwargs)
         try:
             self._validate()
         except ValidationError as err:

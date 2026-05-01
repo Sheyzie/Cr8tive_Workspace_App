@@ -1,4 +1,5 @@
 from database.db import get_table_map
+import os
 
 '''
 This module holds all the commands, module, and argument validations
@@ -6,6 +7,7 @@ This module holds all the commands, module, and argument validations
 
 TABLES_MAP = get_table_map()
 DB_TABLES = set(TABLES_MAP)
+
 
 DEFAULT_COMMANDS = {
     'CREATE_MODEL': {
@@ -17,14 +19,29 @@ DEFAULT_COMMANDS = {
             'model': {
                 'name': 'Model',
                 
-                'validate': lambda value:  isinstance(value, str) and value not in DB_TABLES,
-                'message': 'Model needs to be a string and not already declared in table map'
+                # 'validate': lambda value:  isinstance(value, str) and value not already existing model file,
+                'validate': lambda value:  isinstance(value, str) and not os.path.isfile(os.path.join('models', f'{value}.py')),
+                'message': 'Model needs to be a string of model name not already created'
             },
             'payload': {
                 'name': 'Payload',
                 
                 'validate': lambda payload_keys, model:  set(payload_keys) <= {'table_map', 'arguments'} and 'table_map' in payload_keys,
                 'message': 'payload is expected to be <= {"table_map", "arguments"} and "table_map" is required'
+            },
+        }
+    },
+    'CREATE_BULK_MODELS': {
+        'name': 'CREATE_BULK_MODELS',
+        'module': 'database.commands',
+        'require_args': ['payload'],
+        'has_args': True,
+        'args': {
+            'payload': {
+                'name': 'Payload',
+                
+                'validate': lambda payload_keys, model:  set(payload_keys) <= {'table_maps', 'arguments'} and 'table_maps' in payload_keys,
+                'message': 'payload is expected to be <= {"table_maps", "arguments"} and "table_maps" is required'
             },
         }
     },

@@ -1,0 +1,1098 @@
+2026-05-01 02:38:05,688 - backend.commands - INFO - Running backend command...
+2026-05-01 02:38:05,691 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 02:38:05,692 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 02:38:05,695 - database.db - ERROR - Error creating __init__.py table @ database.db 'line 423'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 419, in create_tables
+    cursor.execute(query)
+sqlite3.OperationalError: unknown database __init__
+2026-05-01 02:38:05,696 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 221'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 218, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 338, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 426, in create_tables
+    raise err
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 419, in create_tables
+    cursor.execute(query)
+sqlite3.OperationalError: unknown database __init__
+2026-05-01 02:42:15,973 - backend.commands - INFO - Running backend command...
+2026-05-01 02:42:15,976 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 02:42:15,977 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 02:42:15,981 - database.db - ERROR - Error creating __init__.py table @ database.db 'line 424'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 420, in create_tables
+    cursor.execute(query)
+sqlite3.OperationalError: unknown database __init__
+2026-05-01 02:42:15,982 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 221'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 218, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 339, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 427, in create_tables
+    raise err
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 420, in create_tables
+    cursor.execute(query)
+sqlite3.OperationalError: unknown database __init__
+2026-05-01 02:44:10,448 - backend.commands - INFO - Running backend command...
+2026-05-01 02:44:10,451 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 02:44:10,452 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 02:45:03,679 - backend.commands - INFO - Running backend command...
+2026-05-01 02:45:03,683 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 02:45:03,683 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 02:45:37,235 - backend.commands - INFO - Running backend command...
+2026-05-01 02:45:37,239 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 02:45:37,239 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 02:46:13,995 - backend.commands - INFO - Running backend command...
+2026-05-01 02:46:13,999 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 02:46:14,000 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 02:46:54,856 - backend.commands - INFO - Running backend command...
+2026-05-01 02:47:09,494 - backend.commands - INFO - Running backend command...
+2026-05-01 02:47:09,498 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 02:47:09,498 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 02:47:09,502 - database.db - ERROR - Error creating __init__.py table @ database.db 'line 424'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 418, in create_tables
+    cursor.execute(query)
+sqlite3.OperationalError: unknown database __init__
+2026-05-01 02:47:09,503 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 220'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 217, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 337, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 427, in create_tables
+    raise err
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 418, in create_tables
+    cursor.execute(query)
+sqlite3.OperationalError: unknown database __init__
+2026-05-01 02:48:33,049 - backend.commands - INFO - Running backend command...
+2026-05-01 02:48:33,053 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 02:48:33,053 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 02:49:57,336 - backend.commands - INFO - Running backend command...
+2026-05-01 02:49:57,340 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 02:49:57,340 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 02:51:40,474 - backend.commands - INFO - Running backend command...
+2026-05-01 02:52:02,184 - backend.commands - INFO - Running backend command...
+2026-05-01 02:52:02,188 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 02:52:02,188 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 02:56:49,683 - backend.commands - INFO - Running backend command...
+2026-05-01 02:56:49,687 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 02:56:49,687 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 02:58:15,524 - backend.commands - INFO - Running backend command...
+2026-05-01 02:58:31,479 - backend.commands - INFO - Running backend command...
+2026-05-01 02:58:49,640 - backend.commands - INFO - Running backend command...
+2026-05-01 02:58:49,644 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 02:58:49,645 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 03:00:06,735 - backend.commands - INFO - Running backend command...
+2026-05-01 03:00:06,739 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 03:00:06,739 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 03:01:23,122 - backend.commands - INFO - Running backend command...
+2026-05-01 03:01:23,126 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 03:01:23,126 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 03:01:23,127 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 220'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 217, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 337, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 350, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 505, in _get_table_detail
+    raise ValidationError(f'Unknown keys {set(field.keys()) - set(self.default_field_keys)} provided')
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'InitDB' object has no attribute 'default_field_keys'. Did you mean: 'get_default_field_keys'?
+2026-05-01 03:03:58,724 - backend.commands - INFO - Running backend command...
+2026-05-01 03:03:58,727 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 03:03:58,728 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 03:03:58,729 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 220'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 217, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 338, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 351, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 506, in _get_table_detail
+    raise ValidationError(f'Unknown keys {set(field.keys()) - set(self.default_field_keys)} provided')
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'InitDB' object has no attribute 'default_field_keys'. Did you mean: 'get_default_field_keys'?
+2026-05-01 03:07:27,300 - backend.commands - INFO - Running backend command...
+2026-05-01 03:07:27,303 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 03:07:27,304 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 03:12:12,116 - backend.commands - INFO - Running backend command...
+2026-05-01 03:12:12,121 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 03:12:12,121 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 03:12:12,122 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 220'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 217, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 338, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 351, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 509, in _get_table_detail
+    raise ValidationError(f'Unknown keys {set(field.keys()) - set(self.default_field_keys)} provided')
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'InitDB' object has no attribute 'default_field_keys'. Did you mean: 'get_default_field_keys'?
+2026-05-01 03:14:51,609 - backend.commands - INFO - Running backend command...
+2026-05-01 03:14:51,613 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 03:14:51,613 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 03:14:51,614 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 221'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 218, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 339, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 352, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 510, in _get_table_detail
+    raise ValidationError(f'Unknown keys {set(field.keys()) - set(self.default_field_keys)} provided')
+                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'NoneType' object is not iterable
+2026-05-01 03:16:49,374 - backend.commands - INFO - Running backend command...
+2026-05-01 03:16:49,378 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 03:16:49,378 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 03:16:49,379 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 221'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 218, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 339, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 352, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 510, in _get_table_detail
+    raise ValidationError(f'Unknown keys {set(field.keys()) - set(self.default_field_keys)} provided')
+                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'method' object is not iterable
+2026-05-01 03:19:56,048 - backend.commands - INFO - Running backend command...
+2026-05-01 03:19:56,051 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 03:19:56,052 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 03:19:56,053 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 221'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 218, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 339, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 352, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 511, in _get_table_detail
+    raise ValidationError(f'Unknown keys {set(field.keys()) - default_field_keys} provided')
+exceptions.exception.ValidationError: Unknown keys {'is_nullable', 'is_unique', 'is_pk'} provided
+2026-05-01 03:22:07,273 - backend.commands - INFO - Running backend command...
+2026-05-01 03:22:07,277 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 03:22:07,278 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 03:22:07,279 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 221'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 218, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 339, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 352, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 511, in _get_table_detail
+    raise ValidationError(f'Unknown keys {set(field.keys()) - default_field_keys} provided for {key}')
+exceptions.exception.ValidationError: Unknown keys {'is_nullable', 'is_pk', 'is_unique'} provided for comment
+2026-05-01 03:23:31,834 - backend.commands - INFO - Running backend command...
+2026-05-01 03:23:31,837 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 03:23:31,838 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 03:23:31,839 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 221'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 218, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 339, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 352, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 511, in _get_table_detail
+    raise ValidationError(f'Unknown keys {set(field.keys()) - default_field_keys} provided for {key} in {table_name}')
+exceptions.exception.ValidationError: Unknown keys {'is_pk', 'is_nullable', 'is_unique'} provided for comment in payment
+2026-05-01 03:25:00,877 - backend.commands - INFO - Running backend command...
+2026-05-01 03:25:00,880 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 03:25:00,881 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 03:25:00,882 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 221'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 218, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 339, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 352, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 511, in _get_table_detail
+    raise ValidationError(f'Unknown keys {set(field.keys()) - default_field_keys} provided for {key} in {table_name}')
+exceptions.exception.ValidationError: Unknown keys {'is_pk', 'is_unique', 'is_nullable'} provided for comment in payment
+2026-05-01 03:30:08,263 - backend.commands - INFO - Running backend command...
+2026-05-01 03:30:08,267 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 03:30:08,267 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 03:30:08,268 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 222'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 219, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 340, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 353, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 508, in _get_table_detail
+    raise ValidationError(f'Datatype is required for creating a field in a table')
+exceptions.exception.ValidationError: Datatype is required for creating a field in a table
+2026-05-01 03:37:38,015 - backend.commands - INFO - Running backend command...
+2026-05-01 03:37:38,019 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 03:37:38,020 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 03:37:38,021 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 224'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 221, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 342, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 355, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 510, in _get_table_detail
+    raise ValidationError(f'Datatype is required for creating a field in a table')
+exceptions.exception.ValidationError: Datatype is required for creating a field in a table
+2026-05-01 03:40:06,544 - backend.commands - INFO - Running backend command...
+2026-05-01 03:40:06,548 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 03:40:06,548 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 03:40:06,549 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 222'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 219, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 340, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 353, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 509, in _get_table_detail
+    raise ValidationError(f'Datatype is required for creating a field in a table')
+exceptions.exception.ValidationError: Datatype is required for creating a field in a table
+2026-05-01 03:42:29,170 - backend.commands - INFO - Running backend command...
+2026-05-01 03:42:29,174 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 03:42:29,175 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 03:46:53,919 - backend.commands - INFO - Running backend command...
+2026-05-01 03:46:53,923 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 03:46:53,924 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 04:10:10,827 - backend.commands - INFO - Running backend command...
+2026-05-01 04:10:10,834 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 04:10:10,835 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 04:10:10,837 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 527, in _get_table_detail
+    raise ValidationError(f'Datatype of type {datatype} is not valid')
+exceptions.exception.ValidationError: Datatype of type fk is not valid
+2026-05-01 04:17:18,848 - backend.commands - INFO - Running backend command...
+2026-05-01 04:17:18,852 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 04:17:18,852 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 04:17:18,854 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 557, in _get_table_detail
+    raise ValidationError(f'Invalid model {reference_model} for {key}')
+exceptions.exception.ValidationError: Invalid model None for client
+2026-05-01 04:32:49,159 - backend.commands - INFO - Running backend command...
+2026-05-01 04:32:49,163 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 04:32:49,163 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 04:38:08,616 - backend.commands - INFO - Running backend command...
+2026-05-01 04:38:25,835 - backend.commands - INFO - Running backend command...
+2026-05-01 04:38:25,839 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 04:38:25,840 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 04:38:25,841 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 507, in _get_table_detail
+    print(table_field['client'])
+          ~~~~~~~~~~~^^^^^^^^^^
+KeyError: 'client'
+2026-05-01 04:39:15,598 - backend.commands - INFO - Running backend command...
+2026-05-01 04:39:15,602 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 04:39:15,603 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 04:40:10,915 - backend.commands - INFO - Running backend command...
+2026-05-01 04:40:10,919 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 04:40:10,919 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 04:40:10,920 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 507, in _get_table_detail
+    print(table_map['client'])
+          ^^^^^^^^^
+NameError: name 'table_map' is not defined. Did you mean: 'self.table_map'?
+2026-05-01 04:41:05,783 - backend.commands - INFO - Running backend command...
+2026-05-01 04:41:05,787 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 04:41:05,787 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 04:42:05,059 - backend.commands - INFO - Running backend command...
+2026-05-01 04:42:05,063 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 04:42:05,064 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 04:49:43,228 - backend.commands - INFO - Running backend command...
+2026-05-01 04:49:43,233 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 04:49:43,233 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 04:52:04,741 - backend.commands - INFO - Running backend command...
+2026-05-01 04:52:04,745 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 04:52:04,745 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 04:58:31,150 - backend.commands - INFO - Running backend command...
+2026-05-01 04:58:31,154 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 04:58:31,154 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 04:58:31,157 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 567, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 05:00:52,196 - backend.commands - INFO - Running backend command...
+2026-05-01 05:00:52,201 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 05:00:52,201 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 05:00:52,204 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 567, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 06:44:18,722 - backend.commands - INFO - Running backend command...
+2026-05-01 06:44:18,726 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 06:44:18,727 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 06:44:18,730 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 567, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 06:46:20,816 - backend.commands - INFO - Running backend command...
+2026-05-01 06:46:32,135 - backend.commands - INFO - Running backend command...
+2026-05-01 06:46:32,139 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 06:46:32,139 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 06:46:32,142 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 570, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 06:47:20,062 - backend.commands - INFO - Running backend command...
+2026-05-01 06:47:20,066 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 06:47:20,067 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 06:47:20,070 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 567, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 06:49:19,804 - backend.commands - INFO - Running backend command...
+2026-05-01 06:49:19,809 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 06:49:19,809 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 06:49:19,812 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 567, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 06:50:00,351 - backend.commands - INFO - Running backend command...
+2026-05-01 06:50:23,329 - backend.commands - INFO - Running backend command...
+2026-05-01 06:50:23,333 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 06:50:23,334 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 06:50:23,337 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 567, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 06:51:02,741 - backend.commands - INFO - Running backend command...
+2026-05-01 06:51:02,746 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 06:51:02,746 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 06:51:02,749 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 567, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 07:17:48,442 - backend.commands - INFO - Running backend command...
+2026-05-01 07:17:48,446 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 07:17:48,447 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 07:17:48,450 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 567, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 07:18:31,106 - backend.commands - INFO - Running backend command...
+2026-05-01 07:18:45,851 - backend.commands - INFO - Running backend command...
+2026-05-01 07:18:45,856 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 07:18:45,856 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 07:18:45,859 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 567, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 07:23:45,522 - backend.commands - INFO - Running backend command...
+2026-05-01 07:23:45,527 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 07:23:45,527 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 07:23:45,530 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 567, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 07:26:21,541 - backend.commands - INFO - Running backend command...
+2026-05-01 07:26:21,545 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 07:26:21,546 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 07:26:21,549 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 567, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 07:28:56,463 - backend.commands - INFO - Running backend command...
+2026-05-01 07:28:56,468 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 07:28:56,468 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 07:28:56,471 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 567, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 07:37:02,798 - backend.commands - INFO - Running backend command...
+2026-05-01 07:37:02,803 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 07:37:02,803 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 07:37:02,807 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 226'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 223, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 344, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 360, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 568, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 07:39:20,904 - backend.commands - INFO - Running backend command...
+2026-05-01 07:39:20,909 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 07:39:20,909 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 07:39:20,912 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 567, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 07:41:29,011 - backend.commands - INFO - Running backend command...
+2026-05-01 07:41:39,497 - backend.commands - INFO - Running backend command...
+2026-05-01 07:41:39,501 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 07:41:39,502 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 07:41:39,504 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 568, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 07:43:38,994 - backend.commands - INFO - Running backend command...
+2026-05-01 07:43:38,998 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 07:43:38,998 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 07:43:39,001 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 568, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 07:44:10,314 - backend.commands - INFO - Running backend command...
+2026-05-01 07:44:20,438 - backend.commands - INFO - Running backend command...
+2026-05-01 07:44:20,443 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 07:44:20,443 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 07:44:20,445 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 568, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 07:45:05,230 - backend.commands - INFO - Running backend command...
+2026-05-01 07:45:05,234 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 07:45:05,234 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 07:45:05,237 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 568, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 07:46:00,635 - backend.commands - INFO - Running backend command...
+2026-05-01 07:46:00,639 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 07:46:00,639 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 07:46:00,642 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 568, in _get_table_detail
+    contraint['fk_datatype'] = self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype']
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 07:47:19,934 - backend.commands - INFO - Running backend command...
+2026-05-01 07:47:30,896 - backend.commands - INFO - Running backend command...
+2026-05-01 07:47:30,948 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 07:47:30,948 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 07:47:30,951 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 568, in _get_table_detail
+    print(self.table_map[reference_model]['fields'][f'{reference_model}_id']['datatype'])
+          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'subscription_id'
+2026-05-01 07:54:50,365 - backend.commands - INFO - Running backend command...
+2026-05-01 07:54:50,369 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 07:54:50,369 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 07:54:50,372 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 359, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 560, in _get_table_detail
+    raise ValidationError(f'Datatype not found in fk field {field} @ {reference_model}')
+exceptions.exception.ValidationError: Datatype not found in fk field {'null': False, 'on_delete': 'cascade', 'to': 'subscription', 'default': None, 'on_update': 'no action', 'unique': False, 'pk': False, 'datatype': 'fk'} @ subscription
+2026-05-01 08:15:50,457 - backend.commands - INFO - Running backend command...
+2026-05-01 08:15:50,461 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 08:15:50,462 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 09:00:20,433 - backend.commands - INFO - Running backend command...
+2026-05-01 09:00:20,438 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 09:00:20,438 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 09:09:55,375 - backend.commands - INFO - Running backend command...
+2026-05-01 09:09:55,380 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 09:09:55,380 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 09:09:55,384 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 365, in create_tables
+    print(table_detail['client']['fk_datatype'])
+          ~~~~~~~~~~~~^^^^^^^^^^
+KeyError: 'client'
+2026-05-01 09:13:32,623 - backend.commands - INFO - Running backend command...
+2026-05-01 09:13:50,041 - backend.commands - INFO - Running backend command...
+2026-05-01 09:13:50,046 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 09:13:50,046 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 09:13:50,050 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 395, in create_tables
+    self._get_datatype(table_detail.get('datatype').get(field)) if fk_field_map == {} else self._get_datatype(fk_field_map.get(field).get('fk_datatype'))
+                                                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'get'
+2026-05-01 10:05:44,674 - backend.commands - INFO - Running backend command...
+2026-05-01 10:05:44,678 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 10:05:44,679 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 10:05:44,683 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 395, in create_tables
+    self._get_datatype(table_detail.get('datatype').get(field)) if fk_field_map == {} else self._get_datatype(fk_field_map.get(field).get('fk_datatype'))
+                                                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'get'
+2026-05-01 10:07:45,295 - backend.commands - INFO - Running backend command...
+2026-05-01 10:07:45,300 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 10:07:45,301 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 10:07:45,305 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 395, in create_tables
+    self._get_datatype(table_detail.get('datatype').get(field)) if fk_field_map == {} else self._get_datatype(fk_field_map.get(field).get('fk_datatype'))
+                                                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'get'
+2026-05-01 10:08:29,487 - backend.commands - INFO - Running backend command...
+2026-05-01 10:08:42,753 - backend.commands - INFO - Running backend command...
+2026-05-01 10:08:42,758 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 10:08:42,758 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 10:08:42,763 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 395, in create_tables
+    self._get_datatype(table_detail.get('datatype').get(field)) if fk_field_map == {} else self._get_datatype(fk_field_map.get(field).get('fk_datatype'))
+                                                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'get'
+2026-05-01 10:18:05,318 - backend.commands - INFO - Running backend command...
+2026-05-01 10:18:05,323 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 10:18:05,323 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 10:22:58,841 - backend.commands - INFO - Running backend command...
+2026-05-01 10:22:58,846 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 10:22:58,846 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 10:26:23,339 - backend.commands - INFO - Running backend command...
+2026-05-01 10:26:23,344 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 10:26:23,344 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 10:26:54,106 - backend.commands - INFO - Running backend command...
+2026-05-01 10:26:54,111 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 10:26:54,111 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 10:29:15,425 - backend.commands - INFO - Running backend command...
+2026-05-01 10:29:15,430 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 10:29:15,430 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 10:36:32,737 - backend.commands - INFO - Running backend command...
+2026-05-01 10:36:32,742 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 10:36:32,743 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 10:40:12,141 - backend.commands - INFO - Running backend command...
+2026-05-01 10:40:12,146 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 10:40:12,147 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 10:40:12,154 - database.db - ERROR - Error creating assigned_client table @ database.db 'line 437'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 433, in create_tables
+    cursor.execute(query)
+sqlite3.OperationalError: near ")": syntax error
+2026-05-01 10:40:12,155 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 440, in create_tables
+    raise err
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 433, in create_tables
+    cursor.execute(query)
+sqlite3.OperationalError: near ")": syntax error
+2026-05-01 10:41:16,395 - backend.commands - INFO - Running backend command...
+2026-05-01 10:41:27,502 - backend.commands - INFO - Running backend command...
+2026-05-01 10:41:27,507 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 10:41:27,507 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 10:41:27,515 - database.db - ERROR - Error creating assigned_client table @ database.db 'line 437'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 433, in create_tables
+    cursor.execute(query)
+sqlite3.OperationalError: near ")": syntax error
+2026-05-01 10:41:27,515 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 343, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 440, in create_tables
+    raise err
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 433, in create_tables
+    cursor.execute(query)
+sqlite3.OperationalError: near ")": syntax error
+2026-05-01 10:43:59,185 - backend.commands - INFO - Running backend command...
+2026-05-01 10:43:59,190 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 10:43:59,190 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 10:43:59,199 - database.db - ERROR - Error creating backup table @ database.db 'line 439'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 435, in create_tables
+    cursor.execute(query)
+sqlite3.OperationalError: near ")": syntax error
+2026-05-01 10:43:59,200 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 345, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 442, in create_tables
+    raise err
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 435, in create_tables
+    cursor.execute(query)
+sqlite3.OperationalError: near ")": syntax error
+2026-05-01 10:44:41,476 - backend.commands - INFO - Running backend command...
+2026-05-01 10:44:56,407 - backend.commands - INFO - Running backend command...
+2026-05-01 10:44:56,412 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 10:44:56,412 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 10:44:56,419 - database.db - ERROR - Error creating assigned_client table @ database.db 'line 439'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 435, in create_tables
+    cursor.execute(query)
+sqlite3.OperationalError: near ")": syntax error
+2026-05-01 10:44:56,420 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 345, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 442, in create_tables
+    raise err
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 435, in create_tables
+    cursor.execute(query)
+sqlite3.OperationalError: near ")": syntax error
+2026-05-01 10:45:20,670 - backend.commands - INFO - Running backend command...
+2026-05-01 10:45:20,675 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 10:45:20,675 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 10:45:20,685 - database.db - ERROR - Error creating visit table @ database.db 'line 439'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 435, in create_tables
+    cursor.execute(query)
+sqlite3.OperationalError: near ")": syntax error
+2026-05-01 10:45:20,685 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 345, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 442, in create_tables
+    raise err
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 435, in create_tables
+    cursor.execute(query)
+sqlite3.OperationalError: near ")": syntax error
+2026-05-01 10:45:49,818 - backend.commands - INFO - Running backend command...
+2026-05-01 10:45:49,823 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 10:45:49,823 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 10:45:49,841 - database.db - ERROR - Error creating log table @ database.db 'line 439'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 435, in create_tables
+    cursor.execute(query)
+sqlite3.OperationalError: near ")": syntax error
+2026-05-01 10:45:49,842 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 345, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 442, in create_tables
+    raise err
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 435, in create_tables
+    cursor.execute(query)
+sqlite3.OperationalError: near ")": syntax error
+2026-05-01 10:46:14,902 - backend.commands - INFO - Running backend command...
+2026-05-01 10:46:27,985 - backend.commands - INFO - Running backend command...
+2026-05-01 10:46:27,990 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 10:46:27,990 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 10:52:26,863 - backend.commands - INFO - Running backend command...
+2026-05-01 10:52:26,868 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 10:52:26,869 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 11:00:20,083 - backend.commands - INFO - Running backend command...
+2026-05-01 11:00:20,093 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 11:00:20,093 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 11:05:44,434 - backend.commands - INFO - Running backend command...
+2026-05-01 11:05:44,438 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 11:05:44,439 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 11:13:04,656 - backend.commands - INFO - Running backend command...
+2026-05-01 11:13:04,661 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 11:13:04,661 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 11:14:11,417 - backend.commands - INFO - Running backend command...
+2026-05-01 11:14:11,422 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 11:14:11,422 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 11:14:42,267 - backend.commands - INFO - Running backend command...
+2026-05-01 11:14:42,274 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 11:14:42,275 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 11:16:31,947 - backend.commands - INFO - Running backend command...
+2026-05-01 11:16:31,952 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 11:16:31,953 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 11:27:18,052 - backend.commands - INFO - Running backend command...
+2026-05-01 11:27:18,056 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 11:27:18,057 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 11:28:30,871 - backend.commands - INFO - Running backend command...
+2026-05-01 11:28:30,876 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 11:28:30,877 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 11:31:14,460 - backend.commands - INFO - Running backend command...
+2026-05-01 11:31:14,470 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 11:31:14,471 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 11:32:05,714 - backend.commands - INFO - Running backend command...
+2026-05-01 11:32:05,718 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 11:32:05,719 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 11:33:16,272 - backend.commands - INFO - Running backend command...
+2026-05-01 11:33:28,945 - backend.commands - INFO - Running backend command...
+2026-05-01 11:33:28,950 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 11:33:28,950 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 11:34:12,459 - backend.commands - INFO - Running backend command...
+2026-05-01 11:34:12,464 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 11:34:12,464 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 11:34:52,213 - backend.commands - INFO - Running backend command...
+2026-05-01 11:34:52,217 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 11:34:52,218 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 11:36:36,043 - backend.commands - INFO - Running backend command...
+2026-05-01 11:40:30,856 - backend.commands - INFO - Running backend command...
+2026-05-01 11:40:30,861 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 11:40:30,861 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 11:41:34,557 - backend.commands - INFO - Running backend command...
+2026-05-01 11:41:34,561 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 11:41:34,562 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 11:57:16,364 - backend.commands - INFO - Running backend command...
+2026-05-01 11:57:16,372 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 11:57:16,372 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 11:58:07,219 - backend.commands - INFO - Running backend command...
+2026-05-01 11:58:07,227 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 11:58:07,227 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 11:59:10,571 - backend.commands - INFO - Running backend command...
+2026-05-01 11:59:10,580 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 11:59:10,580 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:01:20,356 - backend.commands - INFO - Running backend command...
+2026-05-01 12:01:20,363 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:01:20,364 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:03:08,621 - backend.commands - INFO - Running backend command...
+2026-05-01 12:03:08,629 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:03:08,629 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:06:31,633 - backend.commands - INFO - Running backend command...
+2026-05-01 12:06:31,641 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:06:31,642 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:10:42,742 - backend.commands - INFO - Running backend command...
+2026-05-01 12:10:42,750 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:10:42,751 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:12:06,588 - backend.commands - INFO - Running backend command...
+2026-05-01 12:12:06,596 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:12:06,597 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:14:37,313 - backend.commands - INFO - Running backend command...
+2026-05-01 12:14:37,322 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:14:37,322 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:20:09,372 - backend.commands - INFO - Running backend command...
+2026-05-01 12:20:09,381 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:20:09,381 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:21:25,338 - backend.commands - INFO - Running backend command...
+2026-05-01 12:21:25,346 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:21:25,347 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:22:14,305 - backend.commands - INFO - Running backend command...
+2026-05-01 12:22:14,313 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:22:14,313 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:22:40,873 - backend.commands - INFO - Running backend command...
+2026-05-01 12:22:40,882 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:22:40,882 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:23:30,741 - backend.commands - INFO - Running backend command...
+2026-05-01 12:23:30,750 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:23:30,750 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:23:57,556 - backend.commands - INFO - Running backend command...
+2026-05-01 12:23:57,564 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:23:57,565 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:24:26,036 - backend.commands - INFO - Running backend command...
+2026-05-01 12:24:26,055 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:24:26,056 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:24:46,448 - backend.commands - INFO - Running backend command...
+2026-05-01 12:24:46,456 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:24:46,456 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:25:28,973 - backend.commands - INFO - Running backend command...
+2026-05-01 12:25:28,981 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:25:28,982 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:26:24,461 - backend.commands - INFO - Running backend command...
+2026-05-01 12:26:24,470 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:26:24,470 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:27:47,776 - backend.commands - INFO - Running backend command...
+2026-05-01 12:27:47,792 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:27:47,793 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:30:24,215 - backend.commands - INFO - Running backend command...
+2026-05-01 12:30:24,223 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:30:24,224 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:31:09,514 - backend.commands - INFO - Running backend command...
+2026-05-01 12:31:09,522 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:31:09,522 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:32:05,549 - backend.commands - INFO - Running backend command...
+2026-05-01 12:32:05,557 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:32:05,557 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:33:02,460 - backend.commands - INFO - Running backend command...
+2026-05-01 12:33:02,471 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:33:02,471 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:41:44,313 - backend.commands - INFO - Running backend command...
+2026-05-01 12:41:44,319 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:41:44,319 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:44:46,096 - backend.commands - INFO - Running backend command...
+2026-05-01 12:44:46,104 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:44:46,105 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:52:27,839 - backend.commands - INFO - Running backend command...
+2026-05-01 12:52:27,844 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:52:27,845 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:55:57,592 - backend.commands - INFO - Running backend command...
+2026-05-01 12:55:57,597 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:55:57,598 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:57:15,262 - backend.commands - INFO - Running backend command...
+2026-05-01 12:57:15,267 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:57:15,268 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:57:15,269 - database.db - ERROR - Error connecting to cr8tive_db.db @ database.db 'line 225'
+Traceback (most recent call last):
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 222, in __init__
+    self._init_database_tables()
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 345, in _init_database_tables
+    self.create_tables(table_name=table_name)
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 361, in create_tables
+    table_detail = self._get_table_detail(table_name=table_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sheyzie/Projects/My_Projects/GUI/Cr8tive Desktop App/app/database/db.py", line 529, in _get_table_detail
+    raise ValidationError(f'Datatype of type {datatype} is not valid\n\n Required datatypes: {get_required_datatypes()}')
+exceptions.exception.ValidationError: Datatype of type json is not valid
+
+ Required datatypes: {'fk', 'str', 'UUID', 'int', 'datetime'}
+2026-05-01 12:58:33,207 - backend.commands - INFO - Running backend command...
+2026-05-01 12:58:33,212 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:58:33,212 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:59:55,483 - backend.commands - INFO - Running backend command...
+2026-05-01 12:59:55,488 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:59:55,488 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 12:59:55,511 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 12:59:55,511 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 13:02:33,813 - backend.commands - INFO - Running backend command...
+2026-05-01 13:02:33,830 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 13:02:33,831 - database.db - INFO - Database connection established to cr8tive_db.db
+2026-05-01 13:02:33,877 - database.db - INFO - Initializing database connection for {self.model_name}...
+2026-05-01 13:02:33,878 - database.db - INFO - Database connection established to cr8tive_db.db

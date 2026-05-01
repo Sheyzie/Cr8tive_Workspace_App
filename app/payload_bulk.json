@@ -1,0 +1,73 @@
+{
+    "model": "",
+    "command": "CREATE_BULK_MODELS",
+    "header": {},
+    "verbose": false,
+    "debug": false,
+    "payload": {
+        "table_maps": [
+            {
+                "vehicle": {
+                    "fields": {
+                        "vehicle_id": {
+                            "pk": true,
+                            "unique": true,
+                            "null": false,
+                            "datatype": "UUID"
+                        },
+                        "client_id": {
+                            "pk": false,
+                            "unique": false,
+                            "null": false,
+                            "datatype": "fk",
+                            "to": "client",
+                            "on_delete": "cascade",
+                            "on_update": "no action",
+                            "pk_only": true
+                        },
+                        "plate_number": {
+                            "pk": false,
+                            "unique": false,
+                            "null": false,
+                            "datatype": "str"
+                        },
+                        "created_at": {
+                            "pk": false,
+                            "unique": false,
+                            "null": false,
+                            "datatype": "datetime",
+                            "on_update": true
+                        }
+                    }
+                }
+            },
+            {
+                "migration": {
+                    "fields": {
+                        "migration_id": {
+                            "pk": true,
+                            "unique": true,
+                            "null": false,
+                            "datatype": "UUID"
+                        },
+                        "table_map": {
+                            "pk": false,
+                            "unique": true,
+                            "null": false,
+                            "datatype": "json",
+                            "indent": 4
+                        },
+                        "timestamp": {
+                            "pk": false,
+                            "unique": false,
+                            "null": false,
+                            "datatype": "datetime",
+                            "on_update": true
+                        }
+                    }
+                }
+            }
+        ]
+    }
+
+}

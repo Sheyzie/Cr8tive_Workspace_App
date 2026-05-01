@@ -3,6 +3,7 @@ import inspect
 from typing import Self
 from datetime import datetime, timedelta
 from database.db import InitDB
+from database import fields
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
 from utils.import_file import ImportManager
@@ -35,26 +36,39 @@ class Subscription(InitDB):
             field_name: value
         }
     '''
+    model_name = 'subscription'
+    subscription_id = fields.UUIDField(pk=True, unique=True, null=False)
+    plan = fields.ForeignKeyField(to = 'plan', on_delete = 'cascade', on_update='no action')
+    client = fields.ForeignKeyField(to = 'client', on_delete = 'cascade', on_update='no action')
+    plan_unit = fields.IntegerField(default = 0)
+    discount = fields.IntegerField(default = 0)
+    discount_type = fields.TextField(choice=['percent', 'value'])
+    vat = fields.IntegerField(default = 0)
+    expiration_date = fields.DateTimeField()
+    status = fields.TextField(choice=['booked', 'running', 'expired', 'exhausted'])
+    payment_status = fields.TextField(choice=['pending', 'partial', 'paid', 'free'])
+    created_at = fields.DateTimeField(on_save = True)
+    updated_at = fields.DateTimeField(on_update = True)
 
     def __init__(self, **kwargs):
         super().__init__()
-        self.subscription_id: str = None
-        self.plan: Plan = None
-        self.client: Client = None
-        self.plan_unit: int = 0
-        self.expiration_date: str = None
-        self.discount = 0
-        self.discount_type = 'percent'
-        self.vat = 0
-        self.status: str = None
-        self.payment_status: str = None
-        self.created_at: str = None
-        self.updated_at: str = None
+        # self.subscription_id: str = None
+        # self.plan: Plan = None
+        # self.client: Client = None
+        # self.plan_unit: int = 0
+        # self.expiration_date: str = None
+        # self.discount = 0
+        # self.discount_type = 'percent'
+        # self.vat = 0
+        # self.status: str = None
+        # self.payment_status: str = None
+        # self.created_at: str = None
+        # self.updated_at: str = None
 
-        self.assigned_users: list[Client] = []
+        # self.assigned_users: list[Client] = []
 
-        if kwargs:
-            self._get_from_kwargs(**kwargs)
+        # if kwargs:
+        #     self._get_from_kwargs(**kwargs)
         try:
             self._validate()
         except ValidationError as err:

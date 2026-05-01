@@ -2,6 +2,7 @@ import time
 import inspect
 from typing import Self
 from database.db import InitDB
+from database import fields
 from exceptions.exception import ValidationError
 from helpers.export_helper import export_helper
 
@@ -21,21 +22,31 @@ class Client(InitDB):
     '''
     model_name = 'client'
 
+    client_id = fields.UUIDField(pk=True, unique=True, null=False)
+    first_name = fields.TextField()
+    last_name = fields.TextField()
+    company_name = fields.TextField()
+    email = fields.TextField()
+    phone = fields.TextField()
+    display_name = fields.TextField()
+    created_at = fields.DateTimeField(on_save = True)
+    updated_at = fields.DateTimeField(on_update = True)
+
     def __init__(self, using=None, **kwargs):
         super().__init__()
-        self.client_id: str = None
-        self.first_name: str = None
-        self.last_name: str = None
-        self.company_name: str = None
-        self.email: str = None
-        self.phone: str = None
-        self.query = ""
-        self._display_name: str = "client"
-        self.created_at: str = None
-        self.updated_at: str = None
+        # self.client_id: str = None
+        # self.first_name: str = None
+        # self.last_name: str = None
+        # self.company_name: str = None
+        # self.email: str = None
+        # self.phone: str = None
+        # self.query = ""
+        # self._display_name: str = "client"
+        # self.created_at: str = None
+        # self.updated_at: str = None
         
-        if kwargs:
-            self._get_from_kwargs(**kwargs)
+        # if kwargs:
+        #     self._get_from_kwargs(**kwargs)
         try:
             self._validate()
         except ValidationError as err:

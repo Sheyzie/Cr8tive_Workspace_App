@@ -2,6 +2,7 @@ import time
 import inspect
 from typing import Self
 from database.db import InitDB
+from database import fields
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
 from helpers.db_helpers import generate_id
@@ -28,16 +29,23 @@ class Payment(InitDB):
             field_name: value
         }
     '''
+    model_name = 'payment'
+    payment_id = fields.UUIDField(pk=True, unique=True, null=False)
+    client = fields.ForeignKeyField(to = 'client', on_delete = 'cascade', on_update='no action')
+    subscription = fields.ForeignKeyField(to = 'subscription', on_delete = 'cascade', on_update='no action')
+    amount = fields.IntegerField(default = 0)
+    created_at = fields.DateTimeField(on_save = True)
+    updated_at = fields.DateTimeField(on_update = True)
 
     def __init__(self, **kwargs):
         super().__init__()
 
-        self.payment_id = None
-        self.client: Client = None
-        self.subscription: Subscription = None
-        self.amount = 0
-        self.created_at = None
-        self.updated_at = None
+        # self.payment_id = None
+        # self.client: Client = None
+        # self.subscription: Subscription = None
+        # self.amount = 0
+        # self.created_at = None
+        # self.updated_at = None
         
         if kwargs:
             self._get_from_kwargs(**kwargs)

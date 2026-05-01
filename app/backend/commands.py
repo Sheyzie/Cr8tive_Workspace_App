@@ -5,6 +5,8 @@ import sys
 import time
 import logging
 
+from database.db import import_module
+
 logger = logging.getLogger(__name__)
 
 # for i in range(5):
@@ -31,7 +33,7 @@ class Processor(BaseProcess):
 
         try:
             command = BASE_COMMANDS.get(self.base_command.get('command'))
-            module = importlib.import_module(command['module'])
+            module = import_module(command['module'])
             return module
         except Exception as e:
             logger.error(f'Unable to import module {command} command')

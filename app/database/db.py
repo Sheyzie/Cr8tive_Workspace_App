@@ -6,6 +6,7 @@ from exceptions.exception import ValidationError
 from helpers.export_helper import export_helper
 from helpers.db_helpers import generate_id
 from utils.import_file import ImportManager
+from database.fields import get_contraint_keys_by_field_name, get_field_from_datatype, get_required_datatypes
 from configs import db_config
 from pathlib import Path
 from datetime import datetime
@@ -21,22 +22,82 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+
+def import_module(filepath):
+    """Helper function to import module"""
+
+    import importlib
+
+    try:
+        return importlib.import_module(filepath)
+    except ModuleNotFoundError as err:
+        raise err
+    
+def get_contraint_from_field_instance(instance, field_type=True):
+    '''
+    Helper function to get contraint info from model field instance
+    '''
+
+    contraint_keys = get_contraint_keys_by_field_name(get_field_from_datatype(instance.field_type))
+
+    contraint = {}
+
+    for key in contraint_keys:
+        if hasattr(instance, key):
+            contraint[key] = getattr(instance, key)
+
+    return contraint
+    
 def get_table_map(model=None):
     ''' Helper function to get table map for all model or specific model if model is set'''
-    
+    from database.fields import Field
+
     os.makedirs('database', exist_ok=True)
 
-    file_path = os.path.join('database', 'tables.json')
-    data = {}
-    with open(file_path, mode='r') as file:
-        data = json.load(file)
-    if not model:
-        return data
+    # file_path = os.path.join('database', 'tables.json')
+    file_path = os.path.join('models')
+    model_files = os.listdir(file_path)
+    table_map = {}
+    for model_file in model_files:
+        field_map = {'fields': {}}
+        if '.py' in model_file and '__init__' not in model_file:
+            model_file = model_file.replace('.py', '')
+            module = import_module(f'models.{model_file}')
+            model_class_name = format_model_name(model_file)
+            model_class = getattr(module, model_class_name)
+            for key, value in model_class.__dict__.items():
+                if isinstance(value, Field):  
+                    contraint = get_contraint_from_field_instance(value)
+                    contraint['datatype'] = value.field_type
+                    field_map['fields'][key] = contraint
+            if model and model == model_file:
+                return field_map
+            table_map[model_file] = field_map
+    return table_map
+
+
+    # data = {}
+    # with open(file_path, mode='r') as file:
+    #     data = json.load(file)
+    # if not model:
+    #     return data
     
-    if data == {}:
-        return data
+    # if data == {}:
+    #     return data
     
-    return data.get(model, {})
+    # return data.get(model, {})
+
+def format_model_name(model):
+    '''
+    Helper function to modify model name for class name
+    '''
+    import re
+
+    # Replace all delimiters with a space
+    model = re.sub(r"[-_]+", " ", model)
+
+    # Capitalize each word and join
+    return ''.join(word.title() for word in model.split())
 
 
 class DB:
@@ -56,44 +117,79 @@ class DB:
                         'is_pk': True,
                         'is_unique': True,
                         'is_nullable': False,
-                        'datatype': UUID
+                        'datatype': 'UUID'
                     },
                     'full_name': {
                         'is_pk': False,
                         'is_unique': False,
                         'is_nullable': True,
-                        'datatype': str,
+                        'datatype': 'str',
+                        "validation": [
+                            {
+                                "name": "is_none",
+                                "value": null,
+                                "exp_result": false
+                            },
+                            {
+                                "name": "is_alpa",
+                                "value": null,
+                                "exp_value": True
+                            },
+                        ],
                     },
                     'role_id': {
                         'is_pk': False,
                         'is_unique': False,
                         'is_nullable': True,
-                        'datatype': UUID,
+                        'datatype': 'UUID',
                         'fk': {
                             'to': 'role',
                             'on_delete': 'cascade',
-                            'on_update': 'no action'
+                            'on_update': 'no action',
+                            'pk_only': True
                         },
+                        "validation": [
+                            {
+                                "name": "is_none",
+                                "value": null,
+                                "exp_value": false
+                            }
+                        ]
                     },
                     'created_at': {
                         'is_pk': False,
                         'is_unique': False,
                         'is_nullable': False,
-                        'datatype': datetime,
+                        'datatype': 'datetime',
                         'is_date': True,
-                        'auto_update': 'save'
+                        'auto_update': 'save',
+                        "validation": [
+                            {
+                                "name": "is_none",
+                                "value": null,
+                                "exp_result": false
+                            },
+                            {
+                                "name": "is_valid_date",
+                                "value": "%Y-%m-%d",
+                                "exp_result": true
+                            }
+                        ]
                     },
                 }
             },
         }
     '''
-    default_field_keys = {'is_pk', 'is_unique', 'fk', 'is_nullable', 'to', 'is_date', 'auto_update', 'datatype', 'validation'}
-    table_map = get_table_map() 
+    # default_field_keys = get_contraint_keys()
+    # default_fk_fields_keys = get_contraint_keys(fk_only=True)
     allow_print = False
     show_sql = False
     stdout = sys.stdout
     stderr = sys.stderr
+
     _db = None
+
+    lazy_fk = []
 
     def __init__(self, using):
 
@@ -115,6 +211,7 @@ class DB:
             exit(1)
         try:
             self._db = using
+
             conn = sqlite3.connect(Path(self._db))
             conn.execute("PRAGMA foreign_keys = ON")
             
@@ -122,7 +219,6 @@ class DB:
             self.write(f'Database connection established to {self._db}\n')
 
             conn.close()
-
             self._init_database_tables()
         except Exception as err:
             conn.close()
@@ -162,6 +258,15 @@ class DB:
             self.conn.close()
             raise err
 
+    @property
+    def table_map(self):
+        return get_table_map() 
+    
+    @classmethod
+    def get_default_field_keys(self, datatype):
+        field = get_field_from_datatype(datatype)
+        return get_contraint_keys_by_field_name(field)
+
     @classmethod    
     def write_error(self, error: str):
         self.stdout.write(f'\033[31m{error}\033[0m\n')
@@ -181,7 +286,7 @@ class DB:
         using = db_config.TEST_DB_NAME
         if not is_test_environ:
             using = db_config.DB_NAME
-
+        
         if not using:
             logger.warn(f"Database name not found\n")
             cls.stderr.write(f"Database name not set found\n")
@@ -199,13 +304,15 @@ class DB:
         '''
         # get table name from model
         model_name = getattr(self, 'model_name', None)
+
         if not model_name:
             try:
                 model_name = self.__name__ # use model name as table name
             except AttributeError:
                 model_name = self.__class__.__name__
-        
-        setattr(self, 'model_name', model_name.lower())
+        if not self.model_name:
+            # set model name only when it is not defined
+            setattr(self, 'model_name', model_name.lower())
     
     def _get_field_map(self):
         '''
@@ -216,8 +323,9 @@ class DB:
             self._set_table_name()
         except TypeError:
             self._set_table_name(self)
-
+        # self.table_map = get_table_map()
         field_map = self.table_map.get(self.model_name, None)
+
         if field_map is None:
             logger.exception(f'No table match the name {self.model_name} ensure table is on TABLE_MAP')
             raise Exception(f'No table match the name {self.model_name} ensure table is on TABLE_MAP')
@@ -232,7 +340,12 @@ class DB:
         tables = self.table_map.keys()
 
         for table_name in tables:
+            if table_name in ['assigned_client', 'backup', 'visit', 'log']:
+                continue
             self.create_tables(table_name=table_name)
+        
+        if len(self.lazy_fk) > 0:
+            self.__add_table_relationship()
 
     def create_tables(self, table_name):
         '''
@@ -240,26 +353,31 @@ class DB:
         '''
         exists = self._check_if_table_exist(table_name)
         
-        if exists:
-            if self.allow_print:
-                self.write(f'\n{table_name} table exist\n')
-            return
-
-        table_detail = self._get_table_detail(table_name=table_name)
+        # if exists:
+        #     if self.allow_print:
+        #         self.write(f'\n{table_name} table exist\n')
+        #     return
         
+        table_detail = self._get_table_detail(table_name=table_name)
+
         table_field_map = self.table_map.get(table_name).get('fields')
 
         # get fk map from detail
         fk_field_map = table_detail.get('fk_field_map', {})
+
         if fk_field_map != {}:
             # create fk table if not exist
             for field, contraint in fk_field_map.items():
+                if contraint['lazy']:
+                    # if lazy, remove from map
+                    self.lazy_fk.append({[field]: fk_field_map.pop(field)})
+                    continue
                 fk_model = contraint['to']
                 exists = self._check_if_table_exist(fk_model)
                 if not exists:
                     self.create_tables(fk_model)
         
-        
+
         # generate sql
         # CREATE TABLE IF NOT EXISTS payment (
         #         payment_id TEXT PRIMARY KEY  , 
@@ -271,12 +389,13 @@ class DB:
         #         FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE CASCADE ON UPDATE NO ACTION,
         #         FOREIGN KEY (subscription_id) REFERENCES subscription(subscription_id) ON DELETE CASCADE ON UPDATE NO ACTION);
     
+        
         query = f'''
             CREATE TABLE IF NOT EXISTS {table_name} (
                 {',\n\t\t'.join([
                 f'{field} {( 
                     # set datatype,  
-                    self._get_datatype(table_detail.get('datatype').get(field))
+                    self._get_datatype(table_detail.get('datatype').get(field)) if table_detail.get('datatype').get(field) != 'fk' and field not in fk_field_map else self._get_datatype(fk_field_map.get(field).get('fk_datatype'))
                     )}{(
                         # set pk
                         ' PRIMARY KEY' if table_detail.get('pk_field') == field else ''
@@ -294,7 +413,7 @@ class DB:
                     # add foreign keys
                     f',\n\t\tFOREIGN KEY ({field}) REFERENCES {(
                         table_detail.get('fk_field_map', {}).get(field).get('to')
-                        )}({field}) ON DELETE {(
+                        )}({self.__get_pk_field_name(table_detail.get('fk_field_map', {}).get(field).get('to'))}) ON DELETE {(
                             table_detail.get('fk_field_map', {}).get(field, None).get('on_delete', '').upper()
                                                 )} ON UPDATE {(
                                                     table_detail.get('fk_field_map', {}).get(field).get('on_update', '').upper()
@@ -340,6 +459,8 @@ class DB:
             return 'TEXT'
         elif obj == 'datetime':
             return 'TEXT'
+        elif obj == 'json':
+            return 'TEXT'
 
     def _get_table_detail(self, table_name):
         '''
@@ -380,23 +501,36 @@ class DB:
         DATATYPE_MAP = {}
 
         table_field = self.table_map.get(table_name, None)
-   
+
         if table_field is None:
             raise ValidationError(f"Invalid table name '{table_name}'. ensure table is in TABLE_MAP")
 
         table_field_map = table_field.get('fields', None)
+
         if table_field_map is None:
             raise ValidationError(f"Field not present in TABLE_MAP for {table_name}")
         
         for key in table_field_map.keys():
             field = table_field_map.get(key, None)
+            datatype = field.get('datatype', None)
+
             if field is None:
                 raise ValidationError(f"Invalid field '{key}' provided for {table_name}")
             
-            if not set(field.keys()) <= set(self.default_field_keys):
-                raise ValidationError(f'Unknown keys {set(field.keys()) - set(self.default_field_keys)} provided')
+            if not datatype:
+                raise ValidationError(f'Datatype is required for creating a field in a table')
             
-            is_pk = field.get('is_pk', False)
+            default_field_keys = set(self.get_default_field_keys(datatype))
+            if not set(field.keys()) <= default_field_keys:
+                raise ValidationError(f'Unknown keys {set(field.keys()) - default_field_keys} provided for {key} in {table_name}')
+            
+            # if not isinstance(datatype, (str, int, datetime, uuid.UUID, dict)):
+            if not datatype in get_required_datatypes():
+                raise ValidationError(f'Datatype of type {datatype} is not valid\n\n Required datatypes: {get_required_datatypes()}')
+            
+            DATATYPE_MAP[key] = datatype
+            
+            is_pk = field.get('pk', False)
             if is_pk:
                 # if primary key value was earlier set
                 if PK_FEILD:
@@ -404,47 +538,46 @@ class DB:
                 
                 # set pk field
                 PK_FEILD = key
-
-            datatype = field.get('datatype', None)
-            if not datatype:
-                raise ValidationError(f'Datatype is required for creating a field in a table')
             
-            # if not isinstance(datatype, (str, int, datetime, uuid.UUID, dict)):
-            if not datatype in ('str', 'int', 'datetime', 'UUID', 'dict'):
-                raise ValidationError(f'Datatype of type {datatype} is not valid')
-            
-            DATATYPE_MAP[key] = datatype
-            
-            is_unique = field.get('is_unique', False)
+            is_unique = field.get('unique', False)
             if is_unique:
                 if key != PK_FEILD:
                     UNIQUE_FIELDS.append(key)
 
-            is_nullable = field.get('is_nullable', False)
+            is_nullable = field.get('null', False)
             if is_nullable:
                 if key == PK_FEILD:
                     raise ValidationError(f'Primary key field is a non nullable field {key}')
             else:
                 if key != PK_FEILD:
-                    NOT_NULL_FIELDS.append(key)
-                
-            fk = field.get('fk', None)
-            if fk is not None:
-                reference_model = fk.get('to', None)
+                    NOT_NULL_FIELDS.append(key)   
+            
+            if datatype == 'fk':
+                reference_model = field.get('to', None)
                 if reference_model not in self.table_map.keys():
                     raise ValidationError(f'Invalid model {reference_model} for {key}')
                 
+                fk_field_datatype = self.table_map[reference_model]['fields'].get(f'{reference_model}_id', {}).get('datatype', None)
+                if not fk_field_datatype:
+                    raise ValidationError(f'Datatype not found in fk field {field} @ {reference_model}')
                 contraint = {}
-                on_delete = fk.get('on_delete', None)
-                on_update = fk.get('on_update', None)
+                on_delete = field.get('on_delete', None)
+                on_update = field.get('on_update', None)
+                lazy = field.get('lazy', False)
 
                 contraint['on_delete'] = on_delete if on_delete is not None else 'no action'
                 contraint['on_update'] = on_update if on_update is not None else 'no action'
                 contraint['to'] = reference_model
-                
+                contraint['fk_datatype'] = fk_field_datatype
+                contraint['lazy'] = lazy
+
                 # map constraint to key
                 FK_FEILDS_MAP[key] = contraint
-        
+
+            # add pk field to not null and unique list
+            NOT_NULL_FIELDS.append(PK_FEILD)
+            UNIQUE_FIELDS.append(PK_FEILD)
+
         table_detail = {
             'pk_field': PK_FEILD,
             'datatype': DATATYPE_MAP,
@@ -477,6 +610,14 @@ class DB:
                 self.stderr.write(str(err))
                 self.stderr.flush()
 
+    def __add_table_relationship(self):
+        pass
+
+    def __get_pk_field_name(self, model):
+        for key, value in self.table_map[model]['fields'].items():
+            if value['pk']:
+                return key
+
     def drop_db(self):
         self.write(f'Dropping database {self._db}\n')
         logger.info(f'Dropping database {self._db}\n')
@@ -499,13 +640,23 @@ class InitDB(DB):
     current instance of a model
     '''
     
-    def __init__(self):
+    def __init__(self, **kwargs):
         is_test_environ = os.getenv('CURRENT_WORKING_DB_ENVIRON', '').lower() == 'test' 
         using = db_config.TEST_DB_NAME
         if not is_test_environ:
             using = db_config.DB_NAME
 
         super().__init__(using)
+        self._set_attribute_from_kwargs(**kwargs)
+        
+
+    def _set_attribute_from_kwargs(self, **kwargs):
+        model = self.model_name
+        field_map = get_table_map(model=model)
+        for key in field_map['fields'].keys():
+            if key in kwargs and key is not None:
+                print('Present:', key)
+                setattr(self, key, kwargs.get(key, None))
 
     @property
     def data(self):
