@@ -648,6 +648,18 @@ class InitDB(DB):
 
         super().__init__(using)
         self._set_attribute_from_kwargs(**kwargs)
+
+    def __setattr__(self, name, value):
+        from database.fields import Field
+
+        prev_attr = getattr(self, name, None)
+        if isinstance(prev_attr, Field):
+            prev_attr._set_data(value)
+
+        return super().__setattr__(name, value)
+    
+    def __get_field_class(self, class_name):
+        print(class_name)
         
 
     def _set_attribute_from_kwargs(self, **kwargs):
