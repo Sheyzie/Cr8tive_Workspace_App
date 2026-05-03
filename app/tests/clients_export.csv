@@ -1,2 +1,2 @@
-plan_id,client_id,plan_unit,expiration_date,discount,discount_type,vat,status,payment_status,created_at,updated_at
-263e23bf-9a80-4c53-b528-9da44a016dec,8c53c87b-2e56-47f2-b715-21cf082285a1,2,2026-05-01 08:50:59,0.1,percent,0.1,booked,pending,2026-04-29 08:50:59,2026-04-29 08:50:59
+plan_id,client_id,plan_unit,discount,discount_type,vat,expiration_date,status,payment_status,created_at,updated_at
+ff671212-85c1-4351-8149-27f85f9b2463,79737ea3-9a96-4fbf-bec5-3f65e5888c6a,2,10,percent,10,2026-05-03 20:23:14,booked,pending,2026-05-03 20:23:14,2026-05-03 20:23:14

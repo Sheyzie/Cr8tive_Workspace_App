@@ -2,6 +2,7 @@ import time
 import inspect
 from typing import Self
 from database.db import InitDB
+from database import fields
 from exceptions.exception import ValidationError
 from logs.utils import log_error_to_file, log_to_file
 from notification.notification import Notification
@@ -23,58 +24,58 @@ class AssignedClient(InitDB):
     '''
     model_name = 'assigned_client'
 
+    assigned_client_id = fields.UUIDField(pk=True, unique=True, null=False)
+    subscription_id = fields.ForeignKeyField(to = 'subscription', on_delete = 'cascade', on_update='no action')
+    client_id = fields.ForeignKeyField(to = 'client', on_delete = 'cascade', on_update='no action')
+    created_at = fields.DateTimeField(on_save = True)
+    updated_at = fields.DateTimeField(on_update = True)
+
     def __init__(self,  **kwargs):
-        super().__init__()
-        self.assigned_client_id = None
-        self.subscription_id: str = None
-        self.client_id: str = None
-        self. created_at: str = None
-        if kwargs:
-            self._get_from_kwargs(**kwargs)
-        try:
-            self._validate()
-        except ValidationError as err:
-            logger.exception(str(err.message))
-            self.write_error(str(err.message))
-            raise err
+        super().__init__(**kwargs)
+        # self.assigned_client_id = None
+        # self.subscription_id: str = None
+        # self.client_id: str = None
+        # self. created_at: str = None
+        # if kwargs:
+        #     self._get_from_kwargs(**kwargs)
+        # try:
+        #     self._validate()
+        # except ValidationError as err:
+        #     logger.exception(str(err.message))
+        #     self.write_error(str(err.message))
+        #     raise err
 
-    def _reset_fields(self):
-        self.assigned_client_id = None
-        self.subscription_id = None
-        self.client_id = None
-        self. created_at = None
+    # def _get_from_kwargs(self, **kwargs) -> None:
+    #     assigned_client_id = kwargs.get('assigned_client_id', 10)
+    #     if assigned_client_id:
+    #         self.assigned_client_id = assigned_client_id
 
-    def _get_from_kwargs(self, **kwargs) -> None:
-        assigned_client_id = kwargs.get('assigned_client_id', 10)
-        if assigned_client_id:
-            self.assigned_client_id = assigned_client_id
-
-        subscription_id = kwargs.get('subscription_id')
-        if subscription_id:
-            self.subscription_id = subscription_id
+    #     subscription_id = kwargs.get('subscription_id')
+    #     if subscription_id:
+    #         self.subscription_id = subscription_id
             
-        client_id = kwargs.get('client_id')
-        if client_id:
-            self.client_id = client_id
+    #     client_id = kwargs.get('client_id')
+    #     if client_id:
+    #         self.client_id = client_id
 
-        created_at = kwargs.get('created_at')
-        if created_at:
-            self.created_at = created_at
+    #     created_at = kwargs.get('created_at')
+    #     if created_at:
+    #         self.created_at = created_at
 
-    def _validate(self, check_id=False) -> None:
-        super()._validate(check_id)
+    # def _validate(self, check_id=False) -> None:
+    #     super()._validate(check_id)
 
-        self._verify_pk()
-        if check_id:
-            if not self.assigned_client_id:
-                raise ValidationError('Assigned client ID not set')
-            if not self._verify_pk():
-                raise ValidationError('Assigned User ID is not valid')
+    #     self._verify_pk()
+    #     if check_id:
+    #         if not self.assigned_client_id:
+    #             raise ValidationError('Assigned client ID not set')
+    #         if not self._verify_pk():
+    #             raise ValidationError('Assigned User ID is not valid')
 
-        if not self.subscription_id:
-            raise ValidationError('Subscription ID is required')
-        if not self.client_id:
-            raise ValidationError('Client ID is required')
+    #     if not self.subscription_id:
+    #         raise ValidationError('Subscription ID is required')
+    #     if not self.client_id:
+    #         raise ValidationError('Client ID is required')
         
     @classmethod
     def delete_user(cls, sub_id: str, client_id: str) -> None:

@@ -23,99 +23,34 @@ class Client(InitDB):
     model_name = 'client'
 
     client_id = fields.UUIDField(pk=True, unique=True, null=False)
-    first_name = fields.TextField()
-    last_name = fields.TextField()
+    first_name = fields.TextField(min_length=3)
+    last_name = fields.TextField(min_length=3)
     company_name = fields.TextField()
     email = fields.TextField()
-    phone = fields.TextField()
-    display_name = fields.TextField()
+    phone = fields.TextField(null = False)
+    display_name = fields.TextField(choice=['client', 'company'])
     created_at = fields.DateTimeField(on_save = True)
     updated_at = fields.DateTimeField(on_update = True)
 
     def __init__(self, using=None, **kwargs):
-        super().__init__()
-        # self.client_id: str = None
-        # self.first_name: str = None
-        # self.last_name: str = None
-        # self.company_name: str = None
-        # self.email: str = None
-        # self.phone: str = None
-        # self.query = ""
-        # self._display_name: str = "client"
-        # self.created_at: str = None
-        # self.updated_at: str = None
-        
-        # if kwargs:
-        #     self._get_from_kwargs(**kwargs)
+        super().__init__(**kwargs)
+
         try:
             self._validate()
         except ValidationError as err:
-            self._reset_fields()
+            # self._reset_fields()
             logger.exception(str(err.message))
             self.write_error(str(err.message))
             raise err
 
     def __str__(self):
         return f'{self.first_name} {self.last_name}' if self.first_name else self.company_name
-    
+        
     def get_display_name(self):
         if self._display_name == 'client':
             return f'{self.first_name} {self.last_name}'
         else:
             return self.company_name
-
-    def _reset_fields(self):
-        '''
-        Reset all field
-        '''
-        self.client_id = None
-        self.first_name = None
-        self.last_name = None
-        self.company_name = None
-        self.email = None
-        self.phone = None
-        self.query = ""
-        self._display_name = ""
-        self.created_at = None
-        self.updated_at = None
-
-    def _get_from_kwargs(self, **kwargs) -> None:
-
-        client_id = kwargs.get('client_id', None)
-        if client_id:
-            self.client_id = client_id
-
-        first_name = kwargs.get('first_name')
-        if first_name:
-            self.first_name = first_name.strip()
-
-        last_name = kwargs.get('last_name')
-        if last_name:
-            self.last_name = last_name.strip()
-
-        company_name = kwargs.get('company_name')
-        if company_name:
-            self.company_name = company_name.strip()
-
-        email = kwargs.get('email')
-        if email:
-            self.email = email.strip().lower()
-
-        phone = kwargs.get('phone')
-        if phone:
-            self.phone = phone.strip()
-
-        display_name = kwargs.get('display_name')
-        if display_name:
-            self._display_name = display_name
-
-        created_at = kwargs.get('created_at')
-        if created_at:
-            self.created_at = created_at
-
-        updated_at = kwargs.get('updated_at')
-        if updated_at:
-            self.updated_at = updated_at
 
     def _validate(self, check_id=False) -> None:
         super()._validate(check_id)
@@ -129,15 +64,15 @@ class Client(InitDB):
         if self.company_name and len(self.company_name) < 3:
             raise ValidationError('Company Name cannot be less than 3 characters')
 
-        # validating phone
-        if not self.phone:
-            raise ValidationError('Phone cannot be empty')
+        # # validating phone
+        # if not self.phone:
+        #     raise ValidationError('Phone cannot be empty')
         
-        if not self.phone.isdigit():
-            raise ValidationError('Phone cannot contain alphabet')
+        # if not self.phone.isdigit():
+        #     raise ValidationError('Phone cannot contain alphabet')
         
-        if self._display_name not in {'client', 'company'}:
-            raise ValidationError('Display name needs either [client, company]')
+        # if self._display_name not in {'client', 'company'}:
+        #     raise ValidationError('Display name needs either [client, company]')
         
         # validating check_id
         if check_id:

@@ -31,14 +31,14 @@ class Payment(InitDB):
     '''
     model_name = 'payment'
     payment_id = fields.UUIDField(pk=True, unique=True, null=False)
-    client = fields.ForeignKeyField(to = 'client', on_delete = 'cascade', on_update='no action')
-    subscription = fields.ForeignKeyField(to = 'subscription', on_delete = 'cascade', on_update='no action')
+    client_id = fields.ForeignKeyField(to = 'client', on_delete = 'cascade', on_update='no action')
+    subscription_id = fields.ForeignKeyField(to = 'subscription', on_delete = 'cascade', on_update='no action')
     amount = fields.IntegerField(default = 0)
     created_at = fields.DateTimeField(on_save = True)
     updated_at = fields.DateTimeField(on_update = True)
 
     def __init__(self, **kwargs):
-        super().__init__()
+        super().__init__(**kwargs)
 
         # self.payment_id = None
         # self.client: Client = None
@@ -47,50 +47,43 @@ class Payment(InitDB):
         # self.created_at = None
         # self.updated_at = None
         
-        if kwargs:
-            self._get_from_kwargs(**kwargs)
-        try:
-            self._validate()
-        except ValidationError as err:
-            self._reset_fields()
-            logger.exception(str(err.message))
-            self.write_error(str(err.message))
-            raise err
+        # if kwargs:
+        #     self._get_from_kwargs(**kwargs)
+        # try:
+        #     self._validate()
+        # except ValidationError as err:
+        #     self._reset_fields()
+        #     logger.exception(str(err.message))
+        #     self.write_error(str(err.message))
+        #     raise err
         
     def __str__(self) -> str:
         return f'₦{self.amount} paid for {self.subscription.plan.plan_name}'
 
-    def _reset_fields(self):
-        self.payment_id = None
-        self.client = None
-        self.subscription = None
-        self.amount = 0
-        self.created_at = None
+    # def _get_from_kwargs(self, **kwargs) -> None:
+    #     payment_id = kwargs.get('payment_id')
+    #     if payment_id:
+    #         self.payment_id = payment_id
 
-    def _get_from_kwargs(self, **kwargs) -> None:
-        payment_id = kwargs.get('payment_id')
-        if payment_id:
-            self.payment_id = payment_id
+    #     client = Client.fetch_one(client_id=kwargs.get('client_id'))
+    #     if client:
+    #         self.client = client
 
-        client = Client.fetch_one(client_id=kwargs.get('client_id'))
-        if client:
-            self.client = client
-
-        subscription = Subscription.fetch_one(subscription_id=kwargs.get('subscription_id'))
-        if subscription:
-            self.subscription = subscription
+    #     subscription = Subscription.fetch_one(subscription_id=kwargs.get('subscription_id'))
+    #     if subscription:
+    #         self.subscription = subscription
         
-        amount = kwargs.get('amount')
-        if amount:
-            self.amount = float(amount) / 100
+    #     amount = kwargs.get('amount')
+    #     if amount:
+    #         self.amount = float(amount) / 100
 
-        created_at = kwargs.get('created_at')
-        if created_at:
-            self.created_at = created_at
+    #     created_at = kwargs.get('created_at')
+    #     if created_at:
+    #         self.created_at = created_at
 
-        updated_at = kwargs.get('updated_at')
-        if updated_at:
-            self.updated_at = updated_at
+    #     updated_at = kwargs.get('updated_at')
+    #     if updated_at:
+    #         self.updated_at = updated_at
 
     def _validate(self, check_id=False) -> None:
         super()._validate(check_id)
@@ -101,13 +94,13 @@ class Payment(InitDB):
             if not self._verify_pk():
                 raise ValidationError('Payment ID is not valid')
 
-        if not self.client:
+        if not self.client_id:
             raise ValidationError('Client not set payment')
-        if not isinstance(self.client, Client):
+        if not isinstance(self.client_id, Client):
             raise ValidationError('Client is not valid on payment')
-        if not self.subscription:
+        if not self.subscription_id:
             raise ValidationError('Subscription not set on payment')
-        if not isinstance(self.subscription, Subscription):
+        if not isinstance(self.subscription_id, Subscription):
             raise ValidationError('Subscription is not valid on payment')
         if not self.amount:
             raise ValidationError('Payment amount is required')
@@ -138,11 +131,11 @@ class Payment(InitDB):
         WHERE subscription_id = ?;
         '''
 
-        value = (self.subscription.subscription_id,)
+        value = (self.subscription_id.subscription_id,)
 
         result = self.custom(query=query, values=value, result_only=True)
         amount = result[0]
-        return self.subscription.total_amount - (amount / 100) if amount else self.subscription.total_amount
+        return self.subscription_id.total_amount - (amount / 100) if amount else self.subscription_id.total_amount
    
        
 

@@ -9,7 +9,7 @@ from utils.import_file import ImportManager
 from database.fields import get_contraint_keys_by_field_name, get_field_from_datatype, get_required_datatypes
 from configs import db_config
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import uuid
 import time
@@ -57,6 +57,7 @@ def get_table_map(model=None):
     # file_path = os.path.join('database', 'tables.json')
     file_path = os.path.join('models')
     model_files = os.listdir(file_path)
+
     table_map = {}
     for model_file in model_files:
         field_map = {'fields': {}}
@@ -73,6 +74,7 @@ def get_table_map(model=None):
             if model and model == model_file:
                 return field_map
             table_map[model_file] = field_map
+    
     return table_map
 
 
@@ -186,6 +188,7 @@ class DB:
     show_sql = False
     stdout = sys.stdout
     stderr = sys.stderr
+    _state = 'init' # monitor init state: init || ready
 
     _db = None
 
@@ -195,6 +198,7 @@ class DB:
 
         self.allow_print = False
         self.show_sql = False
+        self._state = 'init'
 
         try:
             self.field_map = self._get_field_map()
@@ -202,7 +206,7 @@ class DB:
             self.field_map = self._get_field_map(self)
         
         conn = None
-        logger.info('Initializing database connection for {self.model_name}...')
+        logger.info(f'Initializing database connection for {self.model_name}...')
         self.write(f'Initializing database connection for {self.model_name}...')
         
         if not using:
@@ -221,7 +225,8 @@ class DB:
             conn.close()
             self._init_database_tables()
         except Exception as err:
-            conn.close()
+            if conn:
+                conn.close()
             logger.exception(f"Error connecting to {self._db} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
             self.write_error(f"Error connecting to {self._db} @ {__name__} 'line {inspect.currentframe().f_lineno}'\n")
             self.write_error(str(err))
@@ -324,7 +329,11 @@ class DB:
         except TypeError:
             self._set_table_name(self)
         # self.table_map = get_table_map()
-        field_map = self.table_map.get(self.model_name, None)
+
+        try:
+            field_map = self.table_map.get(self.model_name, None)
+        except AttributeError:
+            field_map = get_table_map(model=self.model_name)
 
         if field_map is None:
             logger.exception(f'No table match the name {self.model_name} ensure table is on TABLE_MAP')
@@ -340,7 +349,7 @@ class DB:
         tables = self.table_map.keys()
 
         for table_name in tables:
-            if table_name in ['assigned_client', 'backup', 'visit', 'log']:
+            if table_name in ['backup', 'log']:
                 continue
             self.create_tables(table_name=table_name)
         
@@ -645,36 +654,150 @@ class InitDB(DB):
         using = db_config.TEST_DB_NAME
         if not is_test_environ:
             using = db_config.DB_NAME
-
+        self._state = 'init'
         super().__init__(using)
         self._set_attribute_from_kwargs(**kwargs)
+
 
     def __setattr__(self, name, value):
         from database.fields import Field
 
-        prev_attr = getattr(self, name, None)
-        if isinstance(prev_attr, Field):
-            prev_attr._set_data(value)
+        prev_attr_field_instance = getattr(self, f'_{name}', None)
+
+        if isinstance(prev_attr_field_instance, Field):
+            prev_attr_field_instance._set_data(value, name)
 
         return super().__setattr__(name, value)
     
     def __get_field_class(self, class_name):
         print(class_name)
         
-
     def _set_attribute_from_kwargs(self, **kwargs):
+        ''' Set the field attributes to the model instance '''
+        from database.fields import Field, ForeignKeyField
+        
+        if kwargs == {}:
+            return
+            
         model = self.model_name
         field_map = get_table_map(model=model)
+        auto_field = ['datetime']
+
+        # check if model id is in kwargs if not assign new
+        if f'{model}_id' not in kwargs:
+            kwargs[f'{model}_id'] = self._get_id()        
+        
         for key in field_map['fields'].keys():
-            if key in kwargs and key is not None:
-                print('Present:', key)
-                setattr(self, key, kwargs.get(key, None))
+            # check if autofield data exist
+            datatype = field_map['fields'][key]['datatype']
+            null = field_map['fields'][key]['null']
+            
+            if datatype in auto_field:
+                match datatype:
+                    case 'datetime':
+                        kwargs[key] = self._process_auto_datetime(field_map['fields'][key], **kwargs)
+
+            if key is not None:
+                attr = getattr(self, key)
+                
+                if isinstance(attr, Field):
+                    # make field intance a private attr
+                    setattr(self, f'_{key}', attr)
+
+                _attr = getattr(self, f'_{key}')
+
+                if isinstance(_attr, ForeignKeyField):
+                    # save attr value if field instance exist as a private key
+                    instance = self._get_fk_instance(kwargs.get(key, None), key)
+                    setattr(self, key, instance)
+                    continue
+
+                if isinstance(_attr, Field):
+                    # save attr value if field instance exist as a private key
+                    setattr(self, key, kwargs.get(key, None))
+                    
 
     @property
     def data(self):
         return self._get_data()
+
+    def _get_fk_instance(self, data, attr_name):
+        model_name = attr_name.replace('_id', '')
+        module = import_module(f'models.{model_name}')
+        model_class_name = format_model_name(model_name)
+        model_class = getattr(module, model_class_name, None)
+        kwargs = {}
+        kwargs[attr_name] = data
+
+        instance = model_class.fetch_one(**kwargs)
+        if instance:
+            return instance
     
-    
+    def _process_auto_datetime(self, field_map_detail, **kwargs):
+        on_save = field_map_detail.get('on_save', False)
+        on_update = field_map_detail.get('on_update', False)
+        offset = field_map_detail.get('offset', False)
+        offset_type = field_map_detail.get('offset_type', '')
+        offset_by = field_map_detail.get('offset_by', None)
+        multiply_by = field_map_detail.get('multiply_by', None)
+
+        offset_by_value = offset_by
+        if offset_by and isinstance(offset_by, str):
+            offset_by_value = self._get_attribute_value_from_string_path(offset_by, **kwargs)
+
+        multiply_by_value = multiply_by
+        if multiply_by and isinstance(multiply_by, str):
+            multiply_by_value = self._get_attribute_value_from_string_path(multiply_by, **kwargs)
+            
+        if on_save or on_update:
+            current_date = datetime.now()
+            offset_data = {}
+            if offset:
+                offset_data[offset_type] = int(offset_by_value) * int(multiply_by_value)
+
+                current_date = current_date + timedelta(**offset_data)
+            date_value = current_date.strftime('%Y-%m-%d %H:%M:%S')
+            return date_value
+
+    def _get_attribute_value_from_string_path(self, string_path, **kwargs):
+        from database.fields import Field
+
+        if not isinstance(string_path, str):
+            raise Exception('String path need to be a dot separated string folowing "model.attr"')
+        
+        string_path_list = string_path.split('.')
+        model = string_path_list.pop(0)
+        if model == 'self':
+            base_model = kwargs
+        else:
+            module = import_module(f'models.{model}')
+            model_class_name = format_model_name(model)
+            base_model_class = getattr(module, model_class_name, None)
+            data = {}
+            data[f'{model}_id'] = kwargs.get(f'{model}_id', None)
+            base_model = base_model.fetch_one(**data)
+        if not base_model:
+            raise Exception(f'Model class {model_class_name} of {string_path} not found')
+        
+        while len(string_path_list) != 0:
+            current_attr = string_path_list.pop(0)
+
+            if isinstance(base_model, dict):
+                value = base_model.get(current_attr, None)
+                if value is None or isinstance(value, (int, str, float)):
+                    return value
+            else:    
+                if hasattr(base_model, current_attr):
+                    value = getattr(base_model, current_attr)
+                    if isinstance(value, (int, str, float)):
+                        return value
+                    
+                    if isinstance(value, Field):
+                        if isinstance(value.data, (int, str, float)):
+                            return value.data
+                    
+            base_model = current_attr
+
     def _validate(self, check_id=False) -> None:
         ''' Validate Fields Based on validation set '''
         
@@ -684,42 +807,36 @@ class InitDB(DB):
         fields = self.table_map[self.model_name]['fields']
 
         for field, config in fields.items():
-            validations = config.get('validation', [])
-            datatype = config.get('datatype')
-            is_pk = config.get('is_pk', False)
+            if hasattr(self, f'_{field}'):
+                field_intance = getattr(self, f'_{field}')
+                field_name = get_field_from_datatype(field_intance.field_type)
+                contraints = get_contraint_keys_by_field_name(field_name)
+        
+                for contraint in contraints:
+                    if not check_id and contraint == 'pk':
+                        continue
 
-            if is_pk and not check_id:
-                continue
-
-            for validation in validations:
-                validator = VALIDATOR_MAP.get(datatype, {}).get('validators', {}).get(validation['name'])
-
-                if not validator:
-                    raise ValidationError(f"Validator {validation['name']} not found")
-
-                value = getattr(self, field, None)
-                result = validator(value, validation.get('value'))
-
-                if result != validation.get('exp_value'):
-                    raise ValidationError(f"{field} failed {validation['name']}")
+                    if hasattr(field_intance, contraint):
+                        value = getattr(self, field)
+                        try: 
+                            field_intance._validate_by_contraint(contraint, value)
+                        except Exception as err:
+                            raise ValidationError(str(err))
     
     def _get_pk_field(self):
         '''
         returns the fields contraint for the primary key 
         '''
-        try:
-            field_map = self._get_field_map()
-        except TypeError:
-            field_map = self._get_field_map(self)
 
         model = self.model_name
+        field_map = get_table_map()[model]['fields']
         model_fields = list(field_map.keys())
 
         data = {}
 
         for key in model_fields:
             field_obj = field_map.get(key, {})
-            is_pk = field_obj.get('is_pk', False)
+            is_pk = field_obj.get('pk', False)
             
             if is_pk:
                 data = {
@@ -744,10 +861,15 @@ class InitDB(DB):
         '''
         A serializer for the current models instance
         '''
+        from database.fields import Field, ForeignKeyField, DateTimeField
+
         try:
             field_map = self._get_field_map()
         except TypeError:
             field_map = self._get_field_map(self)
+
+        # run validations
+        self._validate()
 
         model = self.model_name
         model_fields = list(field_map.keys())
@@ -756,113 +878,97 @@ class InitDB(DB):
         
         for field in model_fields: # map thru each field(column name) from TABLE_MAP
             # format field to change fk(subscription_id becomes subscription)
-            formatted_field = field if field[-3:] != '_id' or field == f'{model.lower()}_id' else field[:-3]
 
-            if hasattr(self, formatted_field):
-                value = getattr(self, formatted_field)
-                
-                if value is not None and not isinstance(value, InitDB):
+            if hasattr(self, field):
+                field_instance = getattr(self, f'_{field}', None)
+                # print(f'{field}:', field_instance.__class__.__name__)
+                if not field_instance:
+                    data[field] = field_instance
+                    continue
+
+                if isinstance(field_instance, ForeignKeyField):
+                    value = getattr(self, field, None)
+                    data[field] = getattr(value, field)
+                    continue
+
+                if isinstance(field_instance, Field):
+                    value = getattr(self, field, None)
                     data[field] = value
+                    continue
+        return data
 
-                if isinstance(value, InitDB):
-                    fk_value = getattr(value, field, None)
-                    if fk_value is not None:
-                        data[field] = fk_value
+    # def _is_valid_data(self, data, is_new=False):
+    #     '''
+    #     Check if model data meet the criteria of the field contraint
+    #     '''
+    #     try:
+    #         field_map = self._get_field_map()
+    #     except TypeError:
+    #         field_map = self._get_field_map(self)
 
-            # check if field is private field
-            if hasattr(self, f'_{formatted_field}'):
-                value = getattr(self, f'_{formatted_field}')
-                if value is not None and not isinstance(value, InitDB):
-                    data[field] = value
+    #     model = self.model_name
+    #     model_fields = list(field_map.keys())
+    #     print(data)
+    #     pk_value = None
+    #     unique_values = []
 
-                if isinstance(value, InitDB):
-                    fk_value = getattr(value, field, None)
-                    if fk_value is not None:
-                        data[field] = fk_value
+    #     for field in model_fields:
+    #         field_obj = field_map.get(field, {})
+    #         is_pk = field_obj.get('pk', False)
+    #         is_unique = field_obj.get('unique', False)
+    #         is_nullable = field_obj.get('null', True)
+    #         fk = field_obj.get('fk', None)
 
-            if field[-3:] == '_id':
-                value = getattr(self, field, None)
-                if value is not None:
-                    data[field] = value
+    #         value = data.get(field, None)
 
-        # validate fields
-        is_valid = self._is_valid_data(data, is_new=is_new) 
-        if is_valid:
-            return data
-        return None
-
-    def _is_valid_data(self, data, is_new=False):
-        '''
-        Check if model data meet the criteria of the field contraint
-        '''
-        try:
-            field_map = self._get_field_map()
-        except TypeError:
-            field_map = self._get_field_map(self)
-
-        model = self.model_name
-        model_fields = list(field_map.keys())
-
-        pk_value = None
-        unique_values = []
-
-        for field in model_fields:
-            field_obj = field_map.get(field, {})
-            is_pk = field_obj.get('is_pk', False)
-            is_unique = field_obj.get('is_unique', False)
-            is_nullable = field_obj.get('is_nullable', True)
-            fk = field_obj.get('fk', None)
-
-            value = data.get(field, None)
-
-            # check pk for existing record
-            if not is_new:
-                if is_pk:
-                    # if primary key value was earlier set
-                    if pk_value:
-                        raise ValidationError(f'Primary key value already set to {pk_value}')
+    #         # check pk for existing record
+    #         if not is_new:
+    #             if is_pk:
+    #                 # if primary key value was earlier set
+    #                 if pk_value:
+    #                     raise ValidationError(f'Primary key value already set to {pk_value}')
                     
-                    # get pk value
-                    pk_value = value
-                    if not pk_value:
-                        raise ValidationError(f'Primary key value is not nullable for field {field}')
+    #                 # get pk value
+    #                 pk_value = value
+    #                 if not pk_value:
+    #                     raise ValidationError(f'Primary key value is not nullable for field {field}')
                     
-                    # check if pk value is unique
-                    if pk_value in unique_values:
-                        raise ValidationError(f'Primary key: {pk_value}  has to be unique')
+    #                 # check if pk value is unique
+    #                 if pk_value in unique_values:
+    #                     raise ValidationError(f'Primary key: {pk_value}  has to be unique')
                     
-                    unique_values.append(pk_value)
+    #                 unique_values.append(pk_value)
         
-            if is_unique:
-                # get unique value
-                unique_value = value
-                if not unique_value:
-                    if not is_pk and not is_new:
-                        raise ValidationError(f'Value is required for field with unique contraint {field}')
+    #         if is_unique:
+    #             # get unique value
+    #             unique_value = value
+    #             if not unique_value:
+    #                 if not is_pk and not is_new:
+    #                     raise ValidationError(f'Value is required for field with unique contraint {field}')
                 
-                # check if pk value is unique
-                if unique_value in unique_values:
-                    # pk field field will vallidate it's own uniqueness above
-                    if not is_pk:
-                        raise ValidationError(f'UNIQUE CONSTRAINT: {unique_value} already exist in table')
+    #             # check if pk value is unique
+    #             if unique_value in unique_values:
+    #                 # pk field field will vallidate it's own uniqueness above
+    #                 if not is_pk:
+    #                     raise ValidationError(f'UNIQUE CONSTRAINT: {unique_value} already exist in table')
                 
-                if is_new and not is_pk: # inform if data is new entry and field is not pk field
-                    self._check_unique_value_in_db(field, value)
+    #             if is_new and not is_pk: # inform if data is new entry and field is not pk field
+    #                 self._check_unique_value_in_db(field, value)
                 
-                unique_values.append(unique_value)
+    #             unique_values.append(unique_value)
                 
 
-            if not is_nullable:
-                if not value:
-                    if not is_pk and not is_new:
-                        raise ValidationError(f'Value is required for non nullable field {field}')
+    #         if not is_nullable:
+    #             if not value:
+    #                 if not is_pk and not is_new:
+    #                     raise ValidationError(f'Value is required for non nullable field {field}')
 
-            if fk is not None:
-                reference_model = fk.get('to', None)
-                if reference_model not in self.table_map.keys():
-                    raise ValidationError(f'Invalid model {reference_model} for {field}')
+    #         if fk is not None:
+    #             reference_model = fk.get('to', None)
+    #             if reference_model not in self.table_map.keys():
+    #                 raise ValidationError(f'Invalid model {reference_model} for {field}')
 
-            return True 
+    #         return True 
                 
     def _get_id(self) -> str | None:
         '''
@@ -894,10 +1000,13 @@ class InitDB(DB):
                     if not entry:
                         id_exist = False
                 except Exception as err:
+                    cursor.close()
+                    self.conn.close()
                     logging.exception(str(err))
                     sys.stderr.write(f'\n{err}\n')
                     sys.stderr.flush()
-                    return None
+                    raise err
+            
             return id_string
 
     def _check_unique_value_in_db(self, field, value):
@@ -957,9 +1066,11 @@ class InitDB(DB):
         # handle date
         for key in model_fields:
             field_obj = field_map.get(key, {})
-            is_pk = field_obj.get('is_pk', False)
-            is_date = field_obj.get('is_date', False)
-            auto_update = field_obj.get('auto_update', 'never')
+            is_pk = field_obj.get('pk', False)
+            datatype = field_obj.get('datatype', False)
+            is_date = datatype == 'datetime'
+            on_update = field_obj.get('on_update', False)
+            on_save = field_obj.get('on_save', False)
 
             value = validated_data.get(key, None)
             
@@ -970,35 +1081,30 @@ class InitDB(DB):
 
             # check if date field require auto update
             if is_date:
-                match auto_update:
-                    case 'never':
-                        validated_data[key] = value
-                    case 'save':
-                        validated_data.pop(key, None)
-                        if not update:
-                            validated_data[key] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-                    case 'update':
-                        validated_data[key] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+                if on_update and not value:
+                    validated_data[key] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+                elif on_save and not update:
+                    validated_data[key] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+                else:
+                    validated_data[key] = value              
 
         if not update:
+
             # get primary key string
             uuid_string = self._get_id()
 
             # add key to object
-            data = {
-                pk_key: uuid_string,
-                **validated_data
-            }
-
-            # if model has no primary key
-            if not pk_key:
+            if pk_key not in validated_data:
                 data = {
-                    f'{model.lower()}_id': uuid_string,
+                    pk_key: uuid_string,
                     **validated_data
                 }
+                # set id to object
+                setattr(self, pk_key, uuid_string)
+            else:
+                data = validated_data
             
-            # set id to object
-            setattr(self, pk_key, uuid_string)
+            
 
             # please ignore the tab sapce \t: it is used to make the query readable on terminal
             query = f'''
@@ -1040,9 +1146,11 @@ class InitDB(DB):
                 self.stderr.flush()
                 self.conn.close()
                 raise err
+            finally:
+                return self
 
     def save(self):
-        self.__save_to_db()
+        return self.__save_to_db()
 
     def update(self):
         self.__save_to_db(update=True)
@@ -1059,11 +1167,12 @@ class InitDB(DB):
         pk_key = ''
         for key in model_fields:
             field_obj = field_map.get(key, {})
-            is_pk = field_obj.get('is_pk', False)
+            is_pk = field_obj.get('pk', False)
 
 
             if is_pk:
                 pk_key = key
+                break
 
         try:
             self._connect_to_db()
@@ -1093,6 +1202,21 @@ class InitDB(DB):
             self.stderr.flush()
             self.conn.close()
             raise err
+
+    def _reset_fields(self):
+        ''' Reset all model fields '''
+
+        from database.fields import Field
+
+        model = self.model_name
+        field_map = get_table_map(model=model)
+        
+        for key in field_map['fields'].keys():
+
+            prev_attr_field_intance = getattr(self, f'_{key}', None)
+            
+            if isinstance(prev_attr_field_intance, Field):
+                prev_attr_field_intance._reset_data()
 
     @classmethod
     def fetch_one(cls, **kwargs) -> Self | None:
@@ -1157,6 +1281,7 @@ class InitDB(DB):
         '''
         Get all items from the model.
         '''
+
         try:
             field_map = cls._get_field_map()
         except TypeError:
@@ -1246,7 +1371,8 @@ class InitDB(DB):
         # get date like keys for wild cards
         for key in model_fields:
             field_obj = field_map.get(key, {})
-            is_date = field_obj.get('is_date', False)
+            datatype = field_obj.get('datatype', False)
+            is_date = datatype == 'datetime'
             
             if is_date:
                 date_like_keys.append(key)
@@ -1293,8 +1419,6 @@ class InitDB(DB):
         try:
             cursor.execute(query, values)
             result = cursor.fetchall()
-            cursor.close()
-            conn.close()
 
             if not len(result) > 0:
                 return []
@@ -1310,12 +1434,14 @@ class InitDB(DB):
             
             return instance_list
         except Exception as err:
-            conn.close()
             logger.exception(f'Error fetching {model}')
             cls.stderr.write(str(err))
             cls.stderr.flush()
 
             raise err
+        finally:
+            cursor.close()
+            conn.close()
     
     @classmethod
     def custom(cls, **kwargs) -> Self | None:

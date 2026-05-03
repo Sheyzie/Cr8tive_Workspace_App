@@ -38,20 +38,21 @@ class Subscription(InitDB):
     '''
     model_name = 'subscription'
     subscription_id = fields.UUIDField(pk=True, unique=True, null=False)
-    plan = fields.ForeignKeyField(to = 'plan', on_delete = 'cascade', on_update='no action')
-    client = fields.ForeignKeyField(to = 'client', on_delete = 'cascade', on_update='no action')
-    plan_unit = fields.IntegerField(default = 0)
+    plan_id = fields.ForeignKeyField(to = 'plan', on_delete = 'cascade', on_update='no action')
+    client_id = fields.ForeignKeyField(to = 'client', on_delete = 'cascade', on_update='no action')
+    plan_unit = fields.IntegerField(default = 1, min_value = 1)
     discount = fields.IntegerField(default = 0)
     discount_type = fields.TextField(choice=['percent', 'value'])
     vat = fields.IntegerField(default = 0)
-    expiration_date = fields.DateTimeField()
+    expiration_date = fields.DateTimeField(on_save = True, offset = True, offset_type = 'days', offset_by = 30, multiply_by = 'self.plan_unit')
     status = fields.TextField(choice=['booked', 'running', 'expired', 'exhausted'])
     payment_status = fields.TextField(choice=['pending', 'partial', 'paid', 'free'])
     created_at = fields.DateTimeField(on_save = True)
     updated_at = fields.DateTimeField(on_update = True)
 
     def __init__(self, **kwargs):
-        super().__init__()
+        super().__init__(**kwargs)
+        self.assigned_users = []
         # self.subscription_id: str = None
         # self.plan: Plan = None
         # self.client: Client = None
@@ -82,26 +83,26 @@ class Subscription(InitDB):
     @property
     def usage(self):
         # {'hourly', 'daily', 'weekly', 'monthly', 'half-year', 'yearly'}
-        match self.plan.plan_type:
+        match self.plan_id.plan_type:
             case 'hourly':
-                return (self.plan.duration / 24) * self.plan_unit
+                return (self.plan_id.duration / 24) * self.plan_unit
             case 'daily':
-                return (self.plan.duration * self.plan_unit) + self.plan.guest_pass
+                return (self.plan_id.duration * self.plan_unit) + self.plan_id.guest_pass
             case 'weekly':
-                return ((self.plan.duration * 7) * self.plan_unit) + self.plan.guest_pass
+                return ((self.plan_id.duration * 7) * self.plan_unit) + self.plan_id.guest_pass
             case 'monthly':
-                return ((self.plan.duration * 30) * self.plan_unit) + self.plan.guest_pass
+                return ((self.plan_id.duration * 30) * self.plan_unit) + self.plan_id.guest_pass
             case 'half-year':
-                return ((self.plan.duration * 183) * self.plan_unit) + self.plan.guest_pass
+                return ((self.plan_id.duration * 183) * self.plan_unit) + self.plan_id.guest_pass
             case 'yearly':
-                return ((self.plan.duration * 365) * self.plan_unit) + self.plan.guest_pass
+                return ((self.plan_id.duration * 365) * self.plan_unit) + self.plan_id.guest_pass
             case _:
                 # return daily
-                return (self.plan.duration * self.plan_unit) + self.plan.guest_pass
+                return (self.plan_id.duration * self.plan_unit) + self.plan_id.guest_pass
             
     @property
     def subtotal(self):
-        return self.plan.price * self.plan_unit
+        return self.plan_id.price * self.plan_unit
     
     @property
     def discount_amount(self):
@@ -138,117 +139,45 @@ class Subscription(InitDB):
     
     def __str__(self):
         return f'Subscription for {self.plan.plan_name} by {self.client.get_display_name()}'
-    
-    def _reset_fields(self):
-        self.subscription_id: str = None
-        self.plan = None
-        self.client = None
-        self.plan_unit: int = 0
-        self.expiration_date: str = None
-        self.discount = 0
-        self.discount_type = ''
-        self.vat = 0
-        self.status: str = None
-        self.payment_status: str = None
-        self.created_at: str = None
-        self.updated_at: str = None
-
-    def _get_from_kwargs(self, **kwargs) -> None:
-        subscription_id = kwargs.get('subscription_id')
-        if subscription_id:
-            self.subscription_id = subscription_id
-
-        plan = Plan.fetch_one(plan_id=kwargs.get('plan_id'))
-        if plan:
-            self.plan = plan
-
-        client = Client.fetch_one(client_id=kwargs.get('client_id'))
-        if client:
-            self.client = client
-
-        plan_unit = kwargs.get('plan_unit')
-        if plan_unit:
-            self.plan_unit = plan_unit
-
-        expiration_date = kwargs.get('expiration_date')
-        if expiration_date:
-            self.expiration_date = expiration_date
-
-        discount = kwargs.get('discount')
-        if discount:
-            self.discount = float(discount) / 100
-
-        discount_type = kwargs.get('discount_type')
-        if discount_type and discount_type in {'percent', 'fixed'}:
-            self.discount_type = discount_type
-
-        vat = kwargs.get('vat')
-        if vat:
-            self.vat = float(vat) / 100
-
-        status = kwargs.get('status', 'booked')
-        if status:
-            self.status = status
-
-        payment_status = kwargs.get('payment_status')
-        if payment_status:
-            self.payment_status = payment_status
-
-        assigned_users_id = kwargs.get('assigned_users_id', [])
-        assigned_users = []
-        for client_id in assigned_users_id:
-            client = Client.fetch_one(client_id)
-            if client:
-                assigned_users.append(client)
-        if len(assigned_users) > 0:
-            self.assigned_users = assigned_users
-
-        created_at = kwargs.get('created_at')
-        if created_at:
-            self.created_at = created_at
-
-        updated_at = kwargs.get('updated_at')
-        if updated_at:
-            self.updated_at = updated_at
-
+ 
     def _validate(self, check_id=False) -> None:
         super()._validate(check_id)
 
         STATUS_TYPE = ['booked', 'running', 'expired', 'exhausted']
         PAYMENT_STATUS_TYPE = ['pending', 'partial', 'paid', 'free']
 
-        if not self.plan:
-            raise ValidationError('Plan is not set on subscription')
-        if not isinstance(self.plan, Plan):
+        # if not self.plan_id:
+        #     raise ValidationError('Plan is not set on subscription')
+        if not isinstance(self.plan_id, Plan):
             raise ValidationError('Plan is not valid on subscription')
-        if not self.client:
+        if not self.client_id:
             raise ValidationError('Client not set on subscription')
-        if not isinstance(self.client, Client):
+        if not isinstance(self.client_id, Client):
             raise ValidationError('Client is not valid on subscription')
-        if not isinstance(self.plan_unit, (int, float)):
-            raise ValidationError('Plan unit need to be a number')
-        if not self.plan_unit > 0:
-            raise ValidationError('Plan unit can not be less than 1')
-        if not self.discount:
-            raise ValidationError('Payment discount not set on subscription')
-        if self.discount < 0:
-            raise ValidationError('Payment discount cannot be less than zero')
-        if not isinstance(self.discount, (int, float)):
-            raise ValidationError('Payment discount cannot be letters')
-        if self.discount_type not in {'percent', 'fixed'}:
-            raise ValidationError('Payment discount type choices are [percent, fixed]')
-        if not self.vat:
-            raise ValidationError('Payment vat is required')
-        if self.vat < 0:
-            raise ValidationError('Payment vat cannot be less than zero')
-        if not isinstance(self.vat, (int, float)):
-            raise ValidationError('Payment vat cannot be letters')
-        if not self.status or self.status not in STATUS_TYPE:
-            raise ValidationError(f'Status is required and must include {STATUS_TYPE}')
-        if not self.payment_status or self.payment_status not in PAYMENT_STATUS_TYPE:
-            raise ValidationError(f'Payment status is required. choice {PAYMENT_STATUS_TYPE}')
-        if len(self.assigned_users) > 0 and not all(isinstance(u, Client) for u in self.assigned_users):
-                raise ValidationError('Assigned users need to be a list of valid client')
+        # if not isinstance(self.plan_unit, (int, float)):
+        #     raise ValidationError('Plan unit need to be a number')
+        # if not self.plan_unit > 0:
+        #     raise ValidationError('Plan unit can not be less than 1')
+        # if not self.discount:
+        #     raise ValidationError('Payment discount not set on subscription')
+        # if self.discount < 0:
+        #     raise ValidationError('Payment discount cannot be less than zero')
+        # if not isinstance(self.discount, (int, float)):
+        #     raise ValidationError('Payment discount cannot be letters')
+        # if self.discount_type not in {'percent', 'fixed'}:
+        #     raise ValidationError('Payment discount type choices are [percent, fixed]')
+        # if not self.vat:
+        #     raise ValidationError('Payment vat is required')
+        # if self.vat < 0:
+        #     raise ValidationError('Payment vat cannot be less than zero')
+        # if not isinstance(self.vat, (int, float)):
+        #     raise ValidationError('Payment vat cannot be letters')
+        # if not self.status or self.status not in STATUS_TYPE:
+        #     raise ValidationError(f'Status is required and must include {STATUS_TYPE}')
+        # if not self.payment_status or self.payment_status not in PAYMENT_STATUS_TYPE:
+        #     raise ValidationError(f'Payment status is required. choice {PAYMENT_STATUS_TYPE}')
+        # if len(self.assigned_users) > 0 and not all(isinstance(u, Client) for u in self.assigned_users):
+        #         raise ValidationError('Assigned users need to be a list of valid client')
             
         
         if check_id:
@@ -277,20 +206,20 @@ class Subscription(InitDB):
         self.assigned_users = assigned_users
 
     def _set_expiration(self) -> None:
-        match(self.plan.plan_type):
+        match(self.plan_id.plan_type):
             case 'hourly':
-                expiration_date = datetime.now() + timedelta(hours=(self.plan.duration * self.plan_unit))
+                expiration_date = datetime.now() + timedelta(hours=(self.plan_id.duration * self.plan_unit))
                 
             case 'daily':
-                expiration_date = datetime.now() + timedelta(days=(self.plan.duration * self.plan_unit))
+                expiration_date = datetime.now() + timedelta(days=(self.plan_id.duration * self.plan_unit))
             case 'weekly':
-                expiration_date = datetime.now() + timedelta(weeks=(self.plan.duration * self.plan_unit))
+                expiration_date = datetime.now() + timedelta(weeks=(self.plan_id.duration * self.plan_unit))
             case 'monthly':
-                expiration_date = datetime.now() + timedelta(days=(self.plan.duration * self.plan_unit * 30))
+                expiration_date = datetime.now() + timedelta(days=(self.plan_id.duration * self.plan_unit * 30))
             case 'half-year':
-                expiration_date = datetime.now() + timedelta(days=(self.plan.duration * self.plan_unit * 183))
+                expiration_date = datetime.now() + timedelta(days=(self.plan_id.duration * self.plan_unit * 183))
             case 'yearly':
-                expiration_date = datetime.now() + timedelta(days=(self.plan.duration * self.plan_unit * 365))
+                expiration_date = datetime.now() + timedelta(days=(self.plan_id.duration * self.plan_unit * 365))
         self.expiration_date = expiration_date.strftime('%Y-%m-%d %H:%M:%S')
 
     def save(self):
@@ -320,7 +249,7 @@ class Subscription(InitDB):
                 self.assigned_users.remove(client)
 
     def is_user(self, client: Client) -> bool:
-        if self.client.client_id == client.client_id:
+        if self.client_id.client_id == client.client_id:
             return True
         
         for user in self.assigned_users:

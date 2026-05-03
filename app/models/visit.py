@@ -1,6 +1,7 @@
 import time
 import inspect
 from database.db import InitDB
+from database import fields
 from exceptions.exception import ValidationError, GenerationError
 from logs.utils import log_error_to_file, log_to_file
 from helpers.export_helper import export_helper
@@ -22,74 +23,80 @@ class Visit(InitDB):
             field_name: value
         }
     '''
+    model_name = 'visit'
+
+    visit_id = fields.UUIDField(pk=True, unique=True, null=False)
+    subscription_id = fields.ForeignKeyField(to = 'subscription', on_delete = 'cascade', on_update='no action')
+    client_id = fields.ForeignKeyField(to = 'client', on_delete = 'cascade', on_update='no action')
+    timestamp = fields.DateTimeField(on_save = True)
 
     def __init__(self, **kwargs):
-        super().__init__()
-        self.visit_id: str = None
-        self.subscription: str = None
-        self.client: str = None
-        self.timestamp: str = None
-        if kwargs:
-            self._get_from_kwargs(**kwargs)
-        try:
-            self._validate()
-        except ValidationError as err:
-            self._reset_fields()
-            logger.exception(str(err.message))
-            self.write_error(str(err.message))
-            raise err
+        super().__init__(**kwargs)
+        # self.visit_id: str = None
+        # self.subscription: str = None
+        # self.client: str = None
+        # self.timestamp: str = None
+        # if kwargs:
+        #     self._get_from_kwargs(**kwargs)
+        # try:
+        #     self._validate()
+        # except ValidationError as err:
+        #     self._reset_fields()
+        #     logger.exception(str(err.message))
+        #     self.write_error(str(err.message))
+        #     raise err
 
     def __str__(self):
-        return f'{self.client.get_display_name()} visited on {self.timestamp}'
+        return f'{self.client_id.get_display_name()} visited on {self.timestamp}'
 
-    def _reset_fields(self):
-        self.subscription: str = None
-        self.client: str = None
-        self.timestamp: str = None
+    # def _reset_fields(self):
+    #     self.subscription: str = None
+    #     self.client: str = None
+    #     self.timestamp: str = None
 
-    def _get_from_kwargs(self, **kwargs) -> None:
-        from .client import Client
-        from .subscription import Subscription
+    # def _get_from_kwargs(self, **kwargs) -> None:
+    #     from .client import Client
+    #     from .subscription import Subscription
 
-        visit_id = kwargs.get('visit_id')
-        if visit_id:
-            self.visit_id = visit_id
+    #     visit_id = kwargs.get('visit_id')
+    #     if visit_id:
+    #         self.visit_id = visit_id
 
-        client = Client.fetch_one(client_id=kwargs.get('client_id'))
+    #     client = Client.fetch_one(client_id=kwargs.get('client_id'))
         
-        if client:
-            self.client = client
+    #     if client:
+    #         self.client = client
 
-        subscription = Subscription.fetch_one(subscription_id=kwargs.get('subscription_id'))
-        if subscription:
-            self.subscription = subscription
+    #     subscription = Subscription.fetch_one(subscription_id=kwargs.get('subscription_id'))
+    #     if subscription:
+    #         self.subscription = subscription
 
-        timestamp = kwargs.get('timestamp')
-        if timestamp:
-            self.timestamp = timestamp
+    #     timestamp = kwargs.get('timestamp')
+    #     if timestamp:
+    #         self.timestamp = timestamp
 
-    def _validate(self, check_id=False) -> None:
-        super()._validate(check_id)
+    # def _validate(self, check_id=False) -> None:
+    #     super()._validate(check_id)
 
-        from .client import Client
-        from .subscription import Subscription
+    #     from .client import Client
+    #     from .subscription import Subscription
 
-        if check_id:
-            if not self.visit_id:
-                raise ValidationError('Visit ID not set')
-            if not self._verify_pk():
-                raise ValidationError('Visit ID is not valid')
-            if not self.timestamp:
-                raise ValidationError('Timestamp not set on visit')
+    #     if check_id:
+    #         if not self.visit_id:
+    #             raise ValidationError('Visit ID not set')
+    #         if not self._verify_pk():
+    #             raise ValidationError('Visit ID is not valid')
+    #         if not self.timestamp:
+    #             raise ValidationError('Timestamp not set on visit')
 
-        if not self.client:
-            raise ValidationError('Client not set on visit')
-        if not isinstance(self.client, Client):
-            raise ValidationError('Client is not valid on visit')
-        if not self.subscription: 
-            raise ValidationError('Subscription not set on visit')
-        if not isinstance(self.subscription, Subscription):
-            raise ValidationError('Subscription is not valid on visit')
+    #     if not self.client:
+    #         raise ValidationError('Client not set on visit')
+    #     if not isinstance(self.client, Client):
+    #         raise ValidationError('Client is not valid on visit')
+    #     if not self.subscription: 
+    #         raise ValidationError('Subscription not set on visit')
+    #     if not isinstance(self.subscription, Subscription):
+    #         raise ValidationError('Subscription is not valid on visit')
   
     @classmethod
     def get_client_visits_per_sub(cls, sub_id: str, get_count: bool=False, col_names=False, result_only=False) -> list:

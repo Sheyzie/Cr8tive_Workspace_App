@@ -485,7 +485,7 @@ class TestSubscription(BaseTestClass):
 
         second_subscription = Subscription(**sub_obj2)
         second_subscription.save()
-        
+
         refetch_subscription = Subscription.fetch_one(subscription_id=new_subscription.subscription_id)
 
         assert new_subscription.subscription_id == refetch_subscription.subscription_id
@@ -665,7 +665,7 @@ class TestPayment(BaseTestClass):
         assert one_payment.amount == fetched_payments[1].amount
 
 
-        filter_by_amount = Payment.filter(amount=(one_payment.amount * 100))
+        filter_by_amount = Payment.filter(amount=(one_payment.amount))
         assert len(filter_by_amount) > 0
 
         filter_by_date = Payment.filter(created_at=self.current_year)
@@ -688,7 +688,7 @@ class TestPayment(BaseTestClass):
     
         one_payment_refetched = Payment.fetch_one(payment_id=one_payment.payment_id)
 
-        assert one_payment_refetched.amount == one_payment.amount / 100
+        assert one_payment_refetched.amount == one_payment.amount
 
         self.write('\nTest 3: Passed ✅\n')
         
@@ -771,13 +771,13 @@ class TestVisit(BaseTestClass):
         
         assert fetched_subscription is not None
 
-        fetched_subscription.log_client_to_visit(fetched_subscription.client.client_id)
+        fetched_subscription.log_client_to_visit(fetched_subscription.client_id.client_id)
         
         visits = Visit.get_client_visits_per_sub(fetched_subscription.subscription_id, result_only=True)
         
-        assert visits[0] == fetched_subscription.client.first_name
-        assert visits[1] == fetched_subscription.client.last_name
-        assert visits[2] == fetched_subscription.client.company_name
+        assert visits[0] == fetched_subscription.client_id.first_name
+        assert visits[1] == fetched_subscription.client_id.last_name
+        assert visits[2] == fetched_subscription.client_id.company_name
 
         self.write('\nTest 1: Passed ✅\n')
         
